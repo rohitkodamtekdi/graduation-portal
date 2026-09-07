@@ -2527,7 +2527,7 @@
     "supportOfferings": {
       "title": "My Support Interventions",
       "subtitle": "Manage all published support — training sessions, services, and assets",
-      "createNew": "Create New",
+      "createNew": "Create Support Intervention",
       "tabs": {
         "trainingsAndSessions": "Trainings & Sessions",
         "additionalServices": "Additional Services",
@@ -2596,16 +2596,18 @@
       }
     },
     "dashboard": {
-      "title": "Dashboard",
-      "subtitle": "Overview of your impact and activities",
-      "createSupportBtn": "Create Support for Participants"
+      "title": "Support Provider Dashboard",
+      "subtitle": "Overview of your organization's support commitments, intervention fulfillment tracking & performance portfolio",
+      "createSupportBtn": "Create Support Intervention"
     },
     "createSupport": {
       "title": "Create New Support",
       "subtitle": "Choose the type of support you want to create",
       "changeType": "Change type",
       "training": {
-        "title": "Create Training Session"
+        "title": "Create Training Session",
+        "discardMessage": "Are you sure you want to discard this session draft?",
+        "discard": "Discard Draft"
       },
       "additionalService": {
         "title": "Create Additional Service"

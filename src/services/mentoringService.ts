@@ -123,6 +123,19 @@ export const getSessionDetails = async (sessionId: string | number): Promise<any
 };
 
 /**
+ * Delete a Mentoring Session by ID
+ * Endpoint: DELETE /mentoring/v1/sessions/update/:sessionId
+ */
+export const deleteSession = async (sessionId: string | number): Promise<any> => {
+  try {
+    const response = await api.delete(API_ENDPOINTS.MENTORING_UPDATE_SESSION(sessionId));
+    return response.data;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+/**
  * Get Additional Service categories list
  */
 export const getAdditionalServiceCategories = async (): Promise<MentoringOption[]> => {

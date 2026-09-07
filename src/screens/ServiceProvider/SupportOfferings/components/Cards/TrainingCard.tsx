@@ -436,6 +436,19 @@ const Card: React.FC<CardProps> = ({
           footer(item)
         ) : (
           <HStack {...styles.requestedByRowHStack}>
+            {(item.mentor_name || (item as any).meta?.mentor_name) && (
+              <Text {...styles.cardRequestedByText}>
+                {t('supportProvider.supportOfferings.cards.requestedByPrefix', 'Requested by: ')}
+                <Text fontWeight="$normal" color="$textPrimary" fontSize={'$xs'}>
+                  {item.mentor_name || (item as any).meta?.mentor_name}
+                </Text>
+                {(() => {
+                  const org = item.organization || (item as any).meta?.organization;
+                  const orgName = typeof org === 'object' ? org?.name : org;
+                  return orgName ? ` (${orgName})` : '';
+                })()}
+              </Text>
+            )}
             <HStack {...styles.badgeContentHStack}>
               {/* DRAFT */}
               {currentStatus === SESSION_STATUS.DRAFT && (

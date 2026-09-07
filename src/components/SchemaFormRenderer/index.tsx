@@ -1428,7 +1428,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
             >
               {triggerLabel}
             </Text>
-            {maxFileSize && 
+            {maxFileSize &&
               <Text
                 {...TYPOGRAPHY.caption}
                 color="$gray300"
@@ -2858,7 +2858,7 @@ function formatFieldValueForDisplay(
   if (!isValuePresent(rawValue) && field?.defaultValue) {
     rawValue = field.defaultValue;
   }
-  
+
   const resolveLabel = (v: any): string => {
     if (field?.displayFormat) {
       const [type, format] = field?.displayFormat?.split("@")
@@ -2875,9 +2875,9 @@ function formatFieldValueForDisplay(
     return option?.label || String(v);
   };
 
-  if(field?.type === FORM_FIELD_TYPES.GROUP) {
-    let newValue:string[] = []
-    field?.fields?.forEach((item:FormField | undefined) => newValue.push(item?.name && values[item?.name] ? resolveLabel(values[item?.name]) : '-'))
+  if (field?.type === FORM_FIELD_TYPES.GROUP) {
+    let newValue: string[] = []
+    field?.fields?.forEach((item: FormField | undefined) => newValue.push(item?.name && values[item?.name] ? resolveLabel(values[item?.name]) : '-'))
     return newValue.join(" ")
   }
 
