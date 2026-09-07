@@ -697,7 +697,6 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
 // "Request a Session" flow only needs the core fields; everything else is
 // filled in / managed elsewhere, so we hide it from that form.
 export const REQUEST_SESSION_HIDE_FIELDS: string[] = [
-  'sessionTypeOther',
   'recommended_for',
   'certificate_provided',
   'seats_limit',

@@ -28,10 +28,14 @@ export default function RequestInfoModal({
   const requestTitle = item?.title || '';
   const coachName = item?.coach || '';
 
-  const handleSubmit = () => {
-    onSubmit?.(message);
-    setMessage('');
-    onClose();
+  const handleSubmit = async () => {
+    try {
+      await onSubmit?.(message);
+      setMessage('');
+      onClose();
+    } catch (err) {
+      console.error('[RequestInfoModal] Error sending request info:', err);
+    }
   };
 
   const handleClose = () => {

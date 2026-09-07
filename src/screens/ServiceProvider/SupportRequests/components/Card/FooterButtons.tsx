@@ -1,5 +1,5 @@
 import React from 'react';
-import { HStack, Text, Pressable } from '@gluestack-ui/themed';
+import { HStack, Text, Pressable, Button, ButtonText, ButtonIcon } from '@gluestack-ui/themed';
 import LucideIcon from '@components/ui/LucideIcon';
 import cardStyles from '../../styles';
 import { useLanguage } from '@contexts/LanguageContext';
@@ -25,7 +25,7 @@ export default function ActionButtons({
   return (
     <HStack {...cardStyles.footerRow}>
       {/* Left Action: View Full Details */}
-      <Pressable
+      {/* <Pressable
         onPress={() => onViewFullDetails?.()}
         {...cardStyles.buttonPressableDetails}
       >
@@ -35,54 +35,51 @@ export default function ActionButtons({
             {t(`${BASE_PATH}.buttonTexts.viewFullDetails`)}
           </Text>
         </HStack>
-      </Pressable>
+      </Pressable> */}
 
       {/* Right Action Buttons */}
       {(onRequestInfo || onDecline || onAcceptAndSchedule) ? (
         <HStack {...cardStyles.rightActionGroup}>
           {/* Request Info Button */}
           {onRequestInfo ? (
-            <Pressable
+            <Button
+              variant="outlineghost"
               onPress={() => onRequestInfo?.()}
-              {...cardStyles.requestInfoBtn}
+              {...cardStyles.requestInfoButtonProps}
             >
-              <HStack {...cardStyles.buttonRowMd}>
-                <LucideIcon name="MessageSquare" {...cardStyles.iconRequestInfo} />
-                <Text {...cardStyles.textRequestInfo}>
-                  {t(`${BASE_PATH}.buttonTexts.requestInfo`)}
-                </Text>
-              </HStack>
-            </Pressable>
+              <ButtonIcon as={LucideIcon} name="MessageSquare" {...cardStyles.requestInfoIconProps} />
+              <ButtonText {...cardStyles.requestInfoTextProps}>
+                {t(`${BASE_PATH}.buttonTexts.requestInfo`)}
+              </ButtonText>
+            </Button>
           ) : null}
 
           {/* Decline Button */}
           {onDecline ? (
-            <Pressable
+            <Button
+              variant="outline"
               onPress={() => onDecline?.()}
-              {...cardStyles.declineBtn}
+              {...cardStyles.declineButtonProps}
             >
-              <HStack {...cardStyles.buttonRowMd}>
-                <LucideIcon name="X" {...cardStyles.iconDecline} />
-                <Text {...cardStyles.textDecline}>
-                  {t(`${BASE_PATH}.buttonTexts.decline`)}
-                </Text>
-              </HStack>
-            </Pressable>
+              <ButtonIcon as={LucideIcon} name="X" {...cardStyles.declineIconProps} />
+              <ButtonText {...cardStyles.declineTextProps}>
+                {t(`${BASE_PATH}.buttonTexts.decline`)}
+              </ButtonText>
+            </Button>
           ) : null}
 
           {/* Accept & Schedule Button */}
           {onAcceptAndSchedule ? (
-            <Pressable
+            <Button
+              variant="solid"
               onPress={() => onAcceptAndSchedule?.()}
-              {...cardStyles.acceptBtn}
+              {...cardStyles.acceptButtonProps}
             >
-              <HStack {...cardStyles.buttonRowMd}>
-                <LucideIcon name="CheckCircle" {...cardStyles.iconAccept} />
-                <Text {...cardStyles.textAccept}>
-                  {acceptLabel.startsWith('supportProvider.') ? t(acceptLabel) : acceptLabel}
-                </Text>
-              </HStack>
-            </Pressable>
+              <ButtonIcon as={LucideIcon} name="CheckCircle" {...cardStyles.acceptIconProps} />
+              <ButtonText {...cardStyles.acceptTextProps}>
+                {acceptLabel.startsWith('supportProvider.') ? t(acceptLabel) : acceptLabel}
+              </ButtonText>
+            </Button>
           ) : null}
         </HStack>
       ) : null}

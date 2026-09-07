@@ -120,7 +120,10 @@ export function requestSessionPayloadMapping(formValues: any, optionMap: any = {
     learning_objectives: formValues.learning_objectives,
     start_date: moment(formValues.start_date).unix(),
     end_date: moment(formValues.end_date).unix(),
-    title: formValues.title,
+    title:
+      formValues.idp_training_task === 'custom'
+        ? formValues.sessionTypeOther
+        : formValues.title,
     agenda: formValues.description,
     requestees: formValues.requestees || [],
     status: formValues.isDraft ? 'DRAFT' : 'Requested',

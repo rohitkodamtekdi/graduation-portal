@@ -4,6 +4,11 @@ export const DECLINE_FORM_SCHEMA: FormSection[] = [
   {
     type: 'section',
     id: 'declineDetails',
+    _container: {
+      borderWidth: 0,
+      p: 0,
+      bg: 'transparent',
+    },
     rows: [
       {
         fields: [
@@ -17,7 +22,7 @@ export const DECLINE_FORM_SCHEMA: FormSection[] = [
             },
             placeholder: {
               key: 'supportProvider.supportRequests.placeholders.declineReason',
-              fallback: 'Select a reason',
+              fallback: 'Choose a preset reason or write your own',
             },
             optionsSource: 'declineReasonOptions',
             validation: [
@@ -37,35 +42,20 @@ export const DECLINE_FORM_SCHEMA: FormSection[] = [
           {
             name: 'reasonDetails',
             type: 'textarea',
-            required: true,
-            visibleIf: [
-              {
-                name: 'selectedReason',
-                operator: '===',
-                value: 'other',
-              },
-            ],
+            required: false,
             label: {
               key: 'supportProvider.supportRequests.labels.reasonDetails',
               fallback: 'Reason Details',
             },
             placeholder: {
               key: 'supportProvider.supportRequests.placeholders.declineDetails',
-              fallback: 'Please provide additional details...',
+              fallback: 'Provide additional context or details for the Coach...',
             },
+
             subLabel: {
               key: 'supportProvider.supportRequests.hints.decline',
-              fallback: 'This message will be shared with the coach to explain why the request was declined.',
+              fallback: 'This feedback will be shared with the Coach',
             },
-            validation: [
-              {
-                rule: 'required',
-                message: {
-                  key: 'supportProvider.supportRequests.errors.reasonDetailsRequired',
-                  fallback: 'Reason details are required',
-                },
-              },
-            ],
           },
         ],
       },

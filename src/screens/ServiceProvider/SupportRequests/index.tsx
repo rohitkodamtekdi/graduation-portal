@@ -59,7 +59,7 @@ const App = (): React.JSX.Element => {
             { label: 'All Provinces', value: 'all-provinces' },
             ...provincesData.map((p: any) => ({
               label: p.name || p.title || p.label,
-              value: p.name?.toLowerCase(),
+              value: p._id || p.id || p.value,
             })),
           ];
           setProvinceOptions(dynamicProvinces);
@@ -74,26 +74,29 @@ const App = (): React.JSX.Element => {
   // Fetch dynamic sites based on selected province filter
   useEffect(() => {
     const fetchSitesData = async () => {
+      const selectedProv = filters.province;
+      if (!selectedProv || selectedProv === 'all-provinces') {
+        setSiteOptions(DEFAULT_SITE_OPTIONS);
+        return;
+      }
       try {
-        const selectedProv = filters.province;
         const res = await getSitesByProvince({
-          provinceId: selectedProv && selectedProv !== 'all-provinces' ? selectedProv : undefined,
+          provinceId: selectedProv,
           page: 1,
           limit: 100,
         });
         const sitesList = res?.result?.data || [];
-        if (sitesList && sitesList.length > 0) {
-          const dynamicSites = [
-            { label: 'All Sites', value: 'all-sites' },
-            ...sitesList.map((s: any) => ({
-              label: s.name || s.title || s.label,
-              value: s.name?.toLowerCase() || s._id || s.id || s.value,
-            })),
-          ];
-          setSiteOptions(dynamicSites);
-        }
+        const dynamicSites = [
+          { label: 'All Sites', value: 'all-sites' },
+          ...sitesList.map((s: any) => ({
+            label: s.name || s.title || s.label,
+            value: s._id || s.id || s.value,
+          })),
+        ];
+        setSiteOptions(dynamicSites);
       } catch (err) {
         console.error('[SupportRequests Screen] Error fetching dynamic sites:', err);
+        setSiteOptions(DEFAULT_SITE_OPTIONS);
       }
     };
     fetchSitesData();
@@ -136,15 +139,15 @@ const App = (): React.JSX.Element => {
     } catch (err) {
       console.error('[SupportRequests Screen] Failed to fetch support requests via service:', err);
     }
-  }, [activeTab, filters]);
+  }, [activeTab, filters.province, filters.site, filters.search]);
 
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
-  const handleFilterChange = (newFilters: Record<string, any>) => {
+  const handleFilterChange = useCallback((newFilters: Record<string, any>) => {
     setFilters(newFilters);
-  };
+  }, []);
 
   const handleOpenModal = (type: SupportRequestModalType, item?: any) => {
     if (item) setSelectedItem(item);
@@ -227,6 +230,7 @@ const App = (): React.JSX.Element => {
             showClearButton={false}
             hideTitleHeader={true}
             _container={styles.filterContainer}
+            _input={styles.filterInputProps}
           />
 
           {activeTab === 'sessions' && (

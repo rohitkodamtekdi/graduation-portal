@@ -32,17 +32,16 @@ export default function SupportRequestsModals({
   onSuccess,
 }: SupportRequestsModalsProps): React.JSX.Element {
   const handleRequestInfoSubmit = async (message: string) => {
-    try {
-      if (selectedItem?.id) {
-        await requestMoreInfoForSupportRequest({
-          requestId: selectedItem.id,
-          message,
-        });
+    if (selectedItem?.id) {
+      const res = await requestMoreInfoForSupportRequest({
+        requestId: selectedItem.id,
+        message,
+      });
+      if (res.success) {
         onClose();
-        onSuccess?.();
+      } else {
+        throw new Error(res.message || 'Failed to request additional information');
       }
-    } catch (error) {
-      console.error('[SupportRequestsModals] Error submitting Request Info:', error);
     }
   };
 

@@ -5,6 +5,8 @@ import {
   VStack,
   Text,
   Pressable,
+  Button,
+  ButtonText,
 } from '@gluestack-ui/themed';
 import Modal from '@components/ui/Modal';
 import LucideIcon from '@components/ui/LucideIcon';
@@ -86,27 +88,29 @@ export default function DeclineModal({
       footerContent={
         <HStack {...modalStyles.modalFooterRow}>
           {/* Cancel Button */}
-          <Pressable
+          <Button
+            variant="outlineghost"
             onPress={handleClose}
-            {...modalStyles.declineCancelBtn}
+            {...modalStyles.declineCancelBtnProps}
           >
-            <Text {...modalStyles.declineModalCancelText}>
+            <ButtonText {...modalStyles.declineCancelBtnTextProps}>
               {t(`${BASE_PATH}.buttonTexts.cancel`)}
-            </Text>
-          </Pressable>
+            </ButtonText>
+          </Button>
 
           {/* Confirm Decline Button */}
-          <Pressable
+          <Button
+            variant="solid"
             onPress={handleSubmit}
-            {...modalStyles.declineConfirmBtn}
+            {...modalStyles.declineConfirmBtnProps}
           >
-            <HStack {...modalStyles.modalConfirmRow}>
-              <LucideIcon name="X" {...modalStyles.iconDeclineConfirm} />
-              <Text {...modalStyles.modalConfirmText}>
+            <HStack {...modalStyles.declineConfirmBtnRowProps}>
+              <LucideIcon name="X" {...modalStyles.declineConfirmBtnIconProps} />
+              <ButtonText {...modalStyles.declineConfirmBtnTextProps}>
                 {t(`${BASE_PATH}.buttonTexts.confirmDecline`)}
-              </Text>
+              </ButtonText>
             </HStack>
-          </Pressable>
+          </Button>
         </HStack>
       }
     >
@@ -142,6 +146,9 @@ export default function DeclineModal({
           onFieldChange={handleFieldChange}
           t={t}
         />
+        <Text {...modalStyles.declineHintText}>
+          {t(`${BASE_PATH}.hints.decline`)}
+        </Text>
       </VStack>
     </Modal>
   );
