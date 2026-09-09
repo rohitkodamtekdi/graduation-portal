@@ -2549,8 +2549,12 @@
         "hideDetails": "Hide Details",
         "viewDetails": "View Details",
         "requestedBy": "Requested by: {{name}}",
+        "requestedByPrefix": "Requested by: ",
+        "requestsCount": "{{count}} requests / spots",
         "copySession": "Copy Session",
         "copyOffering": "Copy Offering",
+        "copyIntervention": "Copy Intervention",
+        "cancel": "Cancel",
         "viewRequests": "View Requests",
         "complete": "Complete",
         "sessionComplete": "Session Complete",
@@ -2579,7 +2583,8 @@
           "downloading": "Downloading {{name}}...",
           "navigatingRequests": "Navigating to support requests...",
           "offeringCopied": "Offering copied successfully!",
-          "offeringCompleted": "Offering marked as complete!"
+          "offeringCompleted": "Offering marked as complete!",
+          "offeringCancelled": "Intervention cancelled successfully!"
         }
       },
       "modal": {
@@ -2631,7 +2636,8 @@
       },
       "errors": {
         "saveFailed": "Something went wrong while saving. Please try again.",
-        "incompleteWarning": "Please Complete your Profile before proceeding."
+        "incompleteWarning": "Please Complete your Profile before proceeding.",
+        "categoryNotOffered": "This support category is not part of your offered categories. Please update your profile to enable it."
       }
     },
     "supportRequests": {
@@ -2727,11 +2733,11 @@
     },
     "materialsLibrary": {
       "title": "Template & Resource Library",
-      "subtitle": "Standalone content repository of all workbooks, guides, templates, and manuals uploaded for support offerings.",
+      "subtitle": "Standalone content repository of all workbooks, guides, templates, and manuals uploaded for support interventions.",
       "uploadResource": "Upload Resource",
       "stats": {
         "totalResources": "Total Resources",
-        "pdfDocuments": "PDFs & Documents",
+        "pdfDocuments": "PDFs & Word Documents",
         "templatesDecks": "Templates & Decks",
         "totalDownloads": "Total Downloads"
       },
