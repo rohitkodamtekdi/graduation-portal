@@ -122,8 +122,23 @@ export const getAdditionalServices = async (params?: any): Promise<any> => {
 /**
  * Fetch Assets
  */
-export const getAssets = async (params?: FilterParams): Promise<AssetItem[]> => {
-  return [];
+export const getAssets = async (params?: any): Promise<any> => {
+  let responseData: any = {
+    result: { data: [] },
+    total: 0,
+  };
+
+  try {
+    responseData = await getSupportOfferingsList(params, 'asset');
+  } catch (error) {
+    console.warn('Backend API endpoint unavailable for Assets:', error);
+    responseData = {
+      result: { data: [] },
+      total: 0,
+    };
+  }
+
+  return responseData;
 };
 
 /**

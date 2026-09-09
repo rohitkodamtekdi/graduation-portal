@@ -71,35 +71,46 @@ export function valueMapping(
     recommendedForPayload = [formValues.recommended_for];
   }
 
-  let startDate, endDate;
-  if (effectiveFormType === 'training') {
-    startDate = formValues.start_date ? moment(formValues.start_date).unix() : undefined;
-    endDate = formValues.end_date ? moment(formValues.end_date).unix() : undefined;
-  } else {
-    startDate = formValues.start_date ? moment(formValues.start_date).unix() : moment().unix();
-    endDate = formValues.end_date ? moment(formValues.end_date).unix() : moment().add(2, 'years').unix();
-  }
+  const rawStartDate = formValues.start_date ?? formValues.startDate;
+  const rawEndDate = formValues.end_date ?? formValues.endDate;
+
+  const startDate: number = rawStartDate ? moment(rawStartDate).unix() : 0;
+  const endDate: number = rawEndDate ? moment(rawEndDate).unix() : (rawStartDate ? moment(rawStartDate).add(30, 'minutes').unix() : 1800);
+
+  const resolvedTitle = formValues?.idp_training_task === 'custom'
+    ? formValues?.sessionTypeOther
+    : (formValues?.title || formValues?.assetTitle || '');
+
+  const resolvedDescription = formValues?.description || formValues?.assetDescription || '';
+
+  const rawProvinces = formValues.provinces ?? formValues.province;
+  const resolvedProvinces = Array.isArray(rawProvinces) ? rawProvinces.filter(Boolean) : (rawProvinces ? [rawProvinces] : []);
+
+  const rawSites = formValues.sites ?? formValues.site;
+  const resolvedSites = Array.isArray(rawSites) ? rawSites.filter(Boolean) : (rawSites ? [rawSites] : []);
+
+  const rawCategories = formValues.categories ?? formValues.livelihoodCategory;
+  const resolvedCategories = Array.isArray(rawCategories) ? rawCategories.filter(Boolean) : (rawCategories ? [rawCategories] : []);
 
   return {
     ...formValues,
-    title:
-      formValues?.idp_training_task === 'custom'
-        ? formValues?.sessionTypeOther
-        : formValues?.title,
-    categories: [formValues.categories],
+    title: resolvedTitle,
+    description: resolvedDescription,
+    categories: resolvedCategories,
     delivery_mode: formValues.delivery_mode || 'offline',
-    provinces: [formValues.provinces],
+    provinces: resolvedProvinces,
+    sites: resolvedSites,
     recommended_for: recommendedForPayload,
     start_date: startDate,
     end_date: endDate,
-    certificate_provided: formValues.certificate_provided === "true",
-    can_be_copied: formValues.can_be_copied === "true",
+    certificate_provided: formValues.certificate_provided === "true" || formValues.certificate_provided === true,
+    can_be_copied: formValues.can_be_copied === "true" || formValues.can_be_copied === true,
     session_type: 'Public',
     status: formValues.isDraft ? 'DRAFT' : 'PUBLISHED',
     seats_limit: formValues.seats_limit,
     meeting_info: {
-      link: formValues?.meeting_link,
-      location: formValues?.location,
+      link: formValues?.meeting_link || '',
+      location: formValues?.location || '',
     },
     support_offering_type: effectiveFormType
   };
