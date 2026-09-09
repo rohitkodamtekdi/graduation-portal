@@ -103,7 +103,7 @@ export default function MaterialCard({
         {/* Associated offering if exists */}
         {item.associatedOffering ? (
           <HStack {...styles.linkedOfferingBox}>
-            <LucideIcon name="Link2" size={styles.linkedOfferingIcon.size} color={styles.linkedOfferingIcon.color} />
+            <LucideIcon name="BookOpen" size={styles.linkedOfferingIcon.size} color={styles.linkedOfferingIcon.color} />
             <Text {...styles.linkedOfferingText} numberOfLines={1}>
               {t('supportProvider.materialsLibrary.card.linked', { offering: item.associatedOffering })}
             </Text>
@@ -127,28 +127,18 @@ export default function MaterialCard({
 
         {/* Card Footer Actions */}
         <Box {...styles.cardFooterActions}>
-          <HStack {...styles.cardFooterLeftGroup}>
-            {/* Preview Button */}
-            <Pressable
-              onPress={() => onPreview(item)}
-              {...styles.previewBtn}
-            >
-              <HStack {...styles.previewBtnRow}>
-                <LucideIcon name="Eye" size={styles.previewBtnIcon.size} color={styles.previewBtnIcon.color} />
-                <Text {...styles.previewBtnText}>
-                  {t('supportProvider.materialsLibrary.card.preview')}
-                </Text>
-              </HStack>
-            </Pressable>
-
-            {/* Delete Button */}
-            <Pressable
-              onPress={() => onDelete(item)}
-              {...styles.deleteBtn}
-            >
-              <LucideIcon name="Trash2" size={styles.deleteBtnIcon.size} color={styles.deleteBtnIcon.color} />
-            </Pressable>
-          </HStack>
+          {/* Preview Button */}
+          <Pressable
+            onPress={() => onPreview(item)}
+            {...styles.previewBtn}
+          >
+            <HStack {...styles.previewBtnRow}>
+              <LucideIcon name="Eye" size={styles.previewBtnIcon.size} color={styles.previewBtnIcon.color} />
+              <Text {...styles.previewBtnText}>
+                {t('supportProvider.materialsLibrary.card.preview')}
+              </Text>
+            </HStack>
+          </Pressable>
 
           {/* Download Button */}
           <Pressable
