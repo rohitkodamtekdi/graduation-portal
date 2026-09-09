@@ -387,7 +387,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
               <HStack {...styles.cardHeader}>
                 <HStack {...styles.supportCategoryHeader}>
                   <Text {...styles.cardTitleText}>
-                    {getOptionLabel(item.categoryName, optionsState.categoryOpts)}
+                    {getOptionLabel(item.categoryName, optionsState?.categoryOpts || [])}
                   </Text>
                   <Badge {...styles.offeredBadge}>
                     <BadgeText {...styles.redBadgeText}>Offered</BadgeText>
@@ -416,7 +416,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                       <HStack {...styles.badgeRow}>
                         {item.trainingData.socialEmpowerment.map((s, idx) => (
                           <Badge key={idx} {...styles.blueBadge}>
-                            <BadgeText {...styles.blueBadgeText}>{getOptionLabel(s, optionsState.socialEmpowermentOpts)}</BadgeText>
+                            <BadgeText {...styles.blueBadgeText}>{getOptionLabel(s, optionsState?.socialEmpowermentOpts || [])}</BadgeText>
                           </Badge>
                         ))}
                       </HStack>
@@ -429,7 +429,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                       <HStack {...styles.badgeRow}>
                         {item.trainingData.financialInclusion.map((s, idx) => (
                           <Badge key={idx} {...styles.blueBadge}>
-                            <BadgeText {...styles.blueBadgeText}>{getOptionLabel(s, optionsState.financialInclusionOpts)}</BadgeText>
+                            <BadgeText {...styles.blueBadgeText}>{getOptionLabel(s, optionsState?.financialInclusionOpts || [])}</BadgeText>
                           </Badge>
                         ))}
                       </HStack>
@@ -442,7 +442,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                       <HStack {...styles.badgeRow}>
                         {item.trainingData.livelihoods.map((s, idx) => (
                           <Badge key={idx} {...styles.blueBadge}>
-                            <BadgeText {...styles.blueBadgeText}>{getOptionLabel(s, optionsState.livelihoodsOpts)}</BadgeText>
+                            <BadgeText {...styles.blueBadgeText}>{getOptionLabel(s, optionsState?.livelihoodsOpts || [])}</BadgeText>
                           </Badge>
                         ))}
                       </HStack>
@@ -459,7 +459,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                       <HStack {...styles.badgeRow}>
                         {item.linkageData.specialAttention.map((s, idx) => (
                           <Badge key={idx} {...styles.purpleBadge}>
-                            <BadgeText {...styles.purpleBadgeText}>{getOptionLabel(s, optionsState.specialAttentionOpts)}</BadgeText>
+                            <BadgeText {...styles.purpleBadgeText}>{getOptionLabel(s, optionsState?.specialAttentionOpts || [])}</BadgeText>
                           </Badge>
                         ))}
                       </HStack>
@@ -472,7 +472,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                       <HStack {...styles.badgeRow}>
                         {item.linkageData.immediateAttention.map((s, idx) => (
                           <Badge key={idx} {...styles.purpleBadge}>
-                            <BadgeText {...styles.purpleBadgeText}>{getOptionLabel(s, optionsState.immediateAttentionOpts)}</BadgeText>
+                            <BadgeText {...styles.purpleBadgeText}>{getOptionLabel(s, optionsState?.immediateAttentionOpts || [])}</BadgeText>
                           </Badge>
                         ))}
                       </HStack>
@@ -487,7 +487,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                   <HStack {...styles.badgeRow}>
                     {item.assetsData.assetTypes.map((s, idx) => (
                       <Badge key={idx} {...styles.greenBadge}>
-                        <BadgeText {...styles.greenBadgeText}>{getOptionLabel(s, optionsState.assetTypesOpts)}</BadgeText>
+                        <BadgeText {...styles.greenBadgeText}>{getOptionLabel(s, optionsState?.assetTypesOpts || [])}</BadgeText>
                       </Badge>
                     ))}
                   </HStack>
@@ -510,7 +510,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
               <Text {...styles.redAsteriskSmall}> *</Text>
             </HStack>
             <Select
-              options={categoryOptions}
+              options={categoryOptions || []}
               value={selectedCategory}
               onChange={(val) => {
                 handleSelectCategory(val);
@@ -531,7 +531,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                   {t('profile.socialEmpowerment', 'Social Empowerment Sessions')}
                 </Text>
                 <Select
-                  options={optionsState.socialEmpowermentOpts}
+                  options={optionsState?.socialEmpowermentOpts || []}
                   value={socialEmpowerment}
                   onChange={setSocialEmpowerment}
                   placeholder={t('profile.selectSocialEmpowerment', 'Select social empowerment sessions...')}
@@ -544,7 +544,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                   {t('profile.financialInclusion', 'Financial Inclusion Sessions')}
                 </Text>
                 <Select
-                  options={optionsState.financialInclusionOpts}
+                  options={optionsState?.financialInclusionOpts || []}
                   value={financialInclusion}
                   onChange={setFinancialInclusion}
                   placeholder={t('profile.selectFinancialInclusion', 'Select financial inclusion sessions...')}
@@ -557,7 +557,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                   {t('profile.livelihoods', 'Livelihoods Sessions')}
                 </Text>
                 <Select
-                  options={optionsState.livelihoodsOpts}
+                  options={optionsState?.livelihoodsOpts || []}
                   value={livelihoods}
                   onChange={setLivelihoods}
                   placeholder={t('profile.selectLivelihoods', 'Select livelihoods sessions...')}
@@ -575,7 +575,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                   {t('profile.specialAttention', 'Special Attention Tags')}
                 </Text>
                 <Select
-                  options={optionsState.specialAttentionOpts}
+                  options={optionsState?.specialAttentionOpts || []}
                   value={specialAttention}
                   onChange={setSpecialAttention}
                   placeholder={t('profile.selectSpecialAttention', 'Select special attention tags...')}
@@ -588,7 +588,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                   {t('profile.immediateAttention', 'Immediate Attention Tags')}
                 </Text>
                 <Select
-                  options={optionsState.immediateAttentionOpts}
+                  options={optionsState?.immediateAttentionOpts || []}
                   value={immediateAttention}
                   onChange={setImmediateAttention}
                   placeholder={t('profile.selectImmediateAttention', 'Select immediate attention tags...')}
@@ -605,7 +605,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                 {t('profile.assetTypes', 'Asset Types Offered')}
               </Text>
               <Select
-                options={optionsState.assetTypesOpts}
+                options={optionsState?.assetTypesOpts || []}
                 value={assetTypes}
                 onChange={setAssetTypes}
                 placeholder={t('profile.selectAssetTypes', 'Select asset types...')}

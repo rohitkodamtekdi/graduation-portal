@@ -27,7 +27,7 @@ const App = (): React.JSX.Element => {
 
   const { t } = useLanguage();
   const { showAlert } = useAlert();
-  const { isCardAllowed } = useProfileCompletion();
+  const { isCardAllowed, allowedSubOptions, allowedProvinceIds, allowedSiteIds } = useProfileCompletion();
   const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.ADDITIONAL_SERVICE));
 
   const [provinces, setProvinces] = useState<any[]>([]);
@@ -80,7 +80,14 @@ const App = (): React.JSX.Element => {
     }, [init])
   );
 
-  const { sessionTypes, optionsMap } = useTrainingFormOptions({ values, provinces, pillers });
+  const { sessionTypes, optionsMap } = useTrainingFormOptions({
+    values,
+    provinces,
+    pillers,
+    allowedSubOptions,
+    allowedProvinceIds,
+    allowedSiteIds,
+  });
 
   const hideFileds = sessionTypes.length === 0 ? ['idp_additional_services_tasks'] : [];
 

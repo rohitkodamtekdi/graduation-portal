@@ -24,8 +24,9 @@ export const SupportCard: React.FC<FeatureCardProps> = ({ card }) => {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const { showAlert } = useAlert();
-  const { title, description, icon, color, navigationUrl } = card;
-  const { isProfileComplete } = useProfileCompletion();
+  const { title, description, icon, color, navigationUrl, id } = card;
+  const { isProfileComplete, isCardAllowed } = useProfileCompletion();
+  const isAllowed = isCardAllowed(id);
 
   const handlePress = () => {
     if (!isProfileComplete) {
@@ -33,6 +34,15 @@ export const SupportCard: React.FC<FeatureCardProps> = ({ card }) => {
         'error',
         t(
           'supportProvider.createSupport.errors.incompleteWarning'
+        ),
+      );
+      return;
+    }
+    if (!isAllowed) {
+      showAlert(
+        'error',
+        t(
+          'supportProvider.createSupport.errors.categoryNotOffered'
         ),
       );
       return;
@@ -48,7 +58,7 @@ export const SupportCard: React.FC<FeatureCardProps> = ({ card }) => {
   return (
     <Pressable
       {...styles.pressable}
-      opacity={!isProfileComplete ? 0.5 : 1}
+      opacity={!isProfileComplete || !isAllowed ? 0.5 : 1}
       onPress={handlePress}
     >
       {/* Icon Circle */}

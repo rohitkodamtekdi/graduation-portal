@@ -8,20 +8,24 @@ import { ASSET_FORM_SCHEMA } from '@constants/ASSET_SCHEMA';
 import { useLanguage } from '@contexts/LanguageContext';
 import { getSitesByProvince, getProvincesList } from '../../../../services/usersService';
 import { getProjectCategoryList } from '../../../../services/projectService';
+import { getAssetTypesOptions } from '../../../../services/mentoringService';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
 import { SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { MENTORING_ENTITY_TYPES } from '@constants/SP_MENU_OPTIONS';
 
 const App = (): React.JSX.Element => {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const { showAlert } = useAlert();
-  const { isCardAllowed } = useProfileCompletion();
+  const { isCardAllowed, allowedProvinceIds, allowedSiteIds, getAllowedSubOptionIds } = useProfileCompletion();
   const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.ASSET));
+  const allowedAssetTypes = getAllowedSubOptionIds(MENTORING_ENTITY_TYPES.ASSET_TYPES);
   
   const [provinces, setProvinces] = useState<any[]>([]);
   const [dynamicSites, setDynamicSites] = useState<any[]>([]);
   const [livelihoodCats, setLivelihoodCats] = useState<any[]>([]);
+  const [assetTypeOptions, setAssetTypeOptions] = useState<any[]>([]);
   const [values, setValues] = useState<any>({});
   
   const handleFieldChange = useCallback((name: string, value: string) => {
@@ -51,6 +55,12 @@ const App = (): React.JSX.Element => {
   }, [values.province]);
 
   useEffect(() => {
+    getAssetTypesOptions()
+      .then((res: any[]) => setAssetTypeOptions(res || []))
+      .catch(() => setAssetTypeOptions([]));
+  }, []);
+
+  useEffect(() => {
     getProjectCategoryList()
       .then((res: any[]) => {
         // Collect all child categories under root IDP templates
@@ -72,17 +82,25 @@ const App = (): React.JSX.Element => {
   const optionsMap = useMemo(() => {
     const provinceOpts =
       provinces && provinces.length > 0
-        ? provinces.map((p: any) => ({
-            value: p._id || p.id || p.name,
-            label: p.name || p.label,
-          }))
+        ? provinces
+            .map((p: any) => ({
+              value: p._id || p.id || p.name,
+              label: p.name || p.label,
+            }))
+            .filter((opt) =>
+              allowedProvinceIds.length === 0 ? true : allowedProvinceIds.includes(opt.value),
+            )
         : [];
 
     const siteOpts = dynamicSites
-      ? dynamicSites.map((s: any) => ({
-          value: s._id || s.id || s.name,
-          label: s.name || s.label,
-        }))
+      ? dynamicSites
+          .map((s: any) => ({
+            value: s._id || s.id || s.name,
+            label: s.name || s.label,
+          }))
+          .filter((opt) =>
+            allowedSiteIds.length === 0 ? true : allowedSiteIds.includes(opt.value),
+          )
       : [];
 
     const livelihoodOpts =
@@ -119,26 +137,31 @@ const App = (): React.JSX.Element => {
             },
           ];
 
+    const allAssetTypeOpts = assetTypeOptions.map((a: any) => ({
+      value: a.value || a._id || a.id,
+      label: a.label || a.name,
+    }));
+    const assetTypeOpts =
+      allowedAssetTypes.length === 0
+        ? allAssetTypeOpts
+        : allAssetTypeOpts.filter((opt) => allowedAssetTypes.includes(opt.value));
+
     return {
       provinces: provinceOpts,
       sites: siteOpts,
-      assetTypes: [
-        {
-          value: 'Cash',
-          label: 'Cash',
-        },
-        {
-          value: 'In-kind',
-          label: 'In-kind',
-        },
-        {
-          value: 'Voucher',
-          label: 'Voucher',
-        },
-      ],
+      assetTypes: assetTypeOpts,
       livelihoodCategories: livelihoodOpts,
     };
-  }, [provinces, dynamicSites, livelihoodCats, t]);
+  }, [
+    provinces,
+    dynamicSites,
+    livelihoodCats,
+    assetTypeOptions,
+    t,
+    allowedProvinceIds,
+    allowedSiteIds,
+    allowedAssetTypes,
+  ]);
 
   const handleSaveDraft = useCallback(async (formValues: any) => {
     try {

@@ -21,6 +21,8 @@ export const useProfileCompletion = () => {
   const [isProfileComplete, setIsProfileComplete] = useState<boolean | null>(null);
   const [allowedCategories, setAllowedCategories] = useState<string[]>([]);
   const [allowedSubOptions, setAllowedSubOptions] = useState<Record<string, string[]>>({});
+  const [allowedProvinceIds, setAllowedProvinceIds] = useState<string[]>([]);
+  const [allowedSiteIds, setAllowedSiteIds] = useState<string[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -30,6 +32,8 @@ export const useProfileCompletion = () => {
           setIsProfileComplete(false);
           setAllowedCategories([]);
           setAllowedSubOptions({});
+          setAllowedProvinceIds([]);
+          setAllowedSiteIds([]);
         }
         return;
       }
@@ -69,10 +73,18 @@ export const useProfileCompletion = () => {
           subOptions[group] = Array.isArray(raw) ? raw.map(toId) : [];
         });
 
+        // Extract provinces/sites the provider selected as their coverage
+        const rawProvinces = profileData.provinces ?? meta.provinces;
+        const rawSites = profileData.sites ?? meta.sites;
+        const provinceIds = Array.isArray(rawProvinces) ? rawProvinces.map(toId) : [];
+        const siteIds = Array.isArray(rawSites) ? rawSites.map(toId) : [];
+
         if (isMounted) {
           setIsProfileComplete(isComplete);
           setAllowedCategories(cats);
           setAllowedSubOptions(subOptions);
+          setAllowedProvinceIds(provinceIds);
+          setAllowedSiteIds(siteIds);
         }
       } catch (err) {
         console.error('Error checking profile completion:', err);
@@ -80,6 +92,8 @@ export const useProfileCompletion = () => {
           setIsProfileComplete(false);
           setAllowedCategories([]);
           setAllowedSubOptions({});
+          setAllowedProvinceIds([]);
+          setAllowedSiteIds([]);
         }
       }
     };
@@ -106,6 +120,8 @@ export const useProfileCompletion = () => {
     isCardAllowed,
     allowedSubOptions,
     getAllowedSubOptionIds,
+    allowedProvinceIds,
+    allowedSiteIds,
   };
 };
 
