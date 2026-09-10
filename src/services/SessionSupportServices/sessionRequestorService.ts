@@ -49,6 +49,10 @@ export const getRequestSessionsList = async (params: any): Promise<any> => {
       queryParams.append('delivery_mode', format);
     }
 
+    if (params.support_offering_type) {
+      queryParams.append('support_offering_type', params.support_offering_type);
+    }
+
     const endpoint = `${API_ENDPOINTS.USER_SESSIONS_LIST}?${queryParams.toString()}`;
     const response = await api.get(endpoint);
     return response.data;
@@ -101,6 +105,10 @@ export const getMyRequestsList = async (params: any): Promise<any> => {
 
     if (format && format !== 'all-formats') {
       queryParams.append('delivery_mode', format);
+    }
+
+    if (params.support_offering_type) {
+      queryParams.append('support_offering_type', params.support_offering_type);
     }
 
     const endpoint = `${API_ENDPOINTS.REQUEST_SESSIONS_LIST}?${queryParams.toString()}`;

@@ -7,6 +7,7 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import SchemaFormRenderer from '@components/SchemaFormRenderer';
 import { TRAINING_FORM_SCHEMA } from '@constants/TRAINING_FORM_SCHEMA';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useAuth } from '@contexts/AuthContext';
 import { getProvincesList } from '../../../../services/usersService';
 import {
   getSessionCategories,
@@ -25,7 +26,7 @@ import { useTrainingFormOptions, useProfileCompletion } from '@hooks';
 
 // Icon shown next to each delivery mode option in the format-type pill selector
 const DELIVERY_MODE_ICONS: Record<string, string> = {
-  offline: 'MapPin',
+  in_person: 'MapPin',
   online: 'Video',
   hybrid: 'Users',
 };
@@ -36,6 +37,8 @@ const App = (): React.JSX.Element => {
   const modeType: String = route.params?.type;
   const sessionId = route.params?.id;
   const { t } = useLanguage();
+  const { user } = useAuth() || {};
+  const isLc = user?.role === 'LC';
   const [provinces, setProvinces] = useState<any[]>([]);
   const [pillers, setPillers] = useState<MentoringOption[]>([]);
   const [targetAudience, setTargetAudience] = useState<MentoringOption[]>([]);
@@ -45,7 +48,7 @@ const App = (): React.JSX.Element => {
   const [lodingButton, setLodingButton] = useState<false | "saveDraft" | "submit">(false);
   const { showAlert } = useAlert();
   const { isCardAllowed, allowedSubOptions } = useProfileCompletion();
-  const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.TRAINING));
+  const isAllowed = isLc || Boolean(isCardAllowed(SUPPORT_CATEGORIES.TRAINING));
   const [showDiscardModal, setShowDiscardModal] = useState(false);
 
   const { optionsMap } = useTrainingFormOptions({

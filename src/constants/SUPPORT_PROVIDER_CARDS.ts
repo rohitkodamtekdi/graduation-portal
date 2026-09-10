@@ -67,22 +67,19 @@ export const REQUEST_SUPPORT_OPTIONS = [
     id: SUPPORT_CATEGORIES.TRAINING,
     icon: 'Calendar',
     title: 'Session or Training',
-    description: 'Request a training session',
     route: 'sessions-support/request',
   },
   {
     id: SUPPORT_CATEGORIES.ADDITIONAL_SERVICE,
     icon: 'Wrench',
     title: 'Additional Service',
-    description: 'Request a support service',
-    route: 'create-additional-service',
+    route: 'sessions-support/request-additional-service',
   },
   {
     id: SUPPORT_CATEGORIES.ASSET,
     icon: 'Box',
     title: 'Asset',
-    description: 'Request equipment or resources',
-    route: 'create-asset',
+    route: 'sessions-support/request-asset',
   },
 ];
 
@@ -135,7 +132,7 @@ export const getSupportOfferingTabs = (t: any, counts: any) => [
     children: [
       {
         key: 'browse_sessions',
-        label: t('lc.sessionsSupport.tabs.browseSessions', 'Browse Sessions'),
+        label: t('lc.sessionsSupport.tabs.browseSessions', 'Browse Trainings & Sessions'),
       },
       {
         key: 'my_requests',
@@ -143,7 +140,7 @@ export const getSupportOfferingTabs = (t: any, counts: any) => [
       },
       {
         key: 'my_sessions',
-        label: t('lc.sessionsSupport.tabs.mySessions', 'My Sessions'),
+        label: t('lc.sessionsSupport.tabs.mySessions', 'My Trainings & Sessions'),
       },
       {
         key: 'history',
@@ -162,11 +159,11 @@ export const getSupportOfferingTabs = (t: any, counts: any) => [
     children: [
       {
         key: 'browse_sessions',
-        label: t('lc.sessionsSupport.tabs.browseSessions', 'Browse Sessions'),
+        label: t('lc.sessionsSupport.tabs.browseServices', 'Browse Services'),
       },
       {
-        key: 'my_sessions',
-        label: t('lc.sessionsSupport.tabs.mySessions', 'My Sessions'),
+        key: 'my_requests',
+        label: t('lc.sessionsSupport.tabs.myRequests', 'My Requests'),
       },
       {
         key: 'history',
@@ -185,11 +182,11 @@ export const getSupportOfferingTabs = (t: any, counts: any) => [
     children: [
       {
         key: 'browse_sessions',
-        label: t('lc.sessionsSupport.tabs.browseSessions', 'Browse Sessions'),
+        label: t('lc.sessionsSupport.tabs.browseAssets', 'Browse Assets'),
       },
       {
-        key: 'my_sessions',
-        label: t('lc.sessionsSupport.tabs.mySessions', 'My Sessions'),
+        key: 'my_requests',
+        label: t('lc.sessionsSupport.tabs.myRequests', 'My Requests'),
       },
       {
         key: 'history',

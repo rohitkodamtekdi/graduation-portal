@@ -24,6 +24,16 @@ import { RequestFooter } from './RequestorFooter';
 import AssignParticipantsModal from './modals/AssignParticipantsModal';
 import LcMySessionTab from './MyTraining&Sessions/LcMySessionTab';
 
+// Safety net in case the backend's `support_offering_type` filter isn't applied for a request:
+// only keep items whose own recorded type matches the tab we're rendering (missing type = assume it belongs).
+// The field comes back as a plain string from the request-list API, but as an entity-type
+// `{ value, label }` object from the browse/sessions-list API - normalize both shapes.
+const matchesOfferingType = (item: any, expectedType: string): boolean => {
+  const rawType = item?.support_offering_type || item?.type || item?.session?.support_offering_type;
+  const itemType = rawType && typeof rawType === 'object' ? rawType.value : rawType;
+  return !itemType || itemType === expectedType;
+};
+
 const SessionsSupportScreen: React.FC = () => {
   const { t } = useLanguage();
   const navigation = useNavigation();
@@ -82,12 +92,12 @@ const SessionsSupportScreen: React.FC = () => {
       navigation.setParams({ newSession: undefined } as any);
     }
     if (params?.activeSubTab) {
-      setActiveTab('sessions');
+      setActiveTab(params.activeTab || 'sessions');
       setActiveSubTab(params.activeSubTab);
       if (params.refreshRequests) {
         setRefreshRequests(params.refreshRequests);
       }
-      navigation.setParams({ activeSubTab: undefined, refreshRequests: undefined } as any);
+      navigation.setParams({ activeTab: undefined, activeSubTab: undefined, refreshRequests: undefined } as any);
     }
   }, [route?.params]);
 
@@ -382,8 +392,9 @@ const SessionsSupportScreen: React.FC = () => {
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
             setCounts((prev) => ({ ...prev, sessions: totalCount }));
           } else if (activeSubTab === 'my_requests') {
-            result = await getMyRequestsList(params);
-            const rawList = Array.isArray(result) ? result : (result?.result?.data || result?.result || []);
+            result = await getMyRequestsList({ ...params, support_offering_type: 'training_session' });
+            const rawList = (Array.isArray(result) ? result : (result?.result?.data || result?.result || []))
+              .filter((item: any) => matchesOfferingType(item, 'training_session'));
             fetchedData = rawList.map((item: any) => {
               const session = item.session || item.session_details || {};
               return {
@@ -405,13 +416,47 @@ const SessionsSupportScreen: React.FC = () => {
           }
 
         } else if (activeTab === 'additional_services') {
-          const res = await getAdditionalServices(params);
-          fetchedData = Array.isArray(res) ? res : (res as any)?.result?.data || [];
+          let res;
+          if (activeSubTab === 'my_sessions' || activeSubTab === 'my_requests') {
+            res = await getMyRequestsList({ ...params, support_offering_type: 'additional_service' });
+          } else {
+            res = await getRequestSessionsList({ ...params, support_offering_type: 'additional_service' });
+          }
+          const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
+            .filter((item: any) => matchesOfferingType(item, 'additional_service'));
+          fetchedData = rawList.map((item: any) => {
+            const session = item.session || item.session_details || {};
+            return {
+              ...item,
+              title: item.title || session.title || 'Untitled Request',
+              status: item.status || 'REQUESTED',
+              start_date: item.start_date || session.start_date,
+              end_date: item.end_date || session.end_date,
+              delivery_mode: item.delivery_mode || session.delivery_mode,
+            };
+          });
           totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
           setCounts((prev) => ({ ...prev, additional_services: totalCount }));
         } else if (activeTab === 'assets') {
-          const res = await getAssets(params);
-          fetchedData = Array.isArray(res) ? res : (res as any)?.result?.data || [];
+          let res;
+          if (activeSubTab === 'my_sessions' || activeSubTab === 'my_requests') {
+            res = await getMyRequestsList({ ...params, support_offering_type: 'asset' });
+          } else {
+            res = await getRequestSessionsList({ ...params, support_offering_type: 'asset' });
+          }
+          const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
+            .filter((item: any) => matchesOfferingType(item, 'asset'));
+          fetchedData = rawList.map((item: any) => {
+            const session = item.session || item.session_details || {};
+            return {
+              ...item,
+              title: item.title || session.title || 'Untitled Request',
+              status: item.status || 'REQUESTED',
+              start_date: item.start_date || session.start_date,
+              end_date: item.end_date || session.end_date,
+              delivery_mode: item.delivery_mode || session.delivery_mode,
+            };
+          });
           totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
           setCounts((prev) => ({ ...prev, assets: totalCount }));
         }
@@ -517,9 +562,11 @@ const SessionsSupportScreen: React.FC = () => {
                             <Text {...styles.dropdownItemTitle}>
                               {item.title}
                             </Text>
-                            <Text {...styles.dropdownItemDescription}>
-                              {item.description}
-                            </Text>
+                            {(item as any).description ? (
+                              <Text {...styles.dropdownItemDescription}>
+                                {(item as any).description}
+                              </Text>
+                            ) : null}
                           </VStack>
                         </HStack>
                       </Pressable>

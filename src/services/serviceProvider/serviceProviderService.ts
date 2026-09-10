@@ -123,7 +123,7 @@ const mockStore: Record<string, SupportRequestItem[]> = loadMockStore();
  */
 const mapRequestSessionItem = (
   item: any,
-  tab: 'sessions' | 'declined',
+  tab: 'sessions' | 'additional_services' | 'assets' | 'declined',
   provinceMap: Record<string, string> = {},
   siteMap: Record<string, string> = {}
 ): SupportRequestItem => {
@@ -267,62 +267,84 @@ export const getSupportRequests = async (
   const { provinceMap, siteMap } = await getProvinceAndSiteMaps();
 
   let sessionsData: SupportRequestItem[] | null = null;
+  let additionalServicesData: SupportRequestItem[] | null = null;
+  let assetsData: SupportRequestItem[] | null = null;
   let declinedData: SupportRequestItem[] | null = null;
   let sessionsCount = mockStore.sessions.length;
+  let additionalServicesCount = mockStore.additional_services.length;
+  let assetsCount = mockStore.assets.length;
   let declinedCount = mockStore.declined.length;
   let sessionsOverdueCount = mockStore.sessions.filter(i => (i.overdueDays || 0) > 0).length;
 
-  try {
-    if (tab === 'sessions' || tab === 'declined') {
-      const apiParams: any = {};
-      if (tab === 'sessions') {
-        apiParams.status = 'REQUESTED';
-      } else {
-        apiParams.status = 'REJECTED';
-      }
-      if (search && search.trim() !== '') {
-        apiParams.search = search.trim();
-      }
-      if (province && province !== 'all-provinces') {
-        apiParams.provinces = province;
-      }
-      if (site && site !== 'all-sites') {
-        apiParams.sites = site;
-      }
+  // support_offering_type value the requestSessions API expects for each tab (declined isn't
+  // type-scoped - it spans every offering type, so it's handled separately below).
+  const SUPPORT_OFFERING_TYPE: Record<'sessions' | 'additional_services' | 'assets', string> = {
+    sessions: 'training_session',
+    additional_services: 'additional_service',
+    assets: 'asset',
+  };
 
-      if (tab === 'sessions') {
-        const requestedRes = await api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, {
-          params: apiParams,
-        });
-        if (requestedRes?.data?.responseCode === 'OK') {
-          const resObj = requestedRes.data.result;
-          const rawList = Array.isArray(resObj) ? resObj : (resObj?.data || []);
-          const mapped: SupportRequestItem[] = rawList.map((item: any) =>
-            mapRequestSessionItem(item, 'sessions', provinceMap, siteMap));
-          sessionsData = mapped;
-          sessionsCount = resObj?.count ?? (Array.isArray(resObj) ? resObj.length : mapped.length);
-          sessionsOverdueCount = mapped.filter(i => (i.overdueDays || 0) > 0).length;
-        }
-      } else {
-        const rejectedRes = await api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, {
-          params: apiParams,
-        });
-        if (rejectedRes?.data?.responseCode === 'OK') {
-          const resObj = rejectedRes.data.result;
-          const rawList = Array.isArray(resObj) ? resObj : (resObj?.data || []);
-          const mapped: SupportRequestItem[] = rawList.map((item: any) =>
-            mapRequestSessionItem(item, 'declined', provinceMap, siteMap));
-          declinedData = mapped;
-          declinedCount = resObj?.count ?? (Array.isArray(resObj) ? resObj.length : mapped.length);
-        }
-      }
+  const buildParams = (isDeclined: boolean, offeringTab?: 'sessions' | 'additional_services' | 'assets') => {
+    const apiParams: any = { status: isDeclined ? 'REJECTED' : 'REQUESTED' };
+    if (!isDeclined && offeringTab) {
+      apiParams.support_offering_type = SUPPORT_OFFERING_TYPE[offeringTab];
+    }
+    if (search && search.trim() !== '') apiParams.search = search.trim();
+    if (province && province !== 'all-provinces') apiParams.provinces = province;
+    if (site && site !== 'all-sites') apiParams.sites = site;
+    return apiParams;
+  };
+
+  try {
+    // Tab badge counts must stay accurate regardless of which tab is currently active, so every
+    // category is fetched in parallel on every call - not just the one the user happens to be on.
+    const [sessionsRes, additionalServicesRes, assetsRes, declinedRes] = await Promise.all([
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, 'sessions') }),
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, 'additional_services') }),
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, 'assets') }),
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(true) }),
+    ]);
+
+    const extract = (res: any, mapTab: 'sessions' | 'additional_services' | 'assets' | 'declined') => {
+      if (res?.data?.responseCode !== 'OK') return null;
+      const resObj = res.data.result;
+      const rawList = Array.isArray(resObj) ? resObj : (resObj?.data || []);
+      const mapped: SupportRequestItem[] = rawList.map((item: any) =>
+        mapRequestSessionItem(item, mapTab, provinceMap, siteMap));
+      const count = resObj?.count ?? (Array.isArray(resObj) ? resObj.length : mapped.length);
+      return { mapped, count };
+    };
+
+    const sessionsResult = extract(sessionsRes, 'sessions');
+    if (sessionsResult) {
+      sessionsData = sessionsResult.mapped;
+      sessionsCount = sessionsResult.count;
+      sessionsOverdueCount = sessionsResult.mapped.filter(i => (i.overdueDays || 0) > 0).length;
+    }
+
+    const additionalServicesResult = extract(additionalServicesRes, 'additional_services');
+    if (additionalServicesResult) {
+      additionalServicesData = additionalServicesResult.mapped;
+      additionalServicesCount = additionalServicesResult.count;
+    }
+
+    const assetsResult = extract(assetsRes, 'assets');
+    if (assetsResult) {
+      assetsData = assetsResult.mapped;
+      assetsCount = assetsResult.count;
+    }
+
+    const declinedResult = extract(declinedRes, 'declined');
+    if (declinedResult) {
+      declinedData = declinedResult.mapped;
+      declinedCount = declinedResult.count;
     }
   } catch (error) {
     console.warn('[SupportRequests] Failed to fetch session requests:', error);
   }
 
-  const additionalServicesList = [...mockStore.additional_services];
-  const assetsList = [...mockStore.assets];
+  const additionalServicesList = additionalServicesData ?? [...mockStore.additional_services];
+  const assetsList = assetsData ?? [...mockStore.assets];
 
   let list: SupportRequestItem[];
   switch (tab) {
@@ -354,10 +376,10 @@ export const getSupportRequests = async (
 
   const counts = {
     sessions: sessionsCount,
-    additional_services: additionalServicesList.length,
-    assets: assetsList.length,
+    additional_services: additionalServicesCount,
+    assets: assetsCount,
     declined: declinedCount,
-    pendingTotal: sessionsCount + additionalServicesList.length + assetsList.length,
+    pendingTotal: sessionsCount + additionalServicesCount + assetsCount,
     overdueTotal,
   };
 

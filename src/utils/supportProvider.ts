@@ -138,6 +138,52 @@ export function requestSessionPayloadMapping(formValues: any, optionMap: any = {
   };
 }
 
+/**
+ * Maps the Asset request form (ASSET_SCHEMA field names: province/site/assetType/...) to the
+ * request-session API payload. Kept separate from requestSessionPayloadMapping because the Asset
+ * form's fields don't line up with the training/additional-service field names that function expects.
+ */
+export function requestAssetPayloadMapping(formValues: any): any {
+  const { province, site } = formValues;
+  const resolvedProvince = formValues.provinces ?? province;
+  const resolvedSites = formValues.sites ?? site;
+
+  // Availability is optional on the Asset form, but the shared request-session API enforces a
+  // 30 minute - 24 hour window on every request - default to a valid 30 minute slot when left blank.
+  const startMoment = formValues.startDate ? moment(formValues.startDate) : moment();
+  const endMoment = formValues.endDate ? moment(formValues.endDate) : moment(startMoment).add(30, 'minutes');
+
+  return {
+    support_offering_type: 'asset',
+    provinces: Array.isArray(resolvedProvince) ? resolvedProvince : (resolvedProvince ? [resolvedProvince] : []),
+    sites: Array.isArray(resolvedSites) ? resolvedSites : (resolvedSites ? [resolvedSites] : []),
+    title: formValues.assetTitle,
+    agenda: formValues.assetDescription || formValues.assetTitle,
+    start_date: startMoment.unix(),
+    end_date: endMoment.unix(),
+    requestees: formValues.requestees || [],
+    status: formValues.isDraft ? 'DRAFT' : 'Requested',
+    time_zone: 'Asia/Kolkata',
+    can_be_copied: false,
+    certificate_provided: false,
+    // The shared request-session API requires these regardless of offering type, even though
+    // they don't really apply to a physical asset - reuse the closest Asset-form equivalent.
+    categories: [formValues.livelihoodCategory],
+    delivery_mode: 'offline',
+    meeting_info: {
+      link: '',
+      location: '',
+    },
+    meta: {
+      assetType: formValues.assetType,
+      livelihoodCategory: formValues.livelihoodCategory,
+      assetDescription: formValues.assetDescription,
+      estimatedValue: formValues.estimatedValue,
+      quantity: formValues.quantity,
+    },
+  };
+}
+
 export const uploadService = async (file: any) => {
   const entityId = `trainingSession-${Date.now()}`;
   const uploaded = await uploadFiles(entityId, [

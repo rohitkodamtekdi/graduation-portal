@@ -4,10 +4,13 @@ import styles from '../styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
 import { useNavigation } from '@react-navigation/native';
 import SchemaFormRenderer from '@components/SchemaFormRenderer';
-import { ASSET_FORM_SCHEMA } from '@constants/ASSET_SCHEMA';
+import { ASSET_FORM_SCHEMA, REQUEST_ASSET_HIDE_FIELDS } from '@constants/ASSET_SCHEMA';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useAuth } from '@contexts/AuthContext';
 import { getSitesByProvince, getProvincesList } from '../../../../services/usersService';
 import { getProjectCategoryList } from '../../../../services/projectService';
+import { requestSession } from '../../../../services/mentoringService';
+import { requestAssetPayloadMapping } from '@utils/supportProvider';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
 import { SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
@@ -16,8 +19,15 @@ const App = (): React.JSX.Element => {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const { showAlert } = useAlert();
+  const { user } = useAuth() || {};
+  const isLc = user?.role === 'LC';
+
+  const hideFileds = [
+    ...(isLc ? REQUEST_ASSET_HIDE_FIELDS : []),
+  ];
+
   const { isCardAllowed } = useProfileCompletion();
-  const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.ASSET));
+  const isAllowed = isLc || Boolean(isCardAllowed(SUPPORT_CATEGORIES.ASSET));
   
   const [provinces, setProvinces] = useState<any[]>([]);
   const [dynamicSites, setDynamicSites] = useState<any[]>([]);
@@ -140,17 +150,41 @@ const App = (): React.JSX.Element => {
     };
   }, [provinces, dynamicSites, livelihoodCats, t]);
 
-  const handleSaveDraft = useCallback(async (formValues: any) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = useCallback(async (formValues: any, isDraft: boolean) => {
     try {
-      showAlert(
-        'success',
-        'supportProvider.assetForm.draftSuccessMessage',
-      );
-      navigation.goBack();
+      setIsSubmitting(true);
+      setValues(formValues);
+
+      if (isLc) {
+        const payload = requestAssetPayloadMapping({ ...formValues, isDraft });
+        await requestSession(payload);
+
+        showAlert(
+          'success',
+          isDraft
+            ? t('supportProvider.createSupport.training.alerts.draftSaved', 'Draft saved successfully!')
+            : t('supportProvider.assetForm.requestSuccessMessage', 'Asset request saved successfully!'),
+        );
+        // @ts-ignore
+        navigation.navigate('sessions-support', {
+          activeTab: 'assets',
+          activeSubTab: 'my_requests',
+          refreshRequests: Date.now(),
+        });
+      } else {
+        // TODO: wire up SP-side asset offering creation (createSession) once its payload mapping is defined.
+        showAlert('success', 'supportProvider.assetForm.draftSuccessMessage');
+        navigation.goBack();
+      }
     } catch (err: any) {
-      showAlert('error', err?.message || 'common.somethingWentWrong');
+      const errMsg = err?.data?.message || err?.message || t('common.somethingWentWrong', 'Something went wrong. Please try again.');
+      showAlert('error', errMsg);
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [navigation, showAlert, t]);
+  }, [isLc, navigation, showAlert, t]);
 
   const handleBackPress = () => {
     if (navigation.canGoBack && navigation.canGoBack()) {
@@ -181,12 +215,14 @@ const App = (): React.JSX.Element => {
       <Container {...styles.container}>
         <Card borderRadius={"$2xl"} bg="$white">
           <SchemaFormRenderer
-            schema={ASSET_FORM_SCHEMA}
+            schema={ASSET_FORM_SCHEMA(hideFileds)}
             optionsMap={optionsMap}
             values={values}
             t={t}
             onFieldChange={handleFieldChange}
-            onSaveDraft={handleSaveDraft}
+            onSubmit={(formValues) => handleSave(formValues, false)}
+            onSaveDraft={(formValues) => handleSave(formValues, true)}
+            isSubmitting={isSubmitting}
           />
         </Card>
       </Container>

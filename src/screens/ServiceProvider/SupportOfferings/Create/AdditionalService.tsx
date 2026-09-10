@@ -1,21 +1,25 @@
 import React, { useCallback, useState } from 'react';
-import { Card, Container, VStack, useAlert } from '@ui';
+import { Box, Card, Container, HStack, Text, VStack, useAlert } from '@ui';
 import styles from '../styles';
+import lcStyles from '../../../SessionsSupport/styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
+import PageHeader from '@components/PageHeader';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import SchemaFormRenderer from '@components/SchemaFormRenderer';
-import { ADDITIONAL_SERVICES_FORM_SCHEMA } from '@constants/ADDITIONAL_SERVICES_SCHEMA';
+import { ADDITIONAL_SERVICES_FORM_SCHEMA, REQUEST_ADDITIONAL_SERVICE_HIDE_FIELDS } from '@constants/ADDITIONAL_SERVICES_SCHEMA';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useAuth } from '@contexts/AuthContext';
 import { getProvincesList } from '../../../../services/usersService';
 import {
   getAdditionalServiceCategories,
   getSessionDetails,
   MentoringOption,
-  createSession
+  createSession,
+  requestSession,
 } from '../../../../services/mentoringService';
 import logger from '@utils/logger';
 import { FORM_MODE, SESSION_STATUS, SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
-import { uploadService, valueMapping } from '@utils/supportProvider';
+import { uploadService, valueMapping, requestSessionPayloadMapping } from '@utils/supportProvider';
 import { useTrainingFormOptions, useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
 
@@ -27,8 +31,11 @@ const App = (): React.JSX.Element => {
 
   const { t } = useLanguage();
   const { showAlert } = useAlert();
+  const { user } = useAuth() || {};
+  const isLc = user?.role === 'LC';
+
   const { isCardAllowed } = useProfileCompletion();
-  const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.ADDITIONAL_SERVICE));
+  const isAllowed = isLc || Boolean(isCardAllowed(SUPPORT_CATEGORIES.ADDITIONAL_SERVICE));
 
   const [provinces, setProvinces] = useState<any[]>([]);
   const [pillers, setPillers] = useState<MentoringOption[]>([]);
@@ -82,33 +89,64 @@ const App = (): React.JSX.Element => {
 
   const { sessionTypes, optionsMap } = useTrainingFormOptions({ values, provinces, pillers });
 
-  const hideFileds = sessionTypes.length === 0 ? ['idp_additional_services_tasks'] : [];
+  const hideFileds = [
+    ...(sessionTypes.length === 0 ? ['idp_additional_services_tasks'] : []),
+    ...(isLc ? REQUEST_ADDITIONAL_SERVICE_HIDE_FIELDS : []),
+  ];
+
+  const handleBackPress = () => {
+    if (navigation.canGoBack && navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      // @ts-ignore
+      navigation.navigate(isLc ? 'sessions-support' : 'create-opportunity');
+    }
+  };
 
   const handleSave = async (formValues: any, isDraft: boolean) => {
     try {
       setValues(formValues);
-      setLodingButton(isDraft ? "saveDraft" : "submit")
-      const payload: any = valueMapping({ ...formValues, isDraft }, false, optionsMap, 'additional_service');
+      setLodingButton(isDraft ? "saveDraft" : "submit");
 
-      if (modeType === 'edit') {
-        // update code api call
+      if (isLc) {
+        const payload: any = requestSessionPayloadMapping(
+          { ...formValues, isDraft, support_offering_type: 'additional_service' },
+          optionsMap
+        );
+        await requestSession(payload);
+
+        const successMsg = isDraft
+          ? t('supportProvider.createSupport.training.alerts.draftSaved', 'Draft saved successfully!')
+          : t('supportProvider.createSupport.training.alerts.sessionSaved', 'Additional Service request saved successfully!');
+
+        showAlert('success', successMsg);
+        // @ts-ignore
+        navigation.navigate('sessions-support', {
+          activeTab: 'additional_services',
+          activeSubTab: 'my_requests',
+          refreshRequests: Date.now(),
+        });
+      } else {
+        const payload: any = valueMapping({ ...formValues, isDraft }, false, optionsMap, 'additional_service');
+
+        if (modeType === 'edit') {
+          // update code api call
+        } else {
+          await createSession(payload);
+        }
+
+        const successMsg = isDraft
+          ? t('supportProvider.supportOfferings.cards.alerts.draftSaved', 'Draft saved successfully!')
+          : modeType === FORM_MODE.COPY
+            ? t('supportProvider.supportOfferings.cards.alerts.supportCopied', 'Support copied successfully!')
+            : t('supportProvider.supportOfferings.cards.alerts.supportPublished', 'Support published successfully!');
+
+        showAlert('success', successMsg);
+        // @ts-ignore
+        navigation.navigate('opportunities');
       }
-      else {
-        await createSession(payload);
-      }
-
-      const successMsg = isDraft
-        ? t('supportProvider.supportOfferings.cards.alerts.draftSaved', 'Draft saved successfully!')
-        : modeType === FORM_MODE.COPY
-          ? t('supportProvider.supportOfferings.cards.alerts.supportCopied', 'Support copied successfully!')
-          : t('supportProvider.supportOfferings.cards.alerts.supportPublished', 'Support published successfully!');
-
-      showAlert('success', successMsg);
-      // @ts-ignore
-      navigation.navigate('opportunities');
     } catch (error: any) {
-      logger.error('Error saving training session:', error);
-      // Show specific API error message if available, otherwise generic message
+      logger.error('Error saving additional service:', error);
       const errMsg =
         error?.data?.message ||
         error?.message ||
@@ -119,16 +157,7 @@ const App = (): React.JSX.Element => {
     }
   };
 
-  const handleBackPress = () => {
-    if (navigation.canGoBack && navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      // @ts-ignore
-      navigation.navigate('create-opportunity');
-    }
-  }
-
-  if (modeType === FORM_MODE.CREATE && !isAllowed) {
+  if (!isLc && modeType === FORM_MODE.CREATE && !isAllowed) {
     return (
       <NotFound
         message={t(
@@ -138,13 +167,34 @@ const App = (): React.JSX.Element => {
     );
   }
 
+  const lcHeaderTitle = (
+    <HStack {...lcStyles.headerTitleHStack}>
+      <Text {...lcStyles.headerSubTitleText}>
+        {t('lc.requestAdditionalService.title', 'Request Additional Service')}
+      </Text>
+      <Box {...lcStyles.headerBadgeBox}>
+        <Text {...lcStyles.headerBadgeText}>
+          {t('lc.requestAdditionalService.badge', 'Service')}
+        </Text>
+      </Box>
+    </HStack>
+  );
+
   return (
     <VStack flex={1}>
-      <SPTitleHeader
-        title={t('supportProvider.createSupport.additionalService.title', 'Create Additional Service')}
-        backButtonText={t('supportProvider.createSupport.changeType', 'Change type')}
-        onNavigateBack={handleBackPress}
-      />
+      {isLc ? (
+        <PageHeader
+          title={lcHeaderTitle as any}
+          backButtonText={t('supportProvider.createSupport.changeType', 'Change Type')}
+          onBackPress={handleBackPress}
+        />
+      ) : (
+        <SPTitleHeader
+          title={t('supportProvider.createSupport.additionalService.title', 'Create Additional Service')}
+          backButtonText={t('supportProvider.createSupport.changeType', 'Change type')}
+          onNavigateBack={handleBackPress}
+        />
+      )}
       <Container {...styles.container}>
         <Card borderRadius={"$2xl"} bg="$white">
           <SchemaFormRenderer

@@ -2220,6 +2220,10 @@
         "browseSessions": "Browse Trainings & Sessions",
         "myRequests": "My Requests",
         "mySessions": "My Trainings & Sessions",
+        "browseServices": "Browse Services",
+        "myServices": "My Requests",
+        "browseAssets": "Browse Assets",
+        "myAssets": "My Requests",
         "history": "History"
       },
       "mySessionCard": {
@@ -2309,6 +2313,10 @@
     "requestSession": {
       "title": "Request a Session",
       "badge": "Training Session"
+    },
+    "requestAdditionalService": {
+      "title": "Request Additional Service",
+      "badge": "Service"
     }
   },
   "template": {
