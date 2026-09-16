@@ -93,7 +93,9 @@ import {
   Copy,
   CircleCheckBig,
   Video,
-  Wrench
+  Wrench,
+  Smartphone,
+  CheckCircle2
 } from 'lucide-react-native';
 import { theme } from '@config/theme';
 
@@ -131,6 +133,7 @@ const ICONS: Record<string, React.ComponentType<any>> = {
   ChartColumn,
   Check,
   CheckCircle,
+  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -206,7 +209,8 @@ const ICONS: Record<string, React.ComponentType<any>> = {
   Copy,
   CircleCheckBig,
   Video,
-  Wrench
+  Wrench,
+  Smartphone
 };
 
 /**
