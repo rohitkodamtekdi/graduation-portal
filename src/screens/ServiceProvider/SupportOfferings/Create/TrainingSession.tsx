@@ -91,6 +91,32 @@ const App = (): React.JSX.Element => {
         const rawData = rawResponse?.result;
         if (rawData) {
           const formattedValues: any = valueMapping(rawData, true, {}, 'training'); // Reverse mapping to form values
+
+          if (modeType === FORM_MODE.COPY) {
+            // If province not allowed in current profile, reset province and sites
+            if (formattedValues.provinces && allowedProvinceIds.length > 0 && !allowedProvinceIds.includes(formattedValues.provinces)) {
+              formattedValues.provinces = '';
+              formattedValues.sites = '';
+            }
+            // If site not allowed in current profile, reset sites
+            if (formattedValues.sites && allowedSiteIds.length > 0 && !allowedSiteIds.includes(formattedValues.sites)) {
+              formattedValues.sites = '';
+            }
+            // If category/pillar or its task not allowed in current profile, reset them
+            const isCategoryAllowed = !allowedSubOptions || (allowedSubOptions[formattedValues.categories]?.length ?? 0) > 0;
+            if (!isCategoryAllowed) {
+              formattedValues.categories = '';
+              formattedValues.idp_training_task = '';
+              formattedValues.title = '';
+            } else if (formattedValues.idp_training_task && allowedSubOptions?.[formattedValues.categories]) {
+              const isTaskAllowed = allowedSubOptions[formattedValues.categories].includes(formattedValues.idp_training_task);
+              if (!isTaskAllowed) {
+                formattedValues.idp_training_task = '';
+                formattedValues.title = '';
+              }
+            }
+          }
+
           setValues(formattedValues);
         }
       }
@@ -100,7 +126,7 @@ const App = (): React.JSX.Element => {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, modeType]);
+  }, [sessionId, modeType, allowedProvinceIds, allowedSiteIds, allowedSubOptions]);
 
   useFocusEffect(
     useCallback(() => {

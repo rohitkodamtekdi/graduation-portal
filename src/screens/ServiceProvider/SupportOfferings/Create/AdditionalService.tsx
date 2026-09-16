@@ -59,6 +59,25 @@ const App = (): React.JSX.Element => {
         const rawData = rawResponse?.result;
         if (rawData) {
           const formattedValues: any = valueMapping(rawData, true, {}, 'additional_service'); // Reverse mapping to form values
+
+          if (modeType === FORM_MODE.COPY) {
+            // If province not allowed in current profile, reset province and sites
+            if (formattedValues.provinces && allowedProvinceIds.length > 0 && !allowedProvinceIds.includes(formattedValues.provinces)) {
+              formattedValues.provinces = '';
+              formattedValues.sites = '';
+            }
+            // If site not allowed in current profile, reset sites
+            if (formattedValues.sites && allowedSiteIds.length > 0 && !allowedSiteIds.includes(formattedValues.sites)) {
+              formattedValues.sites = '';
+            }
+            // If category/pillar not allowed in current profile, reset category and tasks
+            const isCategoryAllowed = !allowedSubOptions || (allowedSubOptions[formattedValues.categories]?.length ?? 0) > 0;
+            if (!isCategoryAllowed) {
+              formattedValues.categories = '';
+              formattedValues.idp_additional_services_tasks = [];
+            }
+          }
+
           setValues(formattedValues);
         }
       }
@@ -68,7 +87,7 @@ const App = (): React.JSX.Element => {
     } finally {
       setIsLoading(false);
     }
-  }, [sessionId, modeType]);
+  }, [sessionId, modeType, allowedProvinceIds, allowedSiteIds, allowedSubOptions]);
 
   useFocusEffect(
     useCallback(() => {

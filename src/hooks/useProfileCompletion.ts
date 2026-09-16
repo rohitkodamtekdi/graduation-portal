@@ -18,7 +18,6 @@ const toId = (entry: any): string => (entry && typeof entry === 'object' ? entry
 
 export const useProfileCompletion = () => {
   const { user } = useAuth();
-  const [isProfileComplete, setIsProfileComplete] = useState<boolean | null>(null);
   const [allowedCategories, setAllowedCategories] = useState<string[]>([]);
   const [allowedSubOptions, setAllowedSubOptions] = useState<Record<string, string[]>>({});
   const [allowedProvinceIds, setAllowedProvinceIds] = useState<string[]>([]);
@@ -29,7 +28,6 @@ export const useProfileCompletion = () => {
     const checkCompletion = async () => {
       if (!user?.id) {
         if (isMounted) {
-          setIsProfileComplete(false);
           setAllowedCategories([]);
           setAllowedSubOptions({});
           setAllowedProvinceIds([]);
@@ -56,16 +54,8 @@ export const useProfileCompletion = () => {
         
         const meta = profileData?.meta || {};
 
-        // Extract coverage
-        const hasCoverage = (Array.isArray(profileData.provinces) && profileData.provinces.length > 0);
-
         // Extract categories
-        let cats: string[] = [];
-        if (Array.isArray(profileData.categories) && profileData.categories.length > 0) {
-          cats = profileData.categories;
-        }
-
-        const isComplete = hasCoverage && cats.length > 0;
+        const cats: string[] = Array.isArray(profileData.categories) ? profileData.categories : [];
 
         const subOptions: Record<string, string[]> = {};
         SUB_OPTION_GROUPS.forEach((group) => {
@@ -74,13 +64,12 @@ export const useProfileCompletion = () => {
         });
 
         // Extract provinces/sites the provider selected as their coverage
-        const rawProvinces = profileData.provinces ?? meta.provinces;
-        const rawSites = profileData.sites ?? meta.sites;
-        const provinceIds = Array.isArray(rawProvinces) ? rawProvinces.map(toId) : [];
-        const siteIds = Array.isArray(rawSites) ? rawSites.map(toId) : [];
+        const rawProvinces = profileData.provinces;
+        const rawSites = profileData.sites;
+        const provinceIds = Array.isArray(rawProvinces) ? rawProvinces : [];
+        const siteIds = Array.isArray(rawSites) ? rawSites : [];
 
         if (isMounted) {
-          setIsProfileComplete(isComplete);
           setAllowedCategories(cats);
           setAllowedSubOptions(subOptions);
           setAllowedProvinceIds(provinceIds);
@@ -89,7 +78,6 @@ export const useProfileCompletion = () => {
       } catch (err) {
         console.error('Error checking profile completion:', err);
         if (isMounted) {
-          setIsProfileComplete(false);
           setAllowedCategories([]);
           setAllowedSubOptions({});
           setAllowedProvinceIds([]);
@@ -113,6 +101,8 @@ export const useProfileCompletion = () => {
     if (!groupKey) return [];
     return allowedSubOptions[groupKey] || [];
   };
+
+  const isProfileComplete = allowedProvinceIds.length > 0 && allowedCategories.length > 0;
 
   return {
     isProfileComplete,
