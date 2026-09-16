@@ -8,9 +8,11 @@ import { ASSET_FORM_SCHEMA } from '@constants/ASSET_SCHEMA';
 import { useLanguage } from '@contexts/LanguageContext';
 import { getSitesByProvince, getProvincesList } from '../../../../services/usersService';
 import { getProjectCategoryList } from '../../../../services/projectService';
+import { createSession } from '../../../../services/mentoringService';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
 import { SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
+import moment from 'moment';
 
 const App = (): React.JSX.Element => {
   const navigation = useNavigation();
@@ -150,15 +152,45 @@ const App = (): React.JSX.Element => {
     };
   }, [provinces, dynamicSites, livelihoodCats, allowedProvinces, allowedSites, t]);
 
-  const handleSaveDraft = useCallback(async (formValues: any) => {
+  const handleSave = useCallback(async (formValues: any, isDraft: boolean) => {
     try {
+      setValues(formValues);
+
+      const payload = {
+        support_offering_type: SUPPORT_CATEGORIES.ASSET,
+        categories: [SUPPORT_CATEGORIES.ASSET],
+        title: formValues.assetTitle,
+        description: formValues.assetDescription,
+        asset_types: formValues.assetType ? [formValues.assetType] : [],
+        livelihoods: formValues.livelihoodCategory || '',
+        estimated_value: formValues.estimatedValue,
+        provinces: formValues.province ? [formValues.province] : [],
+        sites: Array.isArray(formValues.site) ? formValues.site : (formValues.site ? [formValues.site] : []),
+        recommended_for: ['user'],
+        start_date: formValues.startDate ? moment(formValues.startDate).unix() : moment().unix(),
+        end_date: formValues.endDate ? moment(formValues.endDate).unix() : moment().add(2, 'years').unix(),
+        status: isDraft ? 'DRAFT' : 'PUBLISHED',
+        can_be_copied: false,
+        certificate_provided: false,
+        delivery_mode: 'offline',
+      };
+
+      await createSession(payload);
+
       showAlert(
         'success',
-        'supportProvider.assetForm.draftSuccessMessage',
+        isDraft
+          ? t('supportProvider.supportOfferings.cards.alerts.draftSaved', 'Draft saved successfully!')
+          : t('supportProvider.supportOfferings.cards.alerts.supportPublished', 'Support published successfully!'),
       );
-      navigation.goBack();
+      // @ts-ignore
+      navigation.navigate('opportunities');
     } catch (err: any) {
-      showAlert('error', err?.message || 'common.somethingWentWrong');
+      const errMsg =
+        err?.data?.message ||
+        err?.message ||
+        t('supportProvider.createSupport.errors.saveFailed', 'Something went wrong while saving. Please try again.');
+      showAlert('error', errMsg);
     }
   }, [navigation, showAlert, t]);
 
@@ -196,7 +228,8 @@ const App = (): React.JSX.Element => {
             values={values}
             t={t}
             onFieldChange={handleFieldChange}
-            onSaveDraft={handleSaveDraft}
+            onSubmit={(formValues) => handleSave(formValues, false)}
+            onSaveDraft={(formValues) => handleSave(formValues, true)}
           />
         </Card>
       </Container>
