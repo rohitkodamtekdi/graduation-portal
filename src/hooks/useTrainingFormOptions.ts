@@ -11,6 +11,8 @@ interface UseTrainingFormOptionsParams {
   deliveryModes?: MentoringOption[];
   deliveryModeIcons?: Record<string, string>;
   allowedSubOptions?: Record<string, string[]>;
+  allowedProvinces?: string[];
+  allowedSites?: string[];
 }
 
 export function useTrainingFormOptions({
@@ -21,11 +23,20 @@ export function useTrainingFormOptions({
   deliveryModes = [],
   deliveryModeIcons = {},
   allowedSubOptions,
+  allowedProvinces,
+  allowedSites,
 }: UseTrainingFormOptionsParams) {
   const [sessionTypes, setSessionTypes] = useState<MentoringOption[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   // Only allow user to select selected Sub options in Profile
   const filteredPillers = allowedSubOptions ? pillers.filter((p) => (allowedSubOptions[p.value]?.length ?? 0) > 0) : pillers;
+  // Only allow user to select province/site coverage selected in Profile
+  const filteredProvinces = allowedProvinces
+    ? provinces.filter((p: any) => allowedProvinces.includes(p._id))
+    : provinces;
+  const filteredSites = allowedSites
+    ? sites.filter((s: any) => allowedSites.includes(s._id))
+    : sites;
 
   // Fetch session types when categories/pillar changes
   useEffect(() => {
@@ -77,15 +88,15 @@ export function useTrainingFormOptions({
 
   const optionsMap = useMemo(() => {
     return buildTrainingFormOptionsMap({
-      provinces,
-      sites,
+      provinces: filteredProvinces,
+      sites: filteredSites,
       pillers: filteredPillers,
       sessionTypes,
       targetAudience,
       deliveryModes,
       deliveryModeIcons,
     });
-  }, [provinces, sites, filteredPillers, sessionTypes, targetAudience, deliveryModes, deliveryModeIcons]);
+  }, [filteredProvinces, filteredSites, filteredPillers, sessionTypes, targetAudience, deliveryModes, deliveryModeIcons]);
 
   return {
     sessionTypes,

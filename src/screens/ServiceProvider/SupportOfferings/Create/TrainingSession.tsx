@@ -44,7 +44,7 @@ const App = (): React.JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
   const [lodingButton, setLodingButton] = useState<false | "saveDraft" | "submit">(false);
   const { showAlert } = useAlert();
-  const { isCardAllowed, allowedSubOptions } = useProfileCompletion();
+  const { isCardAllowed, allowedSubOptions, allowedProvinces, allowedSites } = useProfileCompletion();
   const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.TRAINING));
   const [showDiscardModal, setShowDiscardModal] = useState(false);
 
@@ -56,6 +56,8 @@ const App = (): React.JSX.Element => {
     deliveryModes,
     deliveryModeIcons: DELIVERY_MODE_ICONS,
     allowedSubOptions,
+    allowedProvinces,
+    allowedSites,
   });
 
   const getHeaderTitle = () => {
