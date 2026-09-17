@@ -72,13 +72,13 @@ export function valueMapping(
   }
 
   let startDate, endDate;
-    if (effectiveFormType === 'training') {
-      startDate = formValues.start_date ? moment(formValues.start_date).unix() : undefined;
-      endDate = formValues.end_date ? moment(formValues.end_date).unix() : undefined;
-    } else {
-      startDate = formValues.start_date ? moment(formValues.start_date).unix() : moment().unix();
-      endDate = formValues.end_date ? moment(formValues.end_date).unix() : moment().add(2, 'years').unix();
-    }
+  if (effectiveFormType === 'training') {
+    startDate = formValues.start_date ? moment(formValues.start_date).unix() : undefined;
+    endDate = formValues.end_date ? moment(formValues.end_date).unix() : undefined;
+  } else {
+    startDate = formValues.start_date ? moment(formValues.start_date).unix() : moment().unix();
+    endDate = formValues.end_date ? moment(formValues.end_date).unix() : moment().add(2, 'years').unix();
+  }
 
    return {
     ...formValues,
