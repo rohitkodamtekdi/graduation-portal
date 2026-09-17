@@ -92,6 +92,13 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
       return SESSION_STATUS_LABEL.IN_PROGRESS;
     }
 
+    if (thisStatus === SESSION_STATUS.LIVE) {
+      return SESSION_STATUS_LABEL.IN_PROGRESS;
+    }
+    if (thisStatus === SESSION_STATUS.PUBLISHED) {
+      return SESSION_STATUS_LABEL.UPCOMING;
+    }
+
     return rawStatus || SESSION_STATUS_LABEL.UPCOMING;
   };
 
@@ -102,13 +109,17 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
   const isCancelled = statusTag === SESSION_STATUS_LABEL.CANCELLED;
 
   // Province / site names resolved from the option lists passed down from the parent screen
-  const provinceName = provinces?.find(
-    (e: any) => e._id === (item as any)?.provinces?.[0] || e._id === (item as any)?.meta?.provinces?.[0]
-  )?.name;
+  const getOptionId = (e: any) => e?._id || e?.id || e?.value;
+  const getOptionLabel = (e: any) => e?.metaInformation?.name || e?.name || e?.title || e?.label;
+
+  const matchedProvince = provinces?.find(
+    (e: any) => getOptionId(e) === (item as any)?.provinces?.[0] || getOptionId(e) === (item as any)?.meta?.provinces?.[0]
+  );
+  const provinceName = matchedProvince ? getOptionLabel(matchedProvince) : undefined;
 
   const siteNames = sites?.filter(
-    (e: any) => (item as any)?.sites?.includes(e._id) || (item as any)?.meta?.sites?.includes(e._id)
-  )?.map((e: any) => e.name).join(', ');
+    (e: any) => (item as any)?.sites?.includes(getOptionId(e)) || (item as any)?.meta?.sites?.includes(getOptionId(e))
+  )?.map((e: any) => getOptionLabel(e)).join(', ');
 
   const requestsCount =
     (item as any)?.requests ??

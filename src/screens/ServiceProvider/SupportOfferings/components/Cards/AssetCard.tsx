@@ -28,30 +28,7 @@ interface CardProps {
   sites?: any[];
 }
 
-const getDeliveryMode = (item: AssetItem): 'offline' | 'online' | 'hybrid' => {
-  const rawMode = (
-    (typeof item.delivery_mode === 'object' ? item.delivery_mode?.value : item.delivery_mode) ||
-    ''
-  ).toLowerCase();
-
-  if (rawMode.includes('hybrid')) {
-    return 'hybrid';
-  }
-  if (rawMode.includes('online') || rawMode.includes('virtual')) {
-    return 'online';
-  }
-  return 'offline';
-};
-
-const getDeliveryBadge = (deliveryMode: 'offline' | 'online' | 'hybrid') => {
-  if (deliveryMode === 'online') {
-    return { label: 'Online', icon: 'Video', bg: '$blue50', border: '$blue200', color: '$blue600' };
-  }
-  if (deliveryMode === 'hybrid') {
-    return { label: 'Hybrid', icon: 'MapPin', bg: '$purple50', border: '$purple200', color: '$purple600' };
-  }
-  return { label: 'Offline', icon: 'MapPin', bg: '$observationTaskBg', border: '#fde68a', color: '$warningIconColor' };
-};
+const deliveryBadge = { label: 'Offline', icon: 'MapPin', bg: '$observationTaskBg', border: '#fde68a', color: '$warningIconColor' };
 
 const getStatusColors = (status: string) => {
   switch (status) {
@@ -80,9 +57,6 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
 
   const statusColors = getStatusColors(item.status);
   const isUpcoming = item.status === 'Upcoming';
-
-  const deliveryMode = getDeliveryMode(item);
-  const deliveryBadge = getDeliveryBadge(deliveryMode);
 
   const provinceName = provinces?.find((e: any) => e._id === item.province)?.name;
   const siteNames = sites?.filter((e: any) => e._id === item.siteKey)?.map((e: any) => e.name).join(', ');
