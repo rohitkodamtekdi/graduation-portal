@@ -18,18 +18,20 @@ const toId = (entry: any): string => (entry && typeof entry === 'object' ? entry
 
 export const useProfileCompletion = () => {
   const { user } = useAuth();
-  const [isProfileComplete, setIsProfileComplete] = useState<boolean | null>(null);
   const [allowedCategories, setAllowedCategories] = useState<string[]>([]);
   const [allowedSubOptions, setAllowedSubOptions] = useState<Record<string, string[]>>({});
+  const [allowedProvinces, setAllowedProvinces] = useState<string[]>([]);
+  const [allowedSites, setAllowedSites] = useState<string[]>([]);
 
   useEffect(() => {
     let isMounted = true;
     const checkCompletion = async () => {
       if (!user?.id) {
         if (isMounted) {
-          setIsProfileComplete(false);
           setAllowedCategories([]);
           setAllowedSubOptions({});
+          setAllowedProvinces([]);
+          setAllowedSites([]);
         }
         return;
       }
@@ -52,16 +54,14 @@ export const useProfileCompletion = () => {
         
         const meta = profileData?.meta || {};
 
-        // Extract coverage
-        const hasCoverage = (Array.isArray(profileData.provinces) && profileData.provinces.length > 0);
+        const provinceIds = Array.isArray(profileData.provinces) ? profileData.provinces : [];
+        const siteIds = Array.isArray(profileData.sites) ? profileData.sites : [];
 
         // Extract categories
         let cats: string[] = [];
         if (Array.isArray(profileData.categories) && profileData.categories.length > 0) {
           cats = profileData.categories;
         }
-
-        const isComplete = hasCoverage && cats.length > 0;
 
         const subOptions: Record<string, string[]> = {};
         SUB_OPTION_GROUPS.forEach((group) => {
@@ -70,16 +70,18 @@ export const useProfileCompletion = () => {
         });
 
         if (isMounted) {
-          setIsProfileComplete(isComplete);
           setAllowedCategories(cats);
           setAllowedSubOptions(subOptions);
+          setAllowedProvinces(provinceIds);
+          setAllowedSites(siteIds);
         }
       } catch (err) {
         console.error('Error checking profile completion:', err);
         if (isMounted) {
-          setIsProfileComplete(false);
           setAllowedCategories([]);
           setAllowedSubOptions({});
+          setAllowedProvinces([]);
+          setAllowedSites([]);
         }
       }
     };
@@ -101,11 +103,12 @@ export const useProfileCompletion = () => {
   };
 
   return {
-    isProfileComplete,
     allowedCategories,
     isCardAllowed,
     allowedSubOptions,
     getAllowedSubOptionIds,
+    allowedProvinces,
+    allowedSites,
   };
 };
 
