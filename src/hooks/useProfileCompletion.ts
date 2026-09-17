@@ -54,8 +54,8 @@ export const useProfileCompletion = () => {
         
         const meta = profileData?.meta || {};
 
-        const provinceIds = Array.isArray(profileData.provinces) ? profileData.provinces.map(toId) : [];
-        const siteIds = Array.isArray(profileData.sites) ? profileData.sites.map(toId) : [];
+        const provinceIds = Array.isArray(profileData.provinces) ? profileData.provinces : [];
+        const siteIds = Array.isArray(profileData.sites) ? profileData.sites : [];
 
         // Extract categories
         let cats: string[] = [];
