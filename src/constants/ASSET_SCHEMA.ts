@@ -91,17 +91,20 @@ export const ASSET_SCHEMA: FormSection[] = [
             fields: [
               {
                 name: 'livelihoodCategory',
-                type: 'select',
+                type: 'pillmultiselect',
                 required: true,
                 label: { key: 'livelihoodCategory', fallback: 'Category of Livelihoods' },
-                placeholder: { fallback: 'Select livelihood category' },
+                subTitle: {
+                  key: 'supportProvider.assetForm.step1.livelihoodCategorySubTitle',
+                  fallback: 'Select all applicable livelihood categories for this asset support',
+                },
                 optionsSource: 'livelihoodCategories',
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.livelihoodCategoryRequired',
-                      fallback: 'Category of livelihoods is required',
+                      fallback: 'At least one livelihood category must be selected',
                     },
                   },
                 ],
@@ -156,8 +159,12 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'estimatedValue',
                 type: 'text',
                 required: true,
-                label: { key: 'estimatedValue', fallback: 'Estimated Asset Value (Rands)' },
-                placeholder: { fallback: 'R 0.00' },
+                label: { key: 'estimatedValue', fallback: 'Estimated Asset Value per Participant (Rands)' },
+                subTitle: {
+                  key: 'supportProvider.assetForm.step1.estimatedValueSubTitle',
+                  fallback: 'Monetary value allocated per individual participant (1:1 ratio)',
+                },
+                placeholder: { fallback: 'e.g. 3500' },
                 inputProps: { keyboardType: 'numeric' },
                 validation: [
                   {
@@ -167,6 +174,40 @@ export const ASSET_SCHEMA: FormSection[] = [
                       fallback: 'Estimated asset value is required',
                     },
                   },
+                ],
+              },
+              {
+                name: 'availableQuantity',
+                type: 'text',
+                required: true,
+                label: { key: 'availableQuantity', fallback: 'Available Quantity' },
+                subTitle: {
+                  key: 'supportProvider.assetForm.step1.availableQuantitySubTitle',
+                  fallback: 'Total number of participants / units funded for this asset',
+                },
+                placeholder: { fallback: 'e.g. 20' },
+                inputProps: { keyboardType: 'numeric' },
+                validation: [
+                  {
+                    rule: 'required',
+                    message: {
+                      key: 'errors.availableQuantityRequired',
+                      fallback: 'Available quantity is required',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            fields: [
+              {
+                name: 'totalFundBreakdown',
+                type: 'note',
+                label: { key: 'totalFundBreakdown', fallback: '' },
+                visibleIf: [
+                  { name: 'estimatedValue', operator: '!=', value: '' },
+                  { name: 'availableQuantity', operator: '!=', value: '' },
                 ],
               },
             ],
@@ -285,6 +326,53 @@ export const ASSET_SCHEMA: FormSection[] = [
           },
         ],
       },
+      {
+        type: 'section',
+        id: 'assetDocuments',
+        rows: [
+          {
+            fields: [
+              {
+                name: 'assetDocuments',
+                type: 'file',
+                multiple: true,
+                required: false,
+                showOptionalTag: true,
+                label: {
+                  key: 'supportProvider.assetForm.step1.resourceContent',
+                  fallback: 'Resource Content / Asset Documents',
+                },
+                subTitle: {
+                  key: 'supportProvider.assetForm.step1.resourceUploadSub',
+                  fallback: 'Upload PDF or Word specification documents (Max 10 MB per file)',
+                },
+                placeholder: {
+                  key: 'supportProvider.assetForm.step1.uploadPrompt',
+                  fallback: 'Click to browse or upload PDF / Word documents',
+                },
+                validation: [
+                  {
+                    rule: 'fileType',
+                    value: ['pdf', 'doc', 'docx'],
+                    message: {
+                      key: 'errors.fileType',
+                      fallback: 'Only PDF, DOC and DOCX files are allowed.',
+                    },
+                  },
+                  {
+                    rule: 'fileSize',
+                    value: 10,
+                    message: {
+                      key: 'errors.fileSize10',
+                      fallback: 'Maximum file size is 10 MB.',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     ],
   },
 
@@ -395,7 +483,12 @@ export const ASSET_SCHEMA: FormSection[] = [
                   {
                     name: 'estimatedValue',
                     type: 'view',
-                    label: { key: 'estimatedValue', fallback: 'Estimated Value' },
+                    label: { key: 'estimatedValue', fallback: 'Estimated Value per Participant' },
+                  },
+                  {
+                    name: 'availableQuantity',
+                    type: 'view',
+                    label: { key: 'availableQuantity', fallback: 'Available Quantity' },
                   },
                 ],
               },

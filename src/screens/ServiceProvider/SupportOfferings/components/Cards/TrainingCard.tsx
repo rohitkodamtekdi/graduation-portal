@@ -18,9 +18,10 @@ import moment from 'moment';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useNavigation } from '@react-navigation/native';
 import { completeTrainingSession } from '../../../../../services/SupportOfferingsServices/supportOfferingsService';
+import { getEnrolledMentees } from '../../../../../services/mentoringService';
 // import { uploadFiles } from '../../../../../project-player/services/projectPlayerService';
 // import { openFilePicker } from '../../../../../project-player/components/Task/FileEvidence/file-picker';
-import type { MaterialItem, TrainingSessionItem } from '../../../../../types/supportOfferingsTypes';
+import type { MaterialItem, TrainingSessionItem, ParticipantAttendanceItem } from '../../../../../types/supportOfferingsTypes';
 import SessionCompleteModal from '../modals/SessionCompleteModal';
 import openExternalLink from '@utils/openExternalLink';
 import styles from '../../styles';
@@ -169,20 +170,8 @@ const Card: React.FC<CardProps> = ({
   const [files, setFiles] = useState<MaterialItem[] | null>(null);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [isAttendanceConfirmed, setIsAttendanceConfirmed] = useState<boolean>(() => {
-    const raw = initialItem as any;
-    if (raw.is_attendance_confirmed || raw.attendance_confirmed) return true;
-    const initialExpected = initialItem.seats_limit || 0;
-    const initialRemaining = initialItem.seats_remaining;
-    if (
-      (initialItem.status === SESSION_STATUS.COMPLETED) &&
-      initialRemaining !== undefined &&
-      initialExpected - initialRemaining > 0
-    ) {
-      return true;
-    }
-    return false;
-  });
+  const [enrolledParticipants, setEnrolledParticipants] = useState<ParticipantAttendanceItem[] | null>(null);
+  const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
 
   const deliveryMode = getDeliveryMode(item);
   const deliveryBadge = getDeliveryBadge(deliveryMode);
@@ -253,6 +242,26 @@ const Card: React.FC<CardProps> = ({
     (navigation as any).navigate('form-training-session', { type: FORM_MODE.COPY, id: item.id });
   };
 
+  const handleOpenCompleteModal = async () => {
+    setIsCompleteModalOpen(true);
+    if (enrolledParticipants || isLoadingParticipants) return;
+
+    setIsLoadingParticipants(true);
+    try {
+      const mentees = await getEnrolledMentees(item.id);
+      setEnrolledParticipants(
+        (mentees || []).map((mentee: any) => ({
+          id: String(mentee.id),
+          name: mentee.name || '',
+          lcName: mentee.organization?.name || '',
+          isPresent: false,
+        }))
+      );
+    } finally {
+      setIsLoadingParticipants(false);
+    }
+  };
+
   /*
    * Keep participant ID based completion functionality.
    */
@@ -269,7 +278,6 @@ const Card: React.FC<CardProps> = ({
       });
 
       const hasMarkedAttendance = selectedParticipantIds.length > 0;
-      setIsAttendanceConfirmed(hasMarkedAttendance);
 
       setItem((prev) => {
         const prevLimit = prev.seats_limit || 0;
@@ -346,15 +354,6 @@ const Card: React.FC<CardProps> = ({
   useEffect(() => {
     setItem(initialItem);
     setFiles(initialItem?.materials || null);
-    const raw = initialItem as any;
-    const isConf =
-      !!raw.is_attendance_confirmed ||
-      !!raw.attendance_confirmed ||
-      ((initialItem.status === SESSION_STATUS.COMPLETED) &&
-        initialItem.seats_remaining !== undefined &&
-        initialItem.seats_limit !== undefined &&
-        initialItem.seats_limit - initialItem.seats_remaining > 0);
-    setIsAttendanceConfirmed(isConf);
   }, [initialItem]);
 
   return (
@@ -461,7 +460,7 @@ const Card: React.FC<CardProps> = ({
               )}
               {/* IN PROGRESS */}
               {currentStatus === SESSION_STATUS.LIVE || currentStatus === SESSION_STATUS_LABEL.IN_PROGRESS && (
-                <Button variant="solid" {...styles.completeActionBtn} onPress={() => setIsCompleteModalOpen(true)} disabled={isCompleting}  >
+                <Button variant="solid" {...styles.completeActionBtn} onPress={handleOpenCompleteModal} disabled={isCompleting}  >
                   <ButtonIcon as={LucideIcon} name="CheckCircle" {...styles.cardWhiteIconProps} />
                   {/* @ts-ignore */}
                   <ButtonText {...styles.completeActionBtnText}>
@@ -480,8 +479,8 @@ const Card: React.FC<CardProps> = ({
                 </Button>
               )}
 
-              {currentStatus === SESSION_STATUS.COMPLETED && !isAttendanceConfirmed && (
-                <Button variant={'outlineghost' as any}  {...styles.outlineActionBtn} onPress={() => setIsCompleteModalOpen(true)}  >
+              {currentStatus === SESSION_STATUS.COMPLETED && expectedParticipants > 0 && (
+                <Button variant={'outlineghost' as any}  {...styles.outlineActionBtn} onPress={handleOpenCompleteModal}  >
                   {/* @ts-ignore */}
                   <ButtonText {...styles.outlineActionBtnText}>
                     {t('supportProvider.supportOfferings.cards.confirmAttendance', 'Confirm Attendance')}
@@ -544,8 +543,8 @@ const Card: React.FC<CardProps> = ({
                   {t('supportProvider.supportOfferings.cards.attendance', 'Attendance')}
                 </Text>
 
-                {currentStatus === SESSION_STATUS.COMPLETED && !isAttendanceConfirmed && (
-                  <Button variant="solid"  {...styles.confirmAttendanceBtn} onPress={() => setIsCompleteModalOpen(true)}  >
+                {currentStatus === SESSION_STATUS.COMPLETED && expectedParticipants > 0 && (
+                  <Button variant="solid"  {...styles.confirmAttendanceBtn} onPress={handleOpenCompleteModal}  >
                     <ButtonIcon as={LucideIcon} name="Check" {...styles.cardWhiteIconProps} />
                     <ButtonText {...(styles.confirmAttendanceBtnText as any)}>
                       {t('supportProvider.supportOfferings.cards.confirmAttendance', 'Confirm Attendance')}
@@ -639,7 +638,8 @@ const Card: React.FC<CardProps> = ({
         onClose={() => setIsCompleteModalOpen(false)}
         sessionTitle={item.title}
         expectedParticipantsCount={expectedParticipants}
-        initialParticipants={item.participantList}
+        initialParticipants={enrolledParticipants || item.participantList}
+        isLoadingParticipants={isLoadingParticipants}
         onConfirmComplete={handleConfirmSessionComplete}
       />
     </Box >

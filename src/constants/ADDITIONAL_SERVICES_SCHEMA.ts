@@ -276,6 +276,47 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
               },
             ],
           },
+          {
+            fields: [
+              {
+                name: 'resources',
+                type: 'file',
+                multiple: true,
+                required: false,
+                showOptionalTag: true,
+                label: {
+                  key: 'supportProvider.additionalServicesForm.step1.resourceContent',
+                  fallback: 'Resource Content / Documents',
+                },
+                subTitle: {
+                  key: 'supportProvider.additionalServicesForm.step1.resourceUploadSub',
+                  fallback: 'Upload PDF or Word service materials or guidelines (Max 10 MB per file)',
+                },
+                placeholder: {
+                  key: 'supportProvider.additionalServicesForm.step1.uploadPrompt',
+                  fallback: 'Click to browse or upload PDF / Word documents',
+                },
+                validation: [
+                  {
+                    rule: 'fileType',
+                    value: ['pdf', 'doc', 'docx'],
+                    message: {
+                      key: 'errors.fileType',
+                      fallback: 'Only PDF, DOC and DOCX files are allowed.',
+                    },
+                  },
+                  {
+                    rule: 'fileSize',
+                    value: 10,
+                    message: {
+                      key: 'errors.fileSize10',
+                      fallback: 'Maximum file size is 10 MB.',
+                    },
+                  },
+                ],
+              },
+            ],
+          },
         ],
       },
     ],

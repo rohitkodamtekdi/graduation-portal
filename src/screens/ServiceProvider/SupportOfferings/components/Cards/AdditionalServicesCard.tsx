@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   HStack,
@@ -17,6 +17,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '@contexts/LanguageContext';
 import type { ServiceItem } from '../../../../../types/supportOfferingsTypes';
 import { FORM_MODE, SESSION_STATUS, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { cancelSession } from '../../../../../services/mentoringService';
+import CancelInterventionModal from '../modals/CancelInterventionModal';
 import styles from '../../styles';
 
 // ---------- Card ----------
@@ -32,6 +34,10 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
   const { showAlert } = useAlert();
   const navigation = useNavigation();
 
+  const [statusOverride, setStatusOverride] = useState<string | null>(null);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
   const getStatusColors = (status: string) => {
     switch (status) {
       case SESSION_STATUS_LABEL.DRAFT:
@@ -40,6 +46,8 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
         return { bg: '$blue50', border: 'transparent', text: '$blue600', icon: 'Clock' };
       case SESSION_STATUS_LABEL.IN_PROGRESS:
         return { bg: '$observationTaskBg', border: 'transparent', text: '$warningIconColor', icon: 'AlertCircle' };
+      case SESSION_STATUS_LABEL.CANCELLED:
+        return { bg: '$error50', border: '$red200', text: '$red600', icon: 'XCircle' };
       case SESSION_STATUS_LABEL.COMPLETED:
       default:
         return { bg: '$success50', border: 'transparent', text: '$success600', icon: 'CheckCircle' };
@@ -51,6 +59,9 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
     const rawStatus = (item as any)?.status || '';
     const thisStatus = String(rawStatus).toUpperCase();
 
+    if (thisStatus === SESSION_STATUS.CANCELLED) {
+      return SESSION_STATUS_LABEL.CANCELLED;
+    }
     if (thisStatus === SESSION_STATUS.DRAFT) {
       return SESSION_STATUS_LABEL.DRAFT;
     }
@@ -84,10 +95,11 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
     return rawStatus || SESSION_STATUS_LABEL.UPCOMING;
   };
 
-  const statusTag = formatStatus();
+  const statusTag = statusOverride || formatStatus();
   const statusColors = getStatusColors(statusTag);
   const isDraft = statusTag === SESSION_STATUS_LABEL.DRAFT;
   const isUpcoming = statusTag === SESSION_STATUS_LABEL.UPCOMING;
+  const isCancelled = statusTag === SESSION_STATUS_LABEL.CANCELLED;
 
   // Province / site names resolved from the option lists passed down from the parent screen
   const provinceName = provinces?.find(
@@ -108,62 +120,75 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
   const requesterOrg = (item as any)?.organization || (item as any)?.meta?.organization;
   const requesterOrgName = typeof requesterOrg === 'object' ? requesterOrg?.name : requesterOrg;
 
+  const handleConfirmCancel = async () => {
+    if (isCancelling) return;
+    setIsCancelling(true);
+    try {
+      await cancelSession(item.id);
+      setStatusOverride(SESSION_STATUS_LABEL.CANCELLED);
+      setIsCancelModalOpen(false);
+      showAlert('success', t('supportProvider.supportOfferings.cards.alerts.offeringCancelled', 'Intervention cancelled successfully!'));
+    } catch (error) {
+      showAlert('error', t('supportProvider.supportOfferings.cards.alerts.cancelFailed', 'Failed to cancel intervention. Please try again.'));
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   return (
     <Box {...styles.cardContainer}>
-      <HStack {...styles.cardHeaderHStack}>
-        {/* Left Side: Info */}
-        <VStack {...styles.cardLeftVStack}>
-          {/* Row 1: Title + Badge */}
-          <HStack {...styles.titleRowHStack}>
-            <Text {...styles.cardTitleText}>
-              {item.title}
-            </Text>
-            <Badge {...styles.badgeContainer(statusColors.bg)}>
+      <VStack {...styles.cardFullVStack}>
+        {/* ROW 1 - TITLE & BADGE */}
+        <HStack {...styles.headerTopHStack}>
+          <HStack {...styles.headerTitleBadgeHStack}>
+            <Text {...styles.cardHeaderTitleText}>{item.title}</Text>
+
+            <Badge {...styles.badgeContainer(statusColors.bg, statusColors.border)}>
               <HStack {...styles.badgeContentHStack}>
                 <LucideIcon name={statusColors.icon} {...styles.badgeIconProps(statusColors.text)} />
-                <BadgeText {...styles.badgeText(statusColors.text)}>
-                  {statusTag}
-                </BadgeText>
+                <BadgeText {...styles.badgeText(statusColors.text)}>{statusTag}</BadgeText>
               </HStack>
             </Badge>
           </HStack>
+        </HStack>
 
-          {/* Row 2: Description */}
-          {item.description ? (
-            <Text {...styles.cardDescriptionText}>
+        {/* ROW 2 - NOTES / DESCRIPTION */}
+        {item.description ? (
+          <Box {...styles.notesBox}>
+            <Text {...styles.notesText} numberOfLines={2} ellipsizeMode="tail">
               {item.description}
             </Text>
-          ) : null}
+          </Box>
+        ) : null}
 
-          {/* Row 3: Metadata */}
-          <HStack {...styles.metaRowHStack}>
-            <HStack {...styles.metaItemHStack}>
-              <LucideIcon name="MapPin" {...styles.cardMetaIconProps} />
-              <Text {...styles.cardMetaSmText}>
-                {provinceName || item.location || '-'}{siteNames ? ` • ${siteNames}` : (item.hubOffice ? ` • ${item.hubOffice}` : '')}
-              </Text>
-            </HStack>
-
-            {item.site ? (
-              <HStack {...styles.metaItemHStack}>
-                <LucideIcon name="Building2" {...styles.cardMetaIconProps} />
-                <Text {...styles.cardMetaSmText}>
-                  {item.site}
-                </Text>
-              </HStack>
-            ) : null}
-
-            <HStack {...styles.metaItemHStack}>
-              <LucideIcon name="Users" {...styles.cardMetaIconProps} />
-              <Text {...styles.cardMetaSmText}>
-                {requestsCount !== undefined
-                  ? t('supportProvider.supportOfferings.cards.requestsCount', '{{count}} requests / spots', { count: requestsCount })
-                  : '-'}
-              </Text>
-            </HStack>
+        {/* ROW 3 - METADATA */}
+        <HStack {...styles.headerMetaHStack}>
+          <HStack {...styles.trainingMetaItemHStack}>
+            <LucideIcon name="MapPin" {...styles.cardMetaIconProps} />
+            <Text {...styles.cardMetaSmText}>
+              {provinceName || item.location || '-'}{siteNames ? ` • ${siteNames}` : (item.hubOffice ? ` • ${item.hubOffice}` : '')}
+            </Text>
           </HStack>
 
-          {/* Row 4: Requested by */}
+          {item.site ? (
+            <HStack {...styles.trainingMetaItemHStack}>
+              <LucideIcon name="Building2" {...styles.cardMetaIconProps} />
+              <Text {...styles.cardMetaSmText}>{item.site}</Text>
+            </HStack>
+          ) : null}
+
+          <HStack {...styles.trainingMetaItemHStack}>
+            <LucideIcon name="Users" {...styles.cardMetaIconProps} />
+            <Text {...styles.cardMetaSmText}>
+              {requestsCount !== undefined
+                ? t('supportProvider.supportOfferings.cards.requestsCount', '{{count}} requests / spots', { count: requestsCount })
+                : '-'}
+            </Text>
+          </HStack>
+        </HStack>
+
+        {/* ROW 4 - ACTIONS */}
+        <HStack {...styles.requestedByRowHStack}>
           {requesterName ? (
             <Text {...styles.cardRequestedByText}>
               {t('supportProvider.supportOfferings.cards.requestedByPrefix', 'Requested by: ')}
@@ -173,72 +198,73 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
               {requesterOrgName ? ` (${requesterOrgName})` : ''}
             </Text>
           ) : null}
-        </VStack>
 
-        {/* Right Side: Action Buttons */}
-        <HStack {...styles.cardRightActionStack}>
-          {/* UPCOMING: Cancel */}
-          {isUpcoming && (
+          <HStack {...styles.badgeContentHStack}>
+            {/* UPCOMING: Cancel */}
+            {isUpcoming && (
+              <Button
+                // @ts-ignore
+                variant="outlineghost" {...styles.cancelActionBtn}
+                onPress={() => setIsCancelModalOpen(true)}
+              >
+                <ButtonIcon as={LucideIcon} name="X" {...styles.cardCopyIconProps} color={'$red600'} />
+                {/* @ts-ignore */}
+                <ButtonText {...styles.cancelActionBtnText}>
+                  {t('supportProvider.supportOfferings.cards.cancel', 'Cancel')}
+                </ButtonText>
+              </Button>
+            )}
+
+            {/* DRAFT: Edit */}
+            {isDraft && (
+              <Button
+                // @ts-ignore
+                variant="outlineghost" {...styles.outlineActionBtn}
+                onPress={() => (navigation as any).navigate('create-additional-service', { id: item.id, type: FORM_MODE.EDIT })}
+              >
+                <ButtonIcon as={LucideIcon} name="Pencil" {...styles.cardCopyIconProps} />
+                {/* @ts-ignore */}
+                <ButtonText {...styles.outlineActionBtnText}>
+                  {t('common.edit', 'Edit')}
+                </ButtonText>
+              </Button>
+            )}
+
+            {/* ALL STATUSES: View Requests */}
             <Button
-              // @ts-ignore
-              variant="outlineghost" {...styles.cancelActionBtn}
-              onPress={() => showAlert('success', t('supportProvider.supportOfferings.cards.alerts.offeringCancelled', 'Intervention cancelled successfully!'))}
+              variant="solid" {...styles.detailsBtn}
+              onPress={() => {
+                try {
+                  (navigation as any).navigate('requests');
+                } catch (e) {
+                  showAlert('info', t('supportProvider.supportOfferings.cards.alerts.navigatingRequests'));
+                }
+              }}
             >
-              <ButtonIcon as={LucideIcon} name="X" {...styles.cardCopyIconProps} color={'$red600'} />
               {/* @ts-ignore */}
-              <ButtonText {...styles.cancelActionBtnText}>
-                {t('supportProvider.supportOfferings.cards.cancel', 'Cancel')}
+              <ButtonText {...styles.detailsBtnText}>
+                {t('supportProvider.supportOfferings.cards.viewRequests')}
               </ButtonText>
             </Button>
-          )}
-
-          {/* DRAFT: Edit */}
-          {isDraft && (
-            <Button
-              // @ts-ignore
-              variant="outlineghost" {...styles.outlineActionBtn}
-              onPress={() => (navigation as any).navigate('create-additional-service', { id: item.id, type: FORM_MODE.EDIT })}
-            >
-              <ButtonIcon as={LucideIcon} name="Pencil" {...styles.cardCopyIconProps} />
-              {/* @ts-ignore */}
-              <ButtonText {...styles.outlineActionBtnText}>
-                {t('common.edit', 'Edit')}
-              </ButtonText>
-            </Button>
-          )}
-
-          {/* UPCOMING / IN PROGRESS / COMPLETED: Copy Intervention */}
-          {!isDraft && (
-            <Button
-              variant="outline" {...styles.outlineActionBtn}
-              onPress={() => (navigation as any).navigate('create-additional-service', { id: item.id, type: FORM_MODE.COPY })}
-            >
-              <ButtonIcon as={LucideIcon} name="Copy" {...styles.cardCopyIconProps} />
-              {/* @ts-ignore */}
-              <ButtonText {...styles.outlineActionBtnText}>
-                {t('supportProvider.supportOfferings.cards.copyIntervention', 'Copy Intervention')}
-              </ButtonText>
-            </Button>
-          )}
-
-          {/* ALL STATUSES: View Requests */}
-          <Button
-            variant="solid" {...styles.detailsBtn}
-            onPress={() => {
-              try {
-                (navigation as any).navigate('requests');
-              } catch (e) {
-                showAlert('info', t('supportProvider.supportOfferings.cards.alerts.navigatingRequests'));
-              }
-            }}
-          >
-            {/* @ts-ignore */}
-            <ButtonText {...styles.detailsBtnText}>
-              {t('supportProvider.supportOfferings.cards.viewRequests')}
-            </ButtonText>
-          </Button>
+          </HStack>
         </HStack>
-      </HStack>
+      </VStack>
+
+      <CancelInterventionModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        title={item.title}
+        statusLabel={statusTag}
+        participantsInfo={
+          requestsCount !== undefined
+            ? `${requestsCount} ${t('supportProvider.supportOfferings.cancelModal.assignedParticipants', 'assigned participants')}`
+            : undefined
+        }
+        supportTypeLabel={t('supportProvider.supportOfferings.cancelModal.additionalServiceType', 'Additional Service')}
+        location={provinceName || item.location}
+        isSubmitting={isCancelling}
+        onConfirmCancel={handleConfirmCancel}
+      />
     </Box>
   );
 };

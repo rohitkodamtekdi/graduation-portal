@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from '@components/ui/Modal';
 import {
   VStack,
@@ -14,6 +14,7 @@ import {
   CheckboxIcon,
   CheckIcon,
   ScrollView,
+  Spinner,
 } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
 import type { ParticipantAttendanceItem } from '../../../../../types/supportOfferingsTypes';
@@ -25,6 +26,7 @@ interface SessionCompleteModalProps {
   sessionTitle: string;
   expectedParticipantsCount: number;
   initialParticipants?: ParticipantAttendanceItem[];
+  isLoadingParticipants?: boolean;
   onConfirmComplete: (selectedParticipantIds: string[]) => void;
 }
 
@@ -34,19 +36,18 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
   sessionTitle,
   expectedParticipantsCount,
   initialParticipants = [],
+  isLoadingParticipants = false,
   onConfirmComplete,
 }) => {
   const { t } = useLanguage();
-  const [participants, setParticipants] = useState<ParticipantAttendanceItem[]>(
-    initialParticipants.length > 0
-      ? initialParticipants
-      : Array.from({ length: expectedParticipantsCount || 6 }).map((_, idx) => ({
-        id: String(idx + 1),
-        name: `Participant ${idx + 1}`,
-        lcName: 'LC: Thandiwe Ndlovu',
-        isPresent: false,
-      }))
-  );
+  const [participants, setParticipants] = useState<ParticipantAttendanceItem[]>(initialParticipants);
+
+  // The modal stays mounted while closed, so its own `participants` state must
+  // be re-synced whenever the real enrolled list arrives (fetched by the
+  // caller after this modal is opened) — it won't pick up prop changes on its own.
+  useEffect(() => {
+    setParticipants(initialParticipants);
+  }, [initialParticipants]);
 
   const markedPresentCount = participants.filter((p) => p.isPresent).length;
 
@@ -145,41 +146,51 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
 
         {/* Participants List */}
         <ScrollView {...styles.modalScrollView}>
-          <VStack {...styles.sectionSmVStack}>
-            {participants.map((p, idx) => (
-              <Pressable
-                key={p.id}
-                onPress={() => handleToggleParticipant(p.id)}
-                {...styles.modalParticipantCard}
-              >
-                <HStack {...styles.modalParticipantInnerHStack}>
-                  <Checkbox
-                    size="md"
-                    value={p.id}
-                    isChecked={p.isPresent}
-                    onChange={() => handleToggleParticipant(p.id)}
-                  >
-                    <CheckboxIndicator {...styles.modalCheckboxIndicator(p.isPresent)}>
-                      <CheckboxIcon as={CheckIcon} color="$white" />
-                    </CheckboxIndicator>
-                  </Checkbox>
+          {isLoadingParticipants ? (
+            <HStack justifyContent="center" p="$4">
+              <Spinner />
+            </HStack>
+          ) : participants.length === 0 ? (
+            <Text {...styles.modalCountText} textAlign="center">
+              {t('supportProvider.supportOfferings.modal.noEnrolledParticipants', 'No participants have enrolled in this session yet.')}
+            </Text>
+          ) : (
+            <VStack {...styles.sectionSmVStack}>
+              {participants.map((p, idx) => (
+                <Pressable
+                  key={p.id}
+                  onPress={() => handleToggleParticipant(p.id)}
+                  {...styles.modalParticipantCard}
+                >
+                  <HStack {...styles.modalParticipantInnerHStack}>
+                    <Checkbox
+                      size="md"
+                      value={p.id}
+                      isChecked={p.isPresent}
+                      onChange={() => handleToggleParticipant(p.id)}
+                    >
+                      <CheckboxIndicator {...styles.modalCheckboxIndicator(p.isPresent)}>
+                        <CheckboxIcon as={CheckIcon} color="$white" />
+                      </CheckboxIndicator>
+                    </Checkbox>
 
-                  <Text {...styles.modalParticipantNumberText}>
-                    {String(idx + 1).padStart(2, '0')}
-                  </Text>
+                    <Text {...styles.modalParticipantNumberText}>
+                      {String(idx + 1).padStart(2, '0')}
+                    </Text>
 
-                  <VStack {...styles.fileTextVStack}>
-                    <Text {...styles.modalParticipantNameText}>
-                      {p.name}
-                    </Text>
-                    <Text {...styles.modalParticipantLcText}>
-                      {p.lcName}
-                    </Text>
-                  </VStack>
-                </HStack>
-              </Pressable>
-            ))}
-          </VStack>
+                    <VStack {...styles.fileTextVStack}>
+                      <Text {...styles.modalParticipantNameText}>
+                        {p.name}
+                      </Text>
+                      <Text {...styles.modalParticipantLcText}>
+                        {p.lcName}
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </Pressable>
+              ))}
+            </VStack>
+          )}
         </ScrollView>
       </VStack>
     </Modal>

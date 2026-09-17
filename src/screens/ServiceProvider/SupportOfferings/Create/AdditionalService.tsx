@@ -162,6 +162,7 @@ const App = (): React.JSX.Element => {
             onFieldChange={handleFieldChange}
             onSubmit={(formValues) => handleSave(formValues, false)}
             onSaveDraft={(formValues) => handleSave(formValues, true)}
+            uploadService={uploadService}
           />
         </Card>
       </Container>
