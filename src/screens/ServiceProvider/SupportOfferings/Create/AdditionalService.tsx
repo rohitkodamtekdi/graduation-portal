@@ -27,7 +27,7 @@ const App = (): React.JSX.Element => {
 
   const { t } = useLanguage();
   const { showAlert } = useAlert();
-  const { isCardAllowed } = useProfileCompletion();
+  const { isCardAllowed, allowedSubOptions, allowedProvinces, allowedSites } = useProfileCompletion();
   const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.ADDITIONAL_SERVICE));
 
   const [provinces, setProvinces] = useState<any[]>([]);
@@ -80,7 +80,14 @@ const App = (): React.JSX.Element => {
     }, [init])
   );
 
-  const { sessionTypes, optionsMap } = useTrainingFormOptions({ values, provinces, pillers });
+  const { sessionTypes, optionsMap } = useTrainingFormOptions({
+    values,
+    provinces,
+    pillers,
+    allowedSubOptions,
+    allowedProvinces,
+    allowedSites,
+  });
 
   const hideFileds = sessionTypes.length === 0 ? ['idp_additional_services_tasks'] : [];
 
@@ -128,7 +135,7 @@ const App = (): React.JSX.Element => {
     }
   }
 
-  if (modeType === FORM_MODE.CREATE && !isAllowed) {
+  if (!isAllowed) {
     return (
       <NotFound
         message={t(
