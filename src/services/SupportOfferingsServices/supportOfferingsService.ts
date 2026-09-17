@@ -119,6 +119,24 @@ export const getAdditionalServices = async (params?: any): Promise<any> => {
   return responseData;
 };
 
+const ASSET_STATUS_LABEL: Record<string, AssetItem['status']> = {
+  DRAFT: 'Pending',
+  PUBLISHED: 'Upcoming',
+  COMPLETED: 'Accepted',
+};
+
+const mapToAssetItem = (raw: any): AssetItem => ({
+  id: raw.id ?? raw._id,
+  title: raw.title,
+  status: ASSET_STATUS_LABEL[String(raw.status).toUpperCase()] || raw.status,
+  type: Array.isArray(raw.asset_types) ? raw.asset_types[0] : raw.asset_types,
+  description: raw.description,
+  sector: raw.livelihoods,
+  value: raw.estimated_value ? `R ${raw.estimated_value}` : undefined,
+  province: Array.isArray(raw.provinces) ? raw.provinces[0] : raw.provinces,
+  siteKey: Array.isArray(raw.sites) ? raw.sites[0] : raw.sites,
+});
+
 /**
  * Fetch Assets
  */
@@ -129,7 +147,12 @@ export const getAssets = async (params?: any): Promise<any> => {
   };
 
   try {
-    responseData = await getSupportOfferingsList(params, 'asset');
+    const res = await getSupportOfferingsList(params, 'asset');
+    const data = (res?.result?.data || []).map(mapToAssetItem);
+    responseData = {
+      ...res,
+      result: { ...res?.result, data },
+    };
   } catch (error) {
     console.warn('Backend API endpoint unavailable for Assets:', error);
     responseData = {
