@@ -80,7 +80,7 @@ export function valueMapping(
     endDate = formValues.end_date ? moment(formValues.end_date).unix() : moment().add(2, 'years').unix();
   }
 
-   return {
+  return {
     ...formValues,
     title:
       formValues?.idp_training_task === 'custom'
