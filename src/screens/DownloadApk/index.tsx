@@ -9,6 +9,8 @@ import {
   Button,
   ButtonText,
   Pressable,
+  ButtonIcon,
+  Spinner,
 } from '@gluestack-ui/themed';
 import Modal from '@components/ui/Modal';
 import LucideIcon from '@components/ui/LucideIcon';
@@ -33,6 +35,7 @@ export const DownloadApkModal: React.FC<DownloadApkModalProps> = ({
 }) => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
+  const [ isDownloading, setIsDownloading ] = useState(false);
 
   const handleClose = useCallback(() => {
     onClose?.();
@@ -44,12 +47,15 @@ export const DownloadApkModal: React.FC<DownloadApkModalProps> = ({
   const isConfigured = Boolean(APK_DOWNLOAD_URL.trim());
   const [showGuide, setShowGuide] = useState(false);
 
-  const handleDownload = useCallback(() => {
+  const handleDownload = useCallback(async() => {
+    setIsDownloading(true)
     if (!APK_DOWNLOAD_URL.trim()) {
       showAlert('error', t('downloadApk.urlNotConfigured'));
+      setIsDownloading(false)
       return;
     }
-    openDownload(APK_DOWNLOAD_URL, t, showAlert);
+    await openDownload(APK_DOWNLOAD_URL, t, showAlert);
+    setIsDownloading(false)
   }, [t, showAlert]);
 
   const handleToggleGuide = useCallback(() => {
@@ -120,8 +126,16 @@ export const DownloadApkModal: React.FC<DownloadApkModalProps> = ({
               <Text {...styles.description}>{t('downloadApk.description')}</Text>
 
               {/* Download APK Button */}
-              <Button  variant="solid"  {...styles.downloadButton}  onPress={handleDownload}  accessibilityRole="button" >
-                <LucideIcon name="Download" size={16} color={styles.downloadButtonIconColor} />
+              <Button  variant="solid"  {...styles.downloadButton}
+                onPress={handleDownload}
+                accessibilityRole="button"
+                isDisabled={isDownloading}
+              >
+                {isDownloading ? (
+                  <Spinner size="small" color="white" mr="$2" />
+                ) : (
+                  <ButtonIcon as={LucideIcon} name="Download" size={16} color={styles.downloadButtonIconColor} />
+                )}
                 <ButtonText {...styles.downloadButtonText}>
                   {t('downloadApk.downloadButton')}
                 </ButtonText>
