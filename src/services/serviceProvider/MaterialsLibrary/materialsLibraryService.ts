@@ -1,5 +1,5 @@
 import mockMaterials from './mockData/materialsLibrary.json';
-import { getProjectTemplatesList } from '../../../project-player/services/projectPlayerService';
+import { getResourcesList } from '../../mentoringService';
 
 export interface MaterialItem {
   id: string;
@@ -45,50 +45,32 @@ export const getMaterialsList = async (
   let items: MaterialItem[] = [];
 
   try {
-    const apiRes = await getProjectTemplatesList();
-    const rawTemplates = apiRes?.data || [];
-    
-    if (Array.isArray(rawTemplates) && rawTemplates.length > 0) {
-      const extractedMaterials: MaterialItem[] = [];
+    const apiRes = await getResourcesList();
+    const rawResources = apiRes?.result || [];
 
-      rawTemplates.forEach((t: any) => {
-        const offeringName = t.title || 'Support Offering';
-        const tasks = t.tasks || [];
+    if (Array.isArray(rawResources) && rawResources.length > 0) {
+      items = rawResources.map((resource: any) => {
+        const fileName = resource.name || `resource-${resource.id}`;
+        const isPdf = (resource.type || '').toLowerCase() === 'pdf' || fileName.toLowerCase().endsWith('.pdf');
 
-        if (Array.isArray(tasks) && tasks.length > 0) {
-          tasks.forEach((task: any, idx: number) => {
-            const cleanTitle = task.name || task.description || 'Resource Guide';
-            const isPdf = idx % 2 === 0;
-            const ext = isPdf ? 'pdf' : 'docx';
-            const cleanFileName = (cleanTitle.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') + `.${ext}`);
-            
-            // Extract attached file name or link if present
-            const firstResource = task.learningResources?.[0];
-            const finalFileName = firstResource?.name || firstResource?.fileName || cleanFileName;
-            const finalFormat = (finalFileName.endsWith('.pdf') || isPdf) ? 'PDF Document' : 'Templates & Decks';
-
-            extractedMaterials.push({
-              id: task._id || `${t._id}-${idx}`,
-              title: cleanTitle,
-              description: task.description || t.description || '',
-              category: t.title || '',
-              format: finalFormat,
-              fileName: finalFileName,
-              fileSize: `${((idx * 7) % 3 + 1).toFixed(1)} MB`,
-              associatedOffering: offeringName,
-              uploadDate: task.updatedAt ? new Date(task.updatedAt).toLocaleDateString('en-GB') : '',
-              downloads: 18 + ((idx * 13) % 60),
-            });
-          });
-        }
+        return {
+          id: String(resource.id),
+          title: fileName,
+          description: '',
+          category: '',
+          format: isPdf ? 'PDF Document' : 'Templates & Decks',
+          fileName,
+          fileSize: '',
+          associatedOffering: '',
+          uploadDate: resource.created_at ? new Date(resource.created_at).toLocaleDateString('en-GB') : '',
+          downloads: 0,
+        };
       });
-
-      items = extractedMaterials;
     } else {
       items = [...inMemoryMaterials];
     }
   } catch (err) {
-    console.warn('[materialsLibraryService] Failed to fetch backend templates, using fallback:', err);
+    console.warn('[materialsLibraryService] Failed to fetch resources list, using fallback:', err);
     items = [...inMemoryMaterials];
   }
 
