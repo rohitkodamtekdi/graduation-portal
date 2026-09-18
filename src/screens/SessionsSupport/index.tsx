@@ -4,7 +4,20 @@ import { useLanguage } from '@contexts/LanguageContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PageHeader from '@components/PageHeader';
 import MyRequests from './MyRequests';
-import { REQUEST_SUPPORT_OPTIONS, getSupportOfferingTabs, DEFAULT_PROVINCE_OPTIONS, DEFAULT_SITE_OPTIONS, FORM_MODE } from '@constants/SUPPORT_PROVIDER_CARDS';
+import {
+  REQUEST_SUPPORT_OPTIONS,
+  getSupportOfferingTabs,
+  DEFAULT_PROVINCE_OPTIONS,
+  DEFAULT_SITE_OPTIONS,
+  FORM_MODE,
+  SUPPORT_PROVIDER_ROUTES as ROUTES,
+  SUPPORT_OFFERING_TABS,
+  SUPPORT_OFFERING_SUB_TABS,
+  SUPPORT_OFFERING_TYPE_VALUES,
+  REQUEST_STATUS,
+  OFFERING_FILTER_FIELDS as FILTER_FIELDS,
+  OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL,
+} from '@constants/SUPPORT_PROVIDER_CARDS';
 import { TabButton } from '@components/Tabs';
 import FilterButton from '@components/Filter';
 import TrainingCard from '../ServiceProvider/SupportOfferings/components/Cards/TrainingCard';
@@ -24,10 +37,6 @@ import { RequestFooter } from './RequestorFooter';
 import AssignParticipantsModal from './modals/AssignParticipantsModal';
 import LcMySessionTab from './MyTraining&Sessions/LcMySessionTab';
 
-// Safety net in case the backend's `support_offering_type` filter isn't applied for a request:
-// only keep items whose own recorded type matches the tab we're rendering (missing type = assume it belongs).
-// The field comes back as a plain string from the request-list API, but as an entity-type
-// `{ value, label }` object from the browse/sessions-list API - normalize both shapes.
 const matchesOfferingType = (item: any, expectedType: string): boolean => {
   const rawType = item?.support_offering_type || item?.type || item?.session?.support_offering_type;
   const itemType = rawType && typeof rawType === 'object' ? rawType.value : rawType;
@@ -71,8 +80,8 @@ const SessionsSupportScreen: React.FC = () => {
   };
 
   // Listing state, filters, and tabs reused from SupportOfferings logic
-  const [activeTab, setActiveTab] = useState('sessions');
-  const [activeSubTab, setActiveSubTab] = useState<string>('browse_sessions');
+  const [activeTab, setActiveTab] = useState<string>(SUPPORT_OFFERING_TABS.SESSIONS);
+  const [activeSubTab, setActiveSubTab] = useState<string>(SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS);
   const [refreshRequests, setRefreshRequests] = useState<number>(0);
 
   // Capture newly created session or request from navigation params
@@ -86,13 +95,13 @@ const SessionsSupportScreen: React.FC = () => {
         return [params.newSession, ...prev];
       });
       // Switch to My Sessions tab so the user sees the new session
-      setActiveTab('sessions');
-      setActiveSubTab('my_sessions');
+      setActiveTab(SUPPORT_OFFERING_TABS.SESSIONS);
+      setActiveSubTab(SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS);
       // Clear the param so re-visits don't re-add it
       navigation.setParams({ newSession: undefined } as any);
     }
     if (params?.activeSubTab) {
-      setActiveTab(params.activeTab || 'sessions');
+      setActiveTab(params.activeTab || SUPPORT_OFFERING_TABS.SESSIONS);
       setActiveSubTab(params.activeSubTab);
       if (params.refreshRequests) {
         setRefreshRequests(params.refreshRequests);
@@ -128,7 +137,7 @@ const SessionsSupportScreen: React.FC = () => {
   const displayTabs = tabs.map((tab) => ({
     ...tab,
     count: undefined,
-    icon: tab.key === 'sessions' ? 'Calendar' : tab.key === 'additional_services' ? 'Wrench' : 'Box',
+    icon: tab.key === SUPPORT_OFFERING_TABS.SESSIONS ? 'Calendar' : tab.key === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES ? 'Wrench' : 'Box',
   }));
 
   const subTabs = tabs.find((tab) => tab.key === activeTab)?.children || [];
@@ -139,7 +148,7 @@ const SessionsSupportScreen: React.FC = () => {
     if (newTab && newTab.children && newTab.children.length > 0) {
       setActiveSubTab(newTab.children[0].key);
     } else {
-      setActiveSubTab('browse_sessions');
+      setActiveSubTab(SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS);
     }
   };
 
@@ -155,13 +164,13 @@ const SessionsSupportScreen: React.FC = () => {
   const filterOptions = [
     {
       type: 'select',
-      attr: 'province',
+      attr: FILTER_FIELDS.PROVINCE,
       placeholder: 'All Provinces',
       data: provinceOptions,
     },
     {
       type: 'select',
-      attr: 'site',
+      attr: FILTER_FIELDS.SITE,
       placeholder: 'All Sites',
       data: siteOptions,
     },
@@ -185,7 +194,7 @@ const SessionsSupportScreen: React.FC = () => {
             const { result: { data } } = await getSitesByProvince();
             setAllSiteOptions(data || []);
             const dynamicProvinces = [
-              { label: 'All Provinces', value: 'all-provinces' },
+              { label: 'All Provinces', value: FILTER_ALL.ALL_PROVINCES },
               ...provincesData.map((p: any) => ({
                 label: p.metaInformation?.name || p.name || p.title || p.label,
                 value: p._id || p.id || p.value,
@@ -205,7 +214,7 @@ const SessionsSupportScreen: React.FC = () => {
             });
 
             const dynamicPathways = [
-              { label: 'All Pathways', value: 'all-pathways' },
+              { label: 'All Pathways', value: FILTER_ALL.ALL_PATHWAYS },
               ...Array.from(uniquePathwaysMap.values()),
             ];
             setPathwayOptions(dynamicPathways);
@@ -213,7 +222,7 @@ const SessionsSupportScreen: React.FC = () => {
 
           if (categoriesData && categoriesData.length > 0) {
             const dynamicPillars = [
-              { label: 'All Pillars', value: 'all-pillars' },
+              { label: 'All Pillars', value: FILTER_ALL.ALL_PILLARS },
               ...categoriesData.map((c: any) => ({
                 label: c.label || c.name || c.value,
                 value: c.value,
@@ -224,7 +233,7 @@ const SessionsSupportScreen: React.FC = () => {
 
           if (deliveryModesData && deliveryModesData.length > 0) {
             const dynamicFormats = [
-              { label: 'All Formats', value: 'all-formats' },
+              { label: 'All Formats', value: FILTER_ALL.ALL_FORMATS },
               ...deliveryModesData.map((d: any) => ({
                 label: d.label || d.name || d.value,
                 value: d.value,
@@ -247,9 +256,9 @@ const SessionsSupportScreen: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchSitesData = async () => {
-      const selectedProv = filters.province;
+      const selectedProv = filters[FILTER_FIELDS.PROVINCE];
 
-      if (!selectedProv || selectedProv === 'all-provinces') {
+      if (!selectedProv || selectedProv === FILTER_ALL.ALL_PROVINCES) {
         if (isMounted) {
           setSiteOptions(DEFAULT_SITE_OPTIONS);
         }
@@ -278,7 +287,7 @@ const SessionsSupportScreen: React.FC = () => {
 
         if (isMounted) {
           const dynamicSites = [
-            { label: 'All Sites', value: 'all-sites' },
+            { label: 'All Sites', value: FILTER_ALL.ALL_SITES },
             ...fetchedSites.map((s: any) => ({
               label: s.metaInformation?.name || s.name || s.title || s.label,
               value: s._id || s.id || s.value,
@@ -305,9 +314,9 @@ const SessionsSupportScreen: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchTypesData = async () => {
-      const selectedPillar = filters.pillar;
+      const selectedPillar = filters[FILTER_FIELDS.PILLAR];
 
-      if (!selectedPillar || selectedPillar === 'all-pillars') {
+      if (!selectedPillar || selectedPillar === FILTER_ALL.ALL_PILLARS) {
         if (isMounted) {
           setTypeOptions(DEFAULT_TYPE_OPTIONS);
         }
@@ -318,7 +327,7 @@ const SessionsSupportScreen: React.FC = () => {
         const typesData = await getSessionTypesByPillar(selectedPillar);
         if (isMounted) {
           const dynamicTypes = [
-            { label: 'All Types', value: 'all-types' },
+            { label: 'All Types', value: FILTER_ALL.ALL_TYPES },
             ...typesData.map((t: any) => ({
               label: t.label || t.name || t.value,
               value: t.value || t._id || t.id,
@@ -354,7 +363,11 @@ const SessionsSupportScreen: React.FC = () => {
 
   // Fetch listing data
   useEffect(() => {
-    if (activeSubTab !== 'browse_sessions' && activeSubTab !== 'my_requests' && activeSubTab !== 'my_sessions') {
+    if (
+      activeSubTab !== SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS &&
+      activeSubTab !== SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS &&
+      activeSubTab !== SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS
+    ) {
       return;
     }
     let isMounted = true;
@@ -364,43 +377,43 @@ const SessionsSupportScreen: React.FC = () => {
         const params: any = {
           page,
           limit,
-          search: filters.search,
-          status: filters.status,
-          pathway: filters.pathway,
-          pillar: filters.pillar,
-          type: filters.type,
-          format: filters.format,
+          search: filters[FILTER_FIELDS.SEARCH],
+          status: filters[FILTER_FIELDS.STATUS],
+          pathway: filters[FILTER_FIELDS.PATHWAY],
+          pillar: filters[FILTER_FIELDS.PILLAR],
+          type: filters[FILTER_FIELDS.TYPE],
+          format: filters[FILTER_FIELDS.FORMAT],
           isSessionsSupport: true,
         };
 
-        if (filters.province && filters.province !== 'all-provinces') {
-          params.provinces = filters.province;
+        if (filters[FILTER_FIELDS.PROVINCE] && filters[FILTER_FIELDS.PROVINCE] !== FILTER_ALL.ALL_PROVINCES) {
+          params.provinces = filters[FILTER_FIELDS.PROVINCE];
         }
 
-        if (filters.site && filters.site !== 'all-sites') {
-          params.sites = filters.site;
+        if (filters[FILTER_FIELDS.SITE] && filters[FILTER_FIELDS.SITE] !== FILTER_ALL.ALL_SITES) {
+          params.sites = filters[FILTER_FIELDS.SITE];
         }
 
         let fetchedData: any[] = [];
         let totalCount = 0;
 
-        if (activeTab === 'sessions') {
+        if (activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
           let result;
-          if (activeSubTab === 'browse_sessions') {
+          if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS) {
             result = await getRequestSessionsList(params);
             fetchedData = result?.result?.data || [];
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
             setCounts((prev) => ({ ...prev, sessions: totalCount }));
-          } else if (activeSubTab === 'my_requests') {
-            result = await getMyRequestsList({ ...params, support_offering_type: 'training_session' });
+          } else if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS) {
+            result = await getMyRequestsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION });
             const rawList = (Array.isArray(result) ? result : (result?.result?.data || result?.result || []))
-              .filter((item: any) => matchesOfferingType(item, 'training_session'));
+              .filter((item: any) => matchesOfferingType(item, SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION));
             fetchedData = rawList.map((item: any) => {
               const session = item.session || item.session_details || {};
               return {
                 ...item,
                 title: item.title || session.title || 'Untitled Request',
-                status: item.status || 'REQUESTED',
+                status: item.status || REQUEST_STATUS.REQUESTED,
                 start_date: item.start_date || session.start_date,
                 end_date: item.end_date || session.end_date,
                 seats_limit: item.seats_limit || session.seats_limit || item.max_participants || session.max_participants,
@@ -415,21 +428,21 @@ const SessionsSupportScreen: React.FC = () => {
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           }
 
-        } else if (activeTab === 'additional_services') {
+        } else if (activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES) {
           let res;
-          if (activeSubTab === 'my_sessions' || activeSubTab === 'my_requests') {
-            res = await getMyRequestsList({ ...params, support_offering_type: 'additional_service' });
+          if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS || activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS) {
+            res = await getMyRequestsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE });
           } else {
-            res = await getRequestSessionsList({ ...params, support_offering_type: 'additional_service' });
+            res = await getRequestSessionsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE });
           }
           const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
-            .filter((item: any) => matchesOfferingType(item, 'additional_service'));
+            .filter((item: any) => matchesOfferingType(item, SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE));
           fetchedData = rawList.map((item: any) => {
             const session = item.session || item.session_details || {};
             return {
               ...item,
               title: item.title || session.title || 'Untitled Request',
-              status: item.status || 'REQUESTED',
+              status: item.status || REQUEST_STATUS.REQUESTED,
               start_date: item.start_date || session.start_date,
               end_date: item.end_date || session.end_date,
               delivery_mode: item.delivery_mode || session.delivery_mode,
@@ -437,21 +450,21 @@ const SessionsSupportScreen: React.FC = () => {
           });
           totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
           setCounts((prev) => ({ ...prev, additional_services: totalCount }));
-        } else if (activeTab === 'assets') {
+        } else if (activeTab === SUPPORT_OFFERING_TABS.ASSETS) {
           let res;
-          if (activeSubTab === 'my_sessions' || activeSubTab === 'my_requests') {
-            res = await getMyRequestsList({ ...params, support_offering_type: 'asset' });
+          if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS || activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS) {
+            res = await getMyRequestsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.ASSET });
           } else {
-            res = await getRequestSessionsList({ ...params, support_offering_type: 'asset' });
+            res = await getRequestSessionsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.ASSET });
           }
           const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
-            .filter((item: any) => matchesOfferingType(item, 'asset'));
+            .filter((item: any) => matchesOfferingType(item, SUPPORT_OFFERING_TYPE_VALUES.ASSET));
           fetchedData = rawList.map((item: any) => {
             const session = item.session || item.session_details || {};
             return {
               ...item,
               title: item.title || session.title || 'Untitled Request',
-              status: item.status || 'REQUESTED',
+              status: item.status || REQUEST_STATUS.REQUESTED,
               start_date: item.start_date || session.start_date,
               end_date: item.end_date || session.end_date,
               delivery_mode: item.delivery_mode || session.delivery_mode,
@@ -462,7 +475,7 @@ const SessionsSupportScreen: React.FC = () => {
         }
 
         if (isMounted) {
-          if (activeSubTab === 'my_sessions') {
+          if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS) {
             if (page === 1) {
               setMySessions(fetchedData);
             } else {
@@ -522,7 +535,7 @@ const SessionsSupportScreen: React.FC = () => {
         rightSection={
           <Box {...styles.rightSectionBox}>
             <HStack {...styles.rightSectionHStack}>
-              <Button {...styles.createSessionBtn} onPress={() => navigation.navigate('sessions-support/create' as never)}>
+              <Button {...styles.createSessionBtn} onPress={() => navigation.navigate(ROUTES.SESSIONS_SUPPORT_CREATE as never)}>
                 <ButtonIcon as={LucideIcon} name="Plus" size={16} color="$textForegroundColor" />
                 <ButtonText {...styles.createSessionBtnText}>
                   {t('lc.sessionsSupport.createSession')}
@@ -625,7 +638,7 @@ const SessionsSupportScreen: React.FC = () => {
 
       <Container {...supportOfferingsStyles.container}>
         <VStack {...supportOfferingsStyles.contentContainer}>
-          {activeSubTab === 'browse_sessions' ? (
+          {activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS ? (
             <>
               <RequestorFilter
                 filters={filters}
@@ -637,14 +650,14 @@ const SessionsSupportScreen: React.FC = () => {
                 typeOptions={typeOptions}
                 statusOptions={statusOptions}
                 formatOptions={formatOptions}
-                shouldDisableSite={!filters.province || filters.province === 'all-provinces'}
-                shouldDisableType={!filters.pillar || filters.pillar === 'all-pillars'}
+                shouldDisableSite={!filters[FILTER_FIELDS.PROVINCE] || filters[FILTER_FIELDS.PROVINCE] === FILTER_ALL.ALL_PROVINCES}
+                shouldDisableType={!filters[FILTER_FIELDS.PILLAR] || filters[FILTER_FIELDS.PILLAR] === FILTER_ALL.ALL_PILLARS}
               />
               <Text {...styles.sessionsFoundText}>
                 {total} {t('lc.sessionsSupport.sessionsFound')}
               </Text>
 
-              {activeTab === 'sessions' && (
+              {activeTab === SUPPORT_OFFERING_TABS.SESSIONS && (
                 <TrainingCard
                   items={items}
                   isShowLoadMore={isShowLoadMore}
@@ -660,7 +673,7 @@ const SessionsSupportScreen: React.FC = () => {
                 />
               )}
 
-              {activeTab === 'additional_services' && (
+              {activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES && (
                 <AdditionalServicesCard
                   items={items}
                   isShowLoadMore={isShowLoadMore}
@@ -669,7 +682,7 @@ const SessionsSupportScreen: React.FC = () => {
                 />
               )}
 
-              {activeTab === 'assets' && (
+              {activeTab === SUPPORT_OFFERING_TABS.ASSETS && (
                 <AssetCard
                   items={items}
                   isShowLoadMore={isShowLoadMore}
@@ -678,7 +691,7 @@ const SessionsSupportScreen: React.FC = () => {
                 />
               )}
             </>
-          ) : activeSubTab === 'my_sessions' ? (
+          ) : activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS ? (
             mySessions.length > 0 ? (
               <VStack {...styles.mySessionsListVStack}>
                 {mySessions.map((session, idx) => (
@@ -688,7 +701,7 @@ const SessionsSupportScreen: React.FC = () => {
                     isFirst={idx === 0}
                     onAssignParticipants={handleAssignSessionClick}
                     onEditSession={(sessionId) => {
-                      (navigation as any).navigate('sessions-support-create-session', {
+                      (navigation as any).navigate(ROUTES.SESSIONS_SUPPORT_CREATE_SESSION, {
                         type: FORM_MODE.EDIT,
                         id: sessionId,
                       });
@@ -700,7 +713,7 @@ const SessionsSupportScreen: React.FC = () => {
                 ))}
               </VStack>
             ) : null
-          ) : activeSubTab === 'my_requests' ? (
+          ) : activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS ? (
             <MyRequests
               items={items}
               _loading={_loading}

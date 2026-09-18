@@ -2615,7 +2615,11 @@
       "training": {
         "title": "Create Training Session",
         "discardMessage": "Are you sure you want to discard this session draft?",
-        "discard": "Discard Draft"
+        "discard": "Discard Draft",
+        "alerts": {
+          "draftSaved": "Draft saved successfully!",
+          "sessionSaved": "Additional Service request saved successfully!"
+        }
       },
       "additionalService": {
         "title": "Create Additional Service"
@@ -2641,6 +2645,10 @@
         "saveFailed": "Something went wrong while saving. Please try again.",
         "incompleteWarning": "Please Complete Your Profile Before Proceeding."
       }
+    },
+    "assetForm": {
+      "requestSuccessMessage": "Asset request saved successfully!",
+      "draftSuccessMessage": "Asset draft saved successfully!"
     },
     "supportRequests": {
       "buttonTexts": {

@@ -120,6 +120,109 @@ export const DEFAULT_PROVINCE_OPTIONS = [{ label: 'All Provinces', value: 'all-p
 
 export const DEFAULT_SITE_OPTIONS = [{ label: 'All Sites', value: 'all-sites' }];
 
+export const ADDITIONAL_SERVICE_FORM_FIELDS = {
+  PROVINCES: 'provinces',
+  SITES: 'sites',
+  CATEGORIES: 'categories',
+  IDP_ADDITIONAL_SERVICES_TASKS: 'idp_additional_services_tasks',
+} as const;
+
+export const SUPPORT_PROVIDER_ROUTES = {
+  SESSIONS_SUPPORT: 'sessions-support',
+  SESSIONS_SUPPORT_CREATE: 'sessions-support/create',
+  SESSIONS_SUPPORT_CREATE_SESSION: 'sessions-support-create-session',
+  CREATE_OPPORTUNITY: 'create-opportunity',
+  OPPORTUNITIES: 'opportunities',
+} as const;
+
+export const SESSIONS_SUPPORT_TABS = {
+  ACTIVE_TAB: 'additional_services',
+  ACTIVE_SUB_TAB: 'my_requests',
+} as const;
+
+export const BUTTON_LOADING_STATE = {
+  SAVE_DRAFT: 'saveDraft',
+  SUBMIT: 'submit',
+} as const;
+
+export const ASSET_FORM_FIELDS = {
+  PROVINCE: 'province',
+  SITE: 'site',
+} as const;
+
+export const ASSET_SESSIONS_SUPPORT_TABS = {
+  ACTIVE_TAB: 'assets',
+  ACTIVE_SUB_TAB: 'my_requests',
+} as const;
+
+export const SUPPORT_OFFERING_TABS = {
+  SESSIONS: 'sessions',
+  ADDITIONAL_SERVICES: 'additional_services',
+  ASSETS: 'assets',
+} as const;
+
+export const SUPPORT_OFFERING_SUB_TABS = {
+  BROWSE_SESSIONS: 'browse_sessions',
+  MY_REQUESTS: 'my_requests',
+  MY_SESSIONS: 'my_sessions',
+  HISTORY: 'history',
+} as const;
+
+export const SUPPORT_OFFERING_TYPE_VALUES = {
+  TRAINING_SESSION: 'training_session',
+  ADDITIONAL_SERVICE: 'additional_service',
+  ASSET: 'asset',
+} as const;
+
+export const REQUEST_STATUS = {
+  REQUESTED: 'REQUESTED',
+  REJECTED: 'REJECTED',
+  PENDING: 'pending',
+  DECLINED: 'Declined',
+} as const;
+
+export const SUPPORT_REQUEST_TABS = {
+  SESSIONS: 'sessions',
+  ADDITIONAL_SERVICES: 'additional_services',
+  ASSETS: 'assets',
+  DECLINED: 'declined',
+} as const;
+
+export const OFFERING_FILTER_FIELDS = {
+  PROVINCE: 'province',
+  SITE: 'site',
+  PATHWAY: 'pathway',
+  PILLAR: 'pillar',
+  TYPE: 'type',
+  FORMAT: 'format',
+  SEARCH: 'search',
+  STATUS: 'status',
+} as const;
+
+export const OFFERING_QUERY_PARAM_KEYS = {
+  PAGE: 'page',
+  LIMIT: 'limit',
+  SEARCH: 'search',
+  STATUS: 'status',
+  PROVINCES: 'provinces',
+  SITES: 'sites',
+  CATEGORIES: 'categories',
+  PILLAR: 'pillar',
+  TYPE: 'type',
+  DELIVERY_MODE: 'delivery_mode',
+} as const;
+
+export const OFFERING_FILTER_ALL_OPTIONS = {
+  ALL_PROVINCES: 'all-provinces',
+  ALL_SITES: 'all-sites',
+  ALL_PATHWAYS: 'all-pathways',
+  ALL_PILLARS: 'all-pillars',
+  ALL_TYPES: 'all-types',
+  ALL_FORMATS: 'all-formats',
+  ALL_STATUSES: 'all-statuses',
+  ALL_STATUS: 'all-status',
+} as const;
+
 export const getSupportOfferingTabs = (t: any, counts: any) => [
   {
     key: 'sessions',

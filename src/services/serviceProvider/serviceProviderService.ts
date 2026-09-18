@@ -3,6 +3,13 @@ import api from '../api';
 import { API_ENDPOINTS } from '../apiEndpoints';
 import supportRequestsMock from './mockData/supportRequests.json';
 import { getProvincesList, getAllSites } from '../usersService';
+import {
+  SUPPORT_REQUEST_TABS,
+  SUPPORT_OFFERING_TYPE_VALUES,
+  REQUEST_STATUS,
+  OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL,
+} from '@constants/SUPPORT_PROVIDER_CARDS';
+import { STORAGE_KEYS } from '@constants/STORAGE_KEYS';
 
 export interface SupportRequestItem {
   id: string | number;
@@ -81,7 +88,7 @@ export interface DeclinePayload {
   details?: string;
 }
 
-const LOCAL_STORAGE_KEY = 'sp_support_requests_store';
+const LOCAL_STORAGE_KEY = STORAGE_KEYS.SP_SUPPORT_REQUESTS_STORE;
 
 const loadMockStore = (): Record<string, SupportRequestItem[]> => {
   try {
@@ -95,10 +102,10 @@ const loadMockStore = (): Record<string, SupportRequestItem[]> => {
     console.error('Error loading support requests mockStore from localStorage:', err);
   }
   return {
-    sessions: [...((supportRequestsMock as any).sessions || [])],
-    additional_services: [...((supportRequestsMock as any).additional_services || [])],
-    assets: [...((supportRequestsMock as any).assets || [])],
-    declined: [],
+    [SUPPORT_REQUEST_TABS.SESSIONS]: [...((supportRequestsMock as any).sessions || [])],
+    [SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES]: [...((supportRequestsMock as any).additional_services || [])],
+    [SUPPORT_REQUEST_TABS.ASSETS]: [...((supportRequestsMock as any).assets || [])],
+    [SUPPORT_REQUEST_TABS.DECLINED]: [],
   };
 };
 
@@ -167,7 +174,7 @@ const mapRequestSessionItem = (
     participants: participantsCount,
     preferredDate: startMoment ? startMoment.format('DD MMM YYYY') : '-',
     preferredTime: startMoment ? startMoment.format('hh:mm A') : '-',
-    status: tab === 'declined' ? 'Declined' : 'pending',
+    status: tab === SUPPORT_REQUEST_TABS.DECLINED ? REQUEST_STATUS.DECLINED : REQUEST_STATUS.PENDING,
     requestedDate: requestedMoment ? requestedMoment.format('DD MMM YYYY') : '-',
     overdueDays,
     declineReason: item.reason || item.decline_reason,
@@ -189,7 +196,7 @@ const applySupportRequestFilters = (
 ): SupportRequestItem[] => {
   let filtered = list;
 
-  if (province && province !== 'all-provinces') {
+  if (province && province !== FILTER_ALL.ALL_PROVINCES) {
     const targetProv = province.toLowerCase().replace(/[\s-_]/g, '');
     filtered = filtered.filter((item) => {
       const itemProv = (item.province || '').toLowerCase().replace(/[\s-_]/g, '');
@@ -197,7 +204,7 @@ const applySupportRequestFilters = (
     });
   }
 
-  if (site && site !== 'all-sites') {
+  if (site && site !== FILTER_ALL.ALL_SITES) {
     const targetSite = site.toLowerCase().replace(/[\s-_]/g, '');
     filtered = filtered.filter((item) => {
       const itemSite = (item.site || '').toLowerCase().replace(/[\s-_]/g, '');
@@ -262,7 +269,7 @@ export const getSupportRequests = async (
     overdueTotal: number;
   };
 }> => {
-  const { tab = 'sessions', provinces: province, sites: site, search } = params || {};
+  const { tab = SUPPORT_REQUEST_TABS.SESSIONS, provinces: province, sites: site, search } = params || {};
 
   const { provinceMap, siteMap } = await getProvinceAndSiteMaps();
 
@@ -279,19 +286,19 @@ export const getSupportRequests = async (
   // support_offering_type value the requestSessions API expects for each tab (declined isn't
   // type-scoped - it spans every offering type, so it's handled separately below).
   const SUPPORT_OFFERING_TYPE: Record<'sessions' | 'additional_services' | 'assets', string> = {
-    sessions: 'training_session',
-    additional_services: 'additional_service',
-    assets: 'asset',
+    sessions: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
+    additional_services: SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE,
+    assets: SUPPORT_OFFERING_TYPE_VALUES.ASSET,
   };
 
   const buildParams = (isDeclined: boolean, offeringTab?: 'sessions' | 'additional_services' | 'assets') => {
-    const apiParams: any = { status: isDeclined ? 'REJECTED' : 'REQUESTED' };
+    const apiParams: any = { status: isDeclined ? REQUEST_STATUS.REJECTED : REQUEST_STATUS.REQUESTED };
     if (!isDeclined && offeringTab) {
       apiParams.support_offering_type = SUPPORT_OFFERING_TYPE[offeringTab];
     }
     if (search && search.trim() !== '') apiParams.search = search.trim();
-    if (province && province !== 'all-provinces') apiParams.provinces = province;
-    if (site && site !== 'all-sites') apiParams.sites = site;
+    if (province && province !== FILTER_ALL.ALL_PROVINCES) apiParams.provinces = province;
+    if (site && site !== FILTER_ALL.ALL_SITES) apiParams.sites = site;
     return apiParams;
   };
 
@@ -299,9 +306,9 @@ export const getSupportRequests = async (
     // Tab badge counts must stay accurate regardless of which tab is currently active, so every
     // category is fetched in parallel on every call - not just the one the user happens to be on.
     const [sessionsRes, additionalServicesRes, assetsRes, declinedRes] = await Promise.all([
-      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, 'sessions') }),
-      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, 'additional_services') }),
-      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, 'assets') }),
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, SUPPORT_REQUEST_TABS.SESSIONS) }),
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES) }),
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, SUPPORT_REQUEST_TABS.ASSETS) }),
       api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(true) }),
     ]);
 
@@ -315,26 +322,26 @@ export const getSupportRequests = async (
       return { mapped, count };
     };
 
-    const sessionsResult = extract(sessionsRes, 'sessions');
+    const sessionsResult = extract(sessionsRes, SUPPORT_REQUEST_TABS.SESSIONS);
     if (sessionsResult) {
       sessionsData = sessionsResult.mapped;
       sessionsCount = sessionsResult.count;
       sessionsOverdueCount = sessionsResult.mapped.filter(i => (i.overdueDays || 0) > 0).length;
     }
 
-    const additionalServicesResult = extract(additionalServicesRes, 'additional_services');
+    const additionalServicesResult = extract(additionalServicesRes, SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES);
     if (additionalServicesResult) {
       additionalServicesData = additionalServicesResult.mapped;
       additionalServicesCount = additionalServicesResult.count;
     }
 
-    const assetsResult = extract(assetsRes, 'assets');
+    const assetsResult = extract(assetsRes, SUPPORT_REQUEST_TABS.ASSETS);
     if (assetsResult) {
       assetsData = assetsResult.mapped;
       assetsCount = assetsResult.count;
     }
 
-    const declinedResult = extract(declinedRes, 'declined');
+    const declinedResult = extract(declinedRes, SUPPORT_REQUEST_TABS.DECLINED);
     if (declinedResult) {
       declinedData = declinedResult.mapped;
       declinedCount = declinedResult.count;
@@ -348,16 +355,16 @@ export const getSupportRequests = async (
 
   let list: SupportRequestItem[];
   switch (tab) {
-    case 'sessions':
+    case SUPPORT_REQUEST_TABS.SESSIONS:
       list = sessionsData ?? [...mockStore.sessions];
       break;
-    case 'declined':
+    case SUPPORT_REQUEST_TABS.DECLINED:
       list = declinedData ?? [...mockStore.declined];
       break;
-    case 'additional_services':
+    case SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES:
       list = additionalServicesList;
       break;
-    case 'assets':
+    case SUPPORT_REQUEST_TABS.ASSETS:
       list = assetsList;
       break;
     default:
@@ -412,7 +419,7 @@ export const acceptAndScheduleSupportRequest = async (
   const body: Record<string, any> = {
     request_session_id: String(payload.requestId),
     type: 'public',
-    support_offering_type: 'training_session',
+    support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
     title: payload.title || '',
     description: payload.description || '',
     start_date: startDate,
@@ -494,15 +501,15 @@ export const declineSupportRequest = async (
 
   // Update in-memory mock store & persist to localStorage
   const { requestId, reason, details } = payload;
-  const categories = ['sessions', 'additional_services', 'assets'];
+  const categories = [SUPPORT_REQUEST_TABS.SESSIONS, SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES, SUPPORT_REQUEST_TABS.ASSETS];
   for (const cat of categories) {
     const idx = mockStore[cat].findIndex(item => String(item.id) === String(requestId));
     if (idx !== -1) {
       const [declinedItem] = mockStore[cat].splice(idx, 1);
-      declinedItem.status = 'Declined';
+      declinedItem.status = REQUEST_STATUS.DECLINED;
       declinedItem.declineReason = reason;
       declinedItem.declineDetails = details;
-      mockStore.declined.unshift(declinedItem);
+      mockStore[SUPPORT_REQUEST_TABS.DECLINED].unshift(declinedItem);
       saveMockStore(mockStore);
       break;
     }

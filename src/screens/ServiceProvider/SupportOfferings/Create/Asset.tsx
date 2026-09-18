@@ -13,7 +13,13 @@ import { requestSession } from '../../../../services/mentoringService';
 import { requestAssetPayloadMapping } from '@utils/supportProvider';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
-import { SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
+import {
+  SUPPORT_CATEGORIES,
+  SUPPORT_PROVIDER_ROUTES as ROUTES,
+  ASSET_FORM_FIELDS as FORM_FIELDS,
+  ASSET_SESSIONS_SUPPORT_TABS as SESSIONS_SUPPORT_TABS,
+} from '@constants/SUPPORT_PROVIDER_CARDS';
+import { ROLE_NAMES } from '@constants/ROLES';
 import moment from 'moment';
 
 const App = (): React.JSX.Element => {
@@ -21,7 +27,7 @@ const App = (): React.JSX.Element => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
   const { user } = useAuth() || {};
-  const isLc = user?.role === 'LC';
+  const isLc = user?.role === ROLE_NAMES.LC;
 
   const hideFileds = [
     ...(isLc ? REQUEST_ASSET_HIDE_FIELDS : []),
@@ -38,7 +44,7 @@ const App = (): React.JSX.Element => {
   const handleFieldChange = useCallback((name: string, value: string) => {
     setValues((prev: any) => {
       const next = { ...prev, [name]: value };
-      if (name === 'province') next.site = '';
+      if (name === FORM_FIELDS.PROVINCE) next[FORM_FIELDS.SITE] = '';
       return next;
     });
   }, []);
@@ -52,14 +58,14 @@ const App = (): React.JSX.Element => {
   },[])
 
   useEffect(() => {
-    if (!values.province) {
+    if (!values[FORM_FIELDS.PROVINCE]) {
       setDynamicSites([]);
       return;
     }
-    getSitesByProvince({ provinceId: values.province, page: 1, limit: 100 })
+    getSitesByProvince({ provinceId: values[FORM_FIELDS.PROVINCE], page: 1, limit: 100 })
       .then(res => setDynamicSites(res.result?.data || []))
       .catch(() => setDynamicSites([]));
-  }, [values.province]);
+  }, [values[FORM_FIELDS.PROVINCE]]);
 
   useEffect(() => {
     getProjectCategoryList()
@@ -175,22 +181,22 @@ const App = (): React.JSX.Element => {
         showAlert(
           'success',
           isDraft
-            ? t('supportProvider.createSupport.training.alerts.draftSaved', 'Draft saved successfully!')
-            : t('supportProvider.assetForm.requestSuccessMessage', 'Asset request saved successfully!'),
+            ? t('supportProvider.createSupport.training.alerts.draftSaved')
+            : t('supportProvider.assetForm.requestSuccessMessage'),
         );
         // @ts-ignore
-        navigation.navigate('sessions-support', {
-          activeTab: 'assets',
-          activeSubTab: 'my_requests',
+        navigation.navigate(ROUTES.SESSIONS_SUPPORT, {
+          activeTab: SESSIONS_SUPPORT_TABS.ACTIVE_TAB,
+          activeSubTab: SESSIONS_SUPPORT_TABS.ACTIVE_SUB_TAB,
           refreshRequests: Date.now(),
         });
       } else {
         // TODO: wire up SP-side asset offering creation (createSession) once its payload mapping is defined.
-        showAlert('success', 'supportProvider.assetForm.draftSuccessMessage');
+        showAlert('success', t('supportProvider.assetForm.draftSuccessMessage'));
         navigation.goBack();
       }
     } catch (err: any) {
-      const errMsg = err?.data?.message || err?.message || t('common.somethingWentWrong', 'Something went wrong. Please try again.');
+      const errMsg = err?.data?.message || err?.message || t('common.somethingWentWrong');
       showAlert('error', errMsg);
     } finally {
       setIsSubmitting(false);
@@ -202,7 +208,7 @@ const App = (): React.JSX.Element => {
       navigation.goBack();
     } else {
       // @ts-ignore
-      navigation.navigate('create-opportunity');
+      navigation.navigate(ROUTES.CREATE_OPPORTUNITY);
     }
   }
 
@@ -219,8 +225,8 @@ const App = (): React.JSX.Element => {
   return (
     <VStack flex={1}>
       <SPTitleHeader
-        title={t('supportProvider.createSupport.asset.title', 'Create Asset')}
-        backButtonText={t('supportProvider.createSupport.changeType', 'Change type')}
+        title={t('supportProvider.createSupport.asset.title')}
+        backButtonText={t('supportProvider.createSupport.changeType')}
         onNavigateBack={handleBackPress}
       />
       <Container {...styles.container}>

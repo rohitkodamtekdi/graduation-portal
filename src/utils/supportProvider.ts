@@ -1,5 +1,5 @@
 import { LC_ROLES, PARTICIPANT } from '@constants/ROLES';
-import { CERTIFICATE_OPTIONS, RECURRING_OPTIONS } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { CERTIFICATE_OPTIONS, RECURRING_OPTIONS, SUPPORT_CATEGORIES, SUPPORT_OFFERING_TYPE_VALUES } from '@constants/SUPPORT_PROVIDER_CARDS';
 import moment from 'moment';
 import { uploadFiles } from '../project-player/services/projectPlayerService';
 
@@ -9,9 +9,9 @@ export function valueMapping(
   formValues: any,
   isReverseMapping: boolean = false,
   optionsMap: any,
-  formType: SupportOfferingFormType = 'training',
+  formType: SupportOfferingFormType = SUPPORT_CATEGORIES.TRAINING,
 ): any {
-  const effectiveFormType: SupportOfferingFormType = formType || 'training';
+  const effectiveFormType: SupportOfferingFormType = formType || SUPPORT_CATEGORIES.TRAINING;
 
   if (isReverseMapping) {
     let recommended_for = '';
@@ -61,7 +61,7 @@ export function valueMapping(
   const { province, site, ...restFormValues } = formValues;
 
   let recommendedForPayload: string[] = [];
-  if (effectiveFormType === 'additional_service' || effectiveFormType === 'asset') {
+  if (effectiveFormType === SUPPORT_CATEGORIES.ADDITIONAL_SERVICE || effectiveFormType === SUPPORT_CATEGORIES.ASSET) {
     recommendedForPayload = ['user'];
   } else if (Array.isArray(formValues.recommended_for)) {
     recommendedForPayload = formValues.recommended_for;
@@ -72,7 +72,7 @@ export function valueMapping(
   }
 
   let startDate, endDate;
-  if (effectiveFormType === 'training') {
+  if (effectiveFormType === SUPPORT_CATEGORIES.TRAINING) {
     startDate = formValues.start_date ? moment(formValues.start_date).unix() : undefined;
     endDate = formValues.end_date ? moment(formValues.end_date).unix() : undefined;
   } else {
@@ -112,7 +112,7 @@ export function requestSessionPayloadMapping(formValues: any, optionMap: any = {
   const resolvedSites = formValues.sites ?? site;
 
   return {
-    support_offering_type: formValues.support_offering_type || 'training_session',
+    support_offering_type: formValues.support_offering_type || SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
     provinces: Array.isArray(resolvedProvince) ? resolvedProvince : [resolvedProvince],
     sites: Array.isArray(resolvedSites) ? resolvedSites : (resolvedSites ? [resolvedSites] : []),
     categories: [formValues.categories],
@@ -155,7 +155,7 @@ export function requestAssetPayloadMapping(formValues: any): any {
   const endMoment = formValues.endDate ? moment(formValues.endDate) : moment(startMoment).add(30, 'minutes');
 
   return {
-    support_offering_type: 'asset',
+    support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.ASSET,
     provinces: Array.isArray(resolvedProvince) ? resolvedProvince : (resolvedProvince ? [resolvedProvince] : []),
     sites: Array.isArray(resolvedSites) ? resolvedSites : (resolvedSites ? [resolvedSites] : []),
     title: formValues.assetTitle,
