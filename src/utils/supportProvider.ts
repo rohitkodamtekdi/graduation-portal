@@ -89,6 +89,7 @@ export function valueMapping(
     categories: [formValues.categories],
     delivery_mode: formValues.delivery_mode || 'offline',
     provinces: [formValues.provinces],
+    sites: [formValues.sites],
     recommended_for: recommendedForPayload,
     start_date: startDate,
     end_date: endDate,
