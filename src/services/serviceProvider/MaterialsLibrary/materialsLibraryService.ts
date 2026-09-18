@@ -12,6 +12,7 @@ export interface MaterialItem {
   associatedOffering: string;
   uploadDate: string;
   downloads: number;
+  fileUrl?: string;
 }
 
 export interface MaterialsFilterParams {
@@ -63,7 +64,8 @@ export const getMaterialsList = async (
           fileSize: '',
           associatedOffering: '',
           uploadDate: resource.created_at ? new Date(resource.created_at).toLocaleDateString('en-GB') : '',
-          downloads: 0,
+          downloads: 0,      
+          fileUrl: resource.link || '',
         };
       });
     } else {

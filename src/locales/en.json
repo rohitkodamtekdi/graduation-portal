@@ -2757,7 +2757,8 @@
         "downloads": "{{count}} downloads",
         "preview": "Preview",
         "download": "Download",
-        "delete": "Delete"
+        "delete": "Delete",
+        "fileNotAvailable": "File is not available for download."
       },
       "uploadModal": {
         "title": "Upload Resource Material",

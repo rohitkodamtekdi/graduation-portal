@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Box, VStack, Text } from '@gluestack-ui/themed';
 import { useAlert } from '@ui';
 import LucideIcon from '@components/ui/LucideIcon';
+import { useLanguage } from '@contexts/LanguageContext';
+import { openDownload } from '@utils/helper';
 import MaterialCard from './MaterialCard';
 import UploadResourceModal from './UploadResourceModal';
 import PreviewModal from './PreviewModal';
@@ -27,6 +29,7 @@ export default function MaterialsContent({
   onUploadClose,
 }: MaterialsContentProps): React.JSX.Element {
   const { showAlert } = useAlert();
+  const { t } = useLanguage();
 
   // Modal State
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -67,10 +70,18 @@ export default function MaterialsContent({
 
   // Download handler
   const handleDownload = async (id: string) => {
+    const item = materials.find(material => material.id === id) || activeItem;
+
+    if (!item?.fileUrl) {
+      showAlert('error', 'supportProvider.materialsLibrary.card.fileNotAvailable');
+      return;
+    }
+
+    await openDownload(item.fileUrl, t, showAlert);
+
     try {
       const res = await incrementDownloads(id);
       if (res.success) {
-        showAlert('success', 'supportProvider.materialsLibrary.previewModal.downloadFile');
         if (activeItem && activeItem.id === id) {
           setActiveItem(prev => (prev ? { ...prev, downloads: res.downloads } : null));
         }
