@@ -1,4 +1,5 @@
 import mockMaterials from './mockData/materialsLibrary.json';
+import { getResourcesList } from '../../mentoringService';
 
 export interface MaterialItem {
   id: string;
@@ -11,6 +12,7 @@ export interface MaterialItem {
   associatedOffering: string;
   uploadDate: string;
   downloads: number;
+  fileUrl?: string;
 }
 
 export interface MaterialsFilterParams {
@@ -34,14 +36,47 @@ export interface MaterialsLibraryResponse {
 let inMemoryMaterials: MaterialItem[] = [...(mockMaterials as unknown as MaterialItem[])];
 
 /**
- * Get materials with optional filters, search, and dynamic stats
+ * Get materials with optional filters, search, and dynamic stats from backend API
  */
 export const getMaterialsList = async (
   params?: MaterialsFilterParams
 ): Promise<MaterialsLibraryResponse> => {
   const { search, category, format } = params || {};
 
-  let filtered = [...inMemoryMaterials];
+  let items: MaterialItem[] = [];
+
+  try {
+    const apiRes = await getResourcesList();
+    const rawResources = apiRes?.result || [];
+
+    if (Array.isArray(rawResources) && rawResources.length > 0) {
+      items = rawResources.map((resource: any) => {
+        const fileName = resource.name || `resource-${resource.id}`;
+        const isPdf = (resource.type || '').toLowerCase() === 'pdf' || fileName.toLowerCase().endsWith('.pdf');
+
+        return {
+          id: String(resource.id),
+          title: fileName,
+          description: '',
+          category: '',
+          format: isPdf ? 'PDF Document' : 'Templates & Decks',
+          fileName,
+          fileSize: '',
+          associatedOffering: '',
+          uploadDate: resource.created_at ? new Date(resource.created_at).toLocaleDateString('en-GB') : '',
+          downloads: 0,      
+          fileUrl: resource.link || '',
+        };
+      });
+    } else {
+      items = [...inMemoryMaterials];
+    }
+  } catch (err) {
+    console.warn('[materialsLibraryService] Failed to fetch resources list, using fallback:', err);
+    items = [...inMemoryMaterials];
+  }
+
+  let filtered = [...items];
 
   // Apply search (matching title, description, or associated offering)
   if (search && search.trim() !== '') {
@@ -73,20 +108,14 @@ export const getMaterialsList = async (
   }
 
   // Compute stats on the complete set (unfiltered)
-  const totalResources = inMemoryMaterials.length;
-  
-  // Format categorization:
-  // PDFs & Documents includes: PDF Document
-  // Templates & Decks includes: Templates & Decks
-  const pdfDocuments = inMemoryMaterials.filter(
+  const totalResources = items.length;
+  const pdfDocuments = items.filter(
     (item) => item.format.toLowerCase() === 'pdf document'
   ).length;
-
-  const templatesDecks = inMemoryMaterials.filter(
+  const templatesDecks = items.filter(
     (item) => item.format.toLowerCase() === 'templates & decks'
   ).length;
-
-  const totalDownloads = inMemoryMaterials.reduce((acc, item) => acc + item.downloads, 0);
+  const totalDownloads = items.reduce((acc, item) => acc + item.downloads, 0);
 
   return {
     success: true,

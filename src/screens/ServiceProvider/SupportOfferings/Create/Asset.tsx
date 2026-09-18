@@ -14,6 +14,7 @@ import { requestAssetPayloadMapping } from '@utils/supportProvider';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
 import { SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
+import moment from 'moment';
 
 const App = (): React.JSX.Element => {
   const navigation = useNavigation();
@@ -80,16 +81,26 @@ const App = (): React.JSX.Element => {
   }, []);
 
   const optionsMap = useMemo(() => {
+    const filteredProvinces =
+      allowedProvinces && allowedProvinces.length > 0
+        ? provinces.filter((p: any) => allowedProvinces.includes(p._id || p.id))
+        : provinces;
+
+    const filteredSites =
+      allowedSites && allowedSites.length > 0
+        ? dynamicSites.filter((s: any) => allowedSites.includes(s._id || s.id))
+        : dynamicSites;
+
     const provinceOpts =
-      provinces && provinces.length > 0
-        ? provinces.map((p: any) => ({
+      filteredProvinces && filteredProvinces.length > 0
+        ? filteredProvinces.map((p: any) => ({
             value: p._id || p.id || p.name,
             label: p.name || p.label,
           }))
         : [];
 
-    const siteOpts = dynamicSites
-      ? dynamicSites.map((s: any) => ({
+    const siteOpts = filteredSites
+      ? filteredSites.map((s: any) => ({
           value: s._id || s.id || s.name,
           label: s.name || s.label,
         }))
@@ -148,7 +159,7 @@ const App = (): React.JSX.Element => {
       ],
       livelihoodCategories: livelihoodOpts,
     };
-  }, [provinces, dynamicSites, livelihoodCats, t]);
+  }, [provinces, dynamicSites, livelihoodCats, allowedProvinces, allowedSites, t]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 

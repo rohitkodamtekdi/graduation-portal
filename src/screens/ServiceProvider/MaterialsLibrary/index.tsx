@@ -83,19 +83,10 @@ const MaterialsLibraryScreen = (): React.JSX.Element => {
 
   return (
     <VStack {...styles.screenWrapper}>
-      {/* Title Header with upload action */}
+      {/* Title Header */}
       <SPTitleHeader
         title={t('supportProvider.materialsLibrary.title')}
         subTitle={t('supportProvider.materialsLibrary.subtitle')}
-        rightSection={
-          <Button
-            onPress={() => setIsUploadOpen(true)}
-            {...styles.uploadButtonProps}
-          >
-            <ButtonIcon as={LucideIcon} name="Plus" />
-            <ButtonText>{t('supportProvider.materialsLibrary.uploadResource')}</ButtonText>
-          </Button>
-        }
       />
 
       {/* Main content body inside boxed/container layout */}
@@ -137,39 +128,6 @@ const MaterialsLibraryScreen = (): React.JSX.Element => {
               </Box>
             </Box>
 
-            {/* Templates & Decks */}
-            <Box {...styles.statCardContainer}>
-              <Box {...styles.statCardContent}>
-                <VStack {...styles.statTextCol}>
-                  <Text {...styles.statTitleText}>
-                    {t('supportProvider.materialsLibrary.stats.templatesDecks')}
-                  </Text>
-                  <Text {...styles.statCountText}>
-                    {stats.templatesDecks}
-                  </Text>
-                </VStack>
-                <Box {...styles.statIconBoxTemplates}>
-                  <LucideIcon name="TrendingUp" size={styles.statIconTrendingUp.size} color={styles.statIconTrendingUp.color} />
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Total Downloads */}
-            <Box {...styles.statCardContainer}>
-              <Box {...styles.statCardContent}>
-                <VStack {...styles.statTextCol}>
-                  <Text {...styles.statTitleText}>
-                    {t('supportProvider.materialsLibrary.stats.totalDownloads')}
-                  </Text>
-                  <Text {...styles.statCountText}>
-                    {stats.totalDownloads}
-                  </Text>
-                </VStack>
-                <Box {...styles.statIconBoxDownloads}>
-                  <LucideIcon name="Download" size={styles.statIconDownload.size} color={styles.statIconDownload.color} />
-                </Box>
-              </Box>
-            </Box>
           </Box>
 
           {/* Filters Box */}

@@ -2639,7 +2639,7 @@
       },
       "errors": {
         "saveFailed": "Something went wrong while saving. Please try again.",
-        "incompleteWarning": "Please Complete your Profile before proceeding."
+        "incompleteWarning": "Please Complete Your Profile Before Proceeding."
       }
     },
     "supportRequests": {
@@ -2765,7 +2765,8 @@
         "downloads": "{{count}} downloads",
         "preview": "Preview",
         "download": "Download",
-        "delete": "Delete"
+        "delete": "Delete",
+        "fileNotAvailable": "File is not available for download."
       },
       "uploadModal": {
         "title": "Upload Resource Material",

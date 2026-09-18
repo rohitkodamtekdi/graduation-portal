@@ -33,9 +33,8 @@ const App = (): React.JSX.Element => {
   const { showAlert } = useAlert();
   const { user } = useAuth() || {};
   const isLc = user?.role === 'LC';
-
-  const { isCardAllowed } = useProfileCompletion();
-  const isAllowed = isLc || Boolean(isCardAllowed(SUPPORT_CATEGORIES.ADDITIONAL_SERVICE));
+  const { isCardAllowed, allowedSubOptions, allowedProvinces, allowedSites } = useProfileCompletion();
+  const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.ADDITIONAL_SERVICE));
 
   const [provinces, setProvinces] = useState<any[]>([]);
   const [pillers, setPillers] = useState<MentoringOption[]>([]);
@@ -87,7 +86,14 @@ const App = (): React.JSX.Element => {
     }, [init])
   );
 
-  const { sessionTypes, optionsMap } = useTrainingFormOptions({ values, provinces, pillers });
+  const { sessionTypes, optionsMap } = useTrainingFormOptions({
+    values,
+    provinces,
+    pillers,
+    allowedSubOptions,
+    allowedProvinces,
+    allowedSites,
+  });
 
   const hideFileds = [
     ...(sessionTypes.length === 0 ? ['idp_additional_services_tasks'] : []),
@@ -211,5 +217,4 @@ const App = (): React.JSX.Element => {
     </VStack>
   );
 };
-
-export default App;
+export default App; 

@@ -239,3 +239,17 @@ export const updateMentoringProfile = async (payload: any): Promise<any> => {
     throw error;
   }
 };
+
+/**
+ * Get uploaded resources list (e.g. materials library files)
+ * Endpoint: GET /mentoring/v1/resources/list
+ */
+export const getResourcesList = async (): Promise<any> => {
+  try {
+    const response = await api.get(API_ENDPOINTS.RESOURCES_LIST);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching resources list:', error);
+    throw error;
+  }
+};

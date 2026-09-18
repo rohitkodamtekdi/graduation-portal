@@ -71,7 +71,7 @@ export interface TrainingSessionItem {
 export interface ServiceItem {
   id: number | string;
   title: string;
-  status: 'Upcoming' | 'In progress' | 'Completed' | string;
+  status: 'Upcoming' | 'In progress' | 'Completed' | 'Draft' | string;
   description?: string;
   location?: string;
   hubOffice?: string;
