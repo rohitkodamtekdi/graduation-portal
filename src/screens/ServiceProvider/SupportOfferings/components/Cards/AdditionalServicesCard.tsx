@@ -23,6 +23,13 @@ import styles from '../../styles';
 
 // ---------- Card ----------
 
+const getRequesterInfo = (item: ServiceItem) => {
+  const requesterName = (item as any)?.mentor_name || (item as any)?.meta?.mentor_name;
+  const requesterOrg = (item as any)?.organization || (item as any)?.meta?.organization;
+  const requesterOrgName = typeof requesterOrg === 'object' ? requesterOrg?.name : requesterOrg;
+  return { requesterName, requesterOrgName };
+};
+
 interface CardProps {
   item: ServiceItem;
   provinces?: any[];
@@ -127,9 +134,7 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
     (item as any)?.meta?.requests ??
     undefined;
 
-  const requesterName = (item as any)?.mentor_name || (item as any)?.meta?.mentor_name;
-  const requesterOrg = (item as any)?.organization || (item as any)?.meta?.organization;
-  const requesterOrgName = typeof requesterOrg === 'object' ? requesterOrg?.name : requesterOrg;
+  const { requesterName, requesterOrgName } = getRequesterInfo(item);
 
   const handleConfirmCancel = async () => {
     if (isCancelling) return;

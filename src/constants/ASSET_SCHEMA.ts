@@ -7,7 +7,6 @@ export const ASSET_SCHEMA: FormSection[] = [
     id: 'assetDetails',
     title: {
       key: 'supportProvider.assetForm.tabs.assetDetails',
-      fallback: 'Asset Details',
     },
     icon: 'FileText',
     children: [
@@ -16,11 +15,9 @@ export const ASSET_SCHEMA: FormSection[] = [
         id: 'assetDetailsSection',
         title: {
           key: 'supportProvider.assetForm.step1.title',
-          fallback: 'Asset Details',
         },
         subTitle: {
           key: 'supportProvider.assetForm.step1.subTitle',
-          fallback: 'Fields marked * are required',
         },
         rows: [
           {
@@ -29,15 +26,14 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'province',
                 type: 'select',
                 required: true,
-                label: { key: 'province', fallback: 'Province' },
-                placeholder: { fallback: 'Select province' },
+                label: { key: 'province' },
+                placeholder: { },
                 optionsSource: 'provinces',
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.provinceRequired',
-                      fallback: 'Province is required',
                     },
                   },
                 ],
@@ -46,11 +42,10 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'site',
                 type: 'multiselect',
                 required: true,
-                label: { key: 'site', fallback: 'Site' },
-                placeholder: { fallback: 'Select province first' },
+                label: { key: 'site' },
+                placeholder: { },
                 placeholderWhenReady: {
                   key: 'sitePlaceholderReady',
-                  fallback: 'Select site',
                 },
                 optionsSource: 'sites',
                 dependsOn: 'province',
@@ -60,7 +55,6 @@ export const ASSET_SCHEMA: FormSection[] = [
                     rule: 'required',
                     message: {
                       key: 'errors.siteRequired',
-                      fallback: 'Site is required',
                     },
                   },
                 ],
@@ -73,14 +67,13 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'assetType',
                 type: 'pillselect',
                 required: true,
-                label: { key: 'assetType', fallback: 'Asset Type' },
+                label: { key: 'assetType' },
                 optionsSource: 'assetTypes',
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.assetTypeRequired',
-                      fallback: 'Asset type is required',
                     },
                   },
                 ],
@@ -93,10 +86,9 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'livelihoodCategory',
                 type: 'pillmultiselect',
                 required: true,
-                label: { key: 'livelihoodCategory', fallback: 'Category of Livelihoods' },
+                label: { key: 'livelihoodCategory' },
                 subTitle: {
                   key: 'supportProvider.assetForm.step1.livelihoodCategorySubTitle',
-                  fallback: 'Select all applicable livelihood categories for this asset support',
                 },
                 optionsSource: 'livelihoodCategories',
                 validation: [
@@ -104,7 +96,6 @@ export const ASSET_SCHEMA: FormSection[] = [
                     rule: 'required',
                     message: {
                       key: 'errors.livelihoodCategoryRequired',
-                      fallback: 'At least one livelihood category must be selected',
                     },
                   },
                 ],
@@ -117,14 +108,13 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'assetTitle',
                 type: 'text',
                 required: true,
-                label: { key: 'assetTitle', fallback: 'Asset Title' },
-                placeholder: { fallback: 'Name of this asset...' },
+                label: { key: 'assetTitle' },
+                placeholder: { },
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.assetTitleRequired',
-                      fallback: 'Asset title is required',
                     },
                   },
                 ],
@@ -137,16 +127,14 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'assetDescription',
                 type: 'textarea',
                 required: true,
-                label: { key: 'assetDescription', fallback: 'Asset Description' },
+                label: { key: 'assetDescription' },
                 placeholder: {
-                  fallback: 'Describe this asset, its purpose, and how it benefits the recipient...',
                 },
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.assetDescriptionRequired',
-                      fallback: 'Asset description is required',
                     },
                   },
                 ],
@@ -159,19 +147,17 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'estimatedValue',
                 type: 'text',
                 required: true,
-                label: { key: 'estimatedValue', fallback: 'Estimated Asset Value per Participant (Rands)' },
+                label: { key: 'estimatedValue' },
                 subTitle: {
                   key: 'supportProvider.assetForm.step1.estimatedValueSubTitle',
-                  fallback: 'Monetary value allocated per individual participant (1:1 ratio)',
                 },
-                placeholder: { fallback: 'e.g. 3500' },
+                placeholder: { },
                 inputProps: { keyboardType: 'numeric' },
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.estimatedValueRequired',
-                      fallback: 'Estimated asset value is required',
                     },
                   },
                 ],
@@ -180,19 +166,17 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'availableQuantity',
                 type: 'text',
                 required: true,
-                label: { key: 'availableQuantity', fallback: 'Available Quantity' },
+                label: { key: 'availableQuantity' },
                 subTitle: {
                   key: 'supportProvider.assetForm.step1.availableQuantitySubTitle',
-                  fallback: 'Total number of participants / units funded for this asset',
                 },
-                placeholder: { fallback: 'e.g. 20' },
+                placeholder: { },
                 inputProps: { keyboardType: 'numeric' },
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.availableQuantityRequired',
-                      fallback: 'Available quantity is required',
                     },
                   },
                 ],
@@ -204,7 +188,7 @@ export const ASSET_SCHEMA: FormSection[] = [
               {
                 name: 'totalFundBreakdown',
                 type: 'note',
-                label: { key: 'totalFundBreakdown', fallback: '' },
+                label: { key: 'totalFundBreakdown' },
                 visibleIf: [
                   { name: 'estimatedValue', operator: '!=', value: '' },
                   { name: 'availableQuantity', operator: '!=', value: '' },
@@ -219,7 +203,6 @@ export const ASSET_SCHEMA: FormSection[] = [
         id: 'availability',
         title: {
           key: 'supportProvider.assetForm.step1.availabilityTitle',
-          fallback: 'Availability (optional)',
         },
         rows: [
           {
@@ -228,14 +211,13 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'startDate',
                 type: 'datetime',
                 required: false,
-                label: { key: 'startDate', fallback: 'Start Date' },
-                placeholder: { fallback: 'DD/MM/YYYY HH:MM' },
+                label: { key: 'startDate' },
+                placeholder: { },
                 validation: [
                   {
                     rule: 'dateNotInPast',
                     message: {
                       key: 'errors.dateNotInPast',
-                      fallback: 'Past dates are not allowed.',
                     },
                   },
                   {
@@ -246,7 +228,6 @@ export const ASSET_SCHEMA: FormSection[] = [
                     },
                     message: {
                       key: "errors.dateCompare",
-                      fallback: "Start Date must be before or equal to End Date."
                     }
                   }
                 ],
@@ -255,8 +236,8 @@ export const ASSET_SCHEMA: FormSection[] = [
               //   name: 'startTime',
               //   type: 'time',
               //   required: false,
-              //   label: { key: 'startTime', fallback: 'Start Time' },
-              //   placeholder: { fallback: '--:--' },
+              //   label: { key: 'startTime' },
+              //   placeholder: { },
               //   validation: [
               //     {
               //       rule: "timeCompare",
@@ -266,8 +247,7 @@ export const ASSET_SCHEMA: FormSection[] = [
               //       },
               //       message: {
               //         key: "errors.timeCompareEndTime",
-              //         fallback: "Start Time must be before End Time."
-              //       }
+              //              //       }
               //     }
               //   ],
               // },
@@ -279,14 +259,13 @@ export const ASSET_SCHEMA: FormSection[] = [
                 name: 'endDate',
                 type: 'datetime',
                 required: false,
-                label: { key: 'endDate', fallback: 'End Date' },
-                placeholder: { fallback: 'DD/MM/YYYY HH:MM' },
+                label: { key: 'endDate' },
+                placeholder: { },
                 validation: [
                   {
                     rule: 'dateNotInPast',
                     message: {
                       key: 'errors.dateNotInPast',
-                      fallback: 'Past dates are not allowed.',
                     },
                   },
                   {
@@ -297,7 +276,6 @@ export const ASSET_SCHEMA: FormSection[] = [
                     },
                     message: {
                       key: "errors.dateCompareStartDate",
-                      fallback: "End Date must be after or equal to Start Date."
                     }
                   }
                 ],
@@ -306,8 +284,8 @@ export const ASSET_SCHEMA: FormSection[] = [
               //   name: 'endTime',
               //   type: 'time',
               //   required: false,
-              //   label: { key: 'endTime', fallback: 'End Time' },
-              //   placeholder: { fallback: '--:--' },
+              //   label: { key: 'endTime' },
+              //   placeholder: { },
               //   validation: [
               //     {
               //       rule: "timeCompare",
@@ -317,8 +295,7 @@ export const ASSET_SCHEMA: FormSection[] = [
               //       },
               //       message: {
               //         key: "errors.timeCompareStartTime",
-              //         fallback: "End Time must be after Start Time."
-              //       }
+              //              //       }
               //     }
               //   ],
               // },
@@ -340,15 +317,12 @@ export const ASSET_SCHEMA: FormSection[] = [
                 showOptionalTag: true,
                 label: {
                   key: 'supportProvider.assetForm.step1.resourceContent',
-                  fallback: 'Resource Content / Asset Documents',
                 },
                 subTitle: {
                   key: 'supportProvider.assetForm.step1.resourceUploadSub',
-                  fallback: 'Upload PDF or Word specification documents (Max 10 MB per file)',
                 },
                 placeholder: {
                   key: 'supportProvider.assetForm.step1.uploadPrompt',
-                  fallback: 'Click to browse or upload PDF / Word documents',
                 },
                 validation: [
                   {
@@ -356,7 +330,6 @@ export const ASSET_SCHEMA: FormSection[] = [
                     value: ['pdf', 'doc', 'docx'],
                     message: {
                       key: 'errors.fileType',
-                      fallback: 'Only PDF, DOC and DOCX files are allowed.',
                     },
                   },
                   {
@@ -364,7 +337,6 @@ export const ASSET_SCHEMA: FormSection[] = [
                     value: 10,
                     message: {
                       key: 'errors.fileSize10',
-                      fallback: 'Maximum file size is 10 MB.',
                     },
                   },
                 ],
@@ -382,7 +354,6 @@ export const ASSET_SCHEMA: FormSection[] = [
     id: 'review',
     title: {
       key: 'supportProvider.assetForm.tabs.review',
-      fallback: 'Review & Publish',
     },
     icon: 'Check',
     children: [
@@ -391,25 +362,20 @@ export const ASSET_SCHEMA: FormSection[] = [
         id: 'reviewPublishSection',
         title: {
           key: 'supportProvider.assetForm.step2.title',
-          fallback: 'Review & Publish',
         },
         hint: {
           title: {
             key: 'supportProvider.assetForm.step2.infoTitle',
-            fallback: 'Before you publish:',
           },
           bullets: [
             {
               key: 'supportProvider.assetForm.step2.infoBullet1',
-              fallback: 'This support will be visible to all Coaches in the GBL network',
             },
             {
               key: 'supportProvider.assetForm.step2.infoBullet2',
-              fallback: 'Coaches can submit requests on behalf of participants',
             },
             {
               key: 'supportProvider.assetForm.step2.infoBullet3',
-              fallback: "You'll receive notifications when requests are submitted",
             },
           ],
         },
@@ -419,7 +385,6 @@ export const ASSET_SCHEMA: FormSection[] = [
             id: 'reviewAssetDetails',
             title: {
               key: 'supportProvider.assetForm.step2.assetDetailsTitle',
-              fallback: 'Asset Details',
             },
             rows:[
               {
@@ -430,7 +395,6 @@ export const ASSET_SCHEMA: FormSection[] = [
                     optionsSource: 'provinces',
                     label: {
                       key: 'province',
-                      fallback: 'Province',
                     },
                   },
                 ],
@@ -443,7 +407,6 @@ export const ASSET_SCHEMA: FormSection[] = [
                     optionsSource: 'sites',
                     label: {
                       key: 'site',
-                      fallback: 'Site',
                     },
                   },
                 ],
@@ -453,7 +416,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                   {
                     type: 'view',
                     name: 'assetType',
-                    label: { key: 'assetType', fallback: 'Asset Type' },
+                    label: { key: 'assetType' },
                     optionsSource: 'assetTypes',
                   },
                 ],
@@ -463,7 +426,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                   {
                     type: 'view',
                     name: 'livelihoodCategory',
-                    label: { key: 'livelihoodCategory', fallback: 'Category of Livelihoods' },
+                    label: { key: 'livelihoodCategory' },
                     optionsSource: 'livelihoodCategories',
                   },
                 ],
@@ -473,8 +436,8 @@ export const ASSET_SCHEMA: FormSection[] = [
                   {
                     type: 'view',
                     name: 'assetTitle',
-                    label: { key: 'assetTitle', fallback: 'Asset Title' },
-                    placeholder: { fallback: 'Name of this asset...' },
+                    label: { key: 'assetTitle' },
+                    placeholder: { },
                   },
                 ],
               },
@@ -483,12 +446,12 @@ export const ASSET_SCHEMA: FormSection[] = [
                   {
                     name: 'estimatedValue',
                     type: 'view',
-                    label: { key: 'estimatedValue', fallback: 'Estimated Value per Participant' },
+                    label: { key: 'estimatedValueReview' },
                   },
                   {
                     name: 'availableQuantity',
                     type: 'view',
-                    label: { key: 'availableQuantity', fallback: 'Available Quantity' },
+                    label: { key: 'availableQuantity' },
                   },
                 ],
               },
@@ -498,12 +461,12 @@ export const ASSET_SCHEMA: FormSection[] = [
                     name: 'startDate',
                     type: 'view',
                     displayFormat: "dateFormat@DD/MM/YYYY hh:mm A",
-                    label: { key: 'startDate', fallback: 'Start Date' },
+                    label: { key: 'startDate' },
                   },
                   // {
                   //   name: 'startTime',
                   //   type: 'view',
-                  //   label: { key: 'startTime', fallback: 'Start Time' },
+                  //   label: { key: 'startTime' },
                   // },
                 ],
               },
@@ -513,12 +476,12 @@ export const ASSET_SCHEMA: FormSection[] = [
                     name: 'endDate',
                     type: 'view',
                     displayFormat: "dateFormat@DD/MM/YYYY hh:mm A",
-                    label: { key: 'endDate', fallback: 'End Date' },
+                    label: { key: 'endDate' },
                   },
                   // {
                   //   name: 'endTime',
                   //   type: 'view',
-                  //   label: { key: 'endTime', fallback: 'End Time' },
+                  //   label: { key: 'endTime' },
                   // },
                 ],
               },

@@ -46,6 +46,26 @@ const getStatusColors = (status: string) => {
   }
 };
 
+const getLocationValue = (item: AssetItem, provinces?: any[], sites?: any[]) => {
+  const provinceName = provinces?.find((e: any) => e._id === item.province)?.name;
+  const siteNames = sites?.filter((e: any) => e._id === item.siteKey)?.map((e: any) => e.name).join(', ');
+  const locationValue = item.meeting_info_details?.location || item.meeting_info?.location || provinceName || item.location;
+  return { siteNames, locationValue };
+};
+
+const getRequesterOrgName = (item: AssetItem) =>
+  typeof item.organization === 'object' ? item.organization?.name : item.organization;
+
+const getClaimedCount = (item: AssetItem) => {
+  const hasParticipantCounts = item.seats_limit !== undefined && item.seats_remaining !== undefined;
+  return hasParticipantCounts ? (item.seats_limit || 0) - (item.seats_remaining || 0) : undefined;
+};
+
+const getTotalFund = (item: AssetItem) => {
+  const hasTotalFund = item.estimatedValuePerParticipant !== undefined && item.quantity !== undefined;
+  return hasTotalFund ? (item.estimatedValuePerParticipant || 0) * (item.quantity || 0) : undefined;
+};
+
 const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
@@ -58,17 +78,10 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
   const statusColors = getStatusColors(item.status);
   const isUpcoming = item.status === 'Upcoming';
 
-  const provinceName = provinces?.find((e: any) => e._id === item.province)?.name;
-  const siteNames = sites?.filter((e: any) => e._id === item.siteKey)?.map((e: any) => e.name).join(', ');
-  const locationValue = item.meeting_info_details?.location || item.meeting_info?.location || provinceName || item.location;
-
-  const requesterOrgName = typeof item.organization === 'object' ? item.organization?.name : item.organization;
-
-  const hasParticipantCounts = item.seats_limit !== undefined && item.seats_remaining !== undefined;
-  const claimed = hasParticipantCounts ? (item.seats_limit || 0) - (item.seats_remaining || 0) : undefined;
-
-  const hasTotalFund = item.estimatedValuePerParticipant !== undefined && item.quantity !== undefined;
-  const totalFund = hasTotalFund ? (item.estimatedValuePerParticipant || 0) * (item.quantity || 0) : undefined;
+  const { siteNames, locationValue } = getLocationValue(item, provinces, sites);
+  const requesterOrgName = getRequesterOrgName(item);
+  const claimed = getClaimedCount(item);
+  const totalFund = getTotalFund(item);
 
   const handleConfirmCancel = async () => {
     if (isCancelling) return;

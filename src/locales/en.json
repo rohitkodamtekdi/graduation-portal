@@ -1431,6 +1431,113 @@
         "site": "Site",
         "sitePlaceholder": "Select province first",
         "sitePlaceholderReady": "Select site",
+        "servicesCategory": "Services Category",
+        "servicesCategoryReview": "Category",
+        "servicesTags": "Tags",
+        "servicesTitle": "Services Title",
+        "servicesTitleReview": "Title",
+        "servicesDescription": "Services Description",
+        "serviceLocation": "Location where service is provided",
+        "serviceLocationReview": "Location",
+        "eligibilityCriteria": "Eligibility Criteria",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "assetType": "Asset Type",
+        "livelihoodCategory": "Category of Livelihoods",
+        "assetTitle": "Asset Title",
+        "assetDescription": "Asset Description",
+        "estimatedValue": "Estimated Asset Value per Participant (Rands)",
+        "estimatedValueReview": "Estimated Value per Participant",
+        "availableQuantity": "Available Quantity",
+        "totalFundBreakdown": "",
+        "trainingDetails": "Training Session Details",
+        "trainingDetailsSubTitle": "Fields marked * are required",
+        "pillar": "Pillar",
+        "idp_training_task": "Training / Session Type",
+        "sessionType": "Please specify",
+        "learningObjectives": "Learning Objectives",
+        "targetAudience": "Target Audience",
+        "certificateProvided": "Certificate Provided",
+        "maxCapacity": "Maximum Capacity",
+        "recurringSession": "Recurring Session",
+        "scheduleFormat": "Schedule & Format",
+        "scheduleDetails": "Schedule & Format",
+        "scheduleDetailsSubTitle": "Set when and how the session will be delivered",
+        "start_date": "Start Date & Time",
+        "end_date": "End Date & Time",
+        "formatType": "Type",
+        "location": "Venue Location",
+        "meetingLink": "Meeting Link",
+        "review": "Review & Publish",
+        "supportProvider": {
+          "trainingSession": {
+            "step1": {
+              "resourceContent": "Resource Content",
+              "resourceUploadSub": "Upload PDF or DOC training materials",
+              "uploadPrompt": "Click to upload PDF / DOC"
+            },
+            "step3": {
+              "title": "Review & Publish",
+              "sessionDetailsTitle": "Session Details",
+              "infoTitle": "Before you publish:",
+              "infoBullet1": "This support will be visible to all Coaches in the GBL network",
+              "infoBullet2": "Coaches can submit requests on behalf of participants",
+              "infoBullet3": "You'll receive notifications when requests are submitted",
+              "scheduleTitle": "Schedule",
+              "startLabel": "Start Date & Time",
+              "endLabel": "End Date & Time",
+              "formatLabel": "Format"
+            }
+          },
+          "assetForm": {
+            "tabs": {
+              "assetDetails": "Asset Details",
+              "review": "Review & Publish"
+            },
+            "step1": {
+              "title": "Asset Details",
+              "subTitle": "Fields marked * are required",
+              "livelihoodCategorySubTitle": "Select all applicable livelihood categories for this asset support",
+              "estimatedValueSubTitle": "Monetary value allocated per individual participant (1:1 ratio)",
+              "availableQuantitySubTitle": "Total number of participants / units funded for this asset",
+              "availabilityTitle": "Availability (optional)",
+              "resourceContent": "Resource Content / Asset Documents",
+              "resourceUploadSub": "Upload PDF or Word specification documents (Max 10 MB per file)",
+              "uploadPrompt": "Click to browse or upload PDF / Word documents"
+            },
+            "step2": {
+              "title": "Review & Publish",
+              "infoTitle": "Before you publish:",
+              "infoBullet1": "This support will be visible to all Coaches in the GBL network",
+              "infoBullet2": "Coaches can submit requests on behalf of participants",
+              "infoBullet3": "You'll receive notifications when requests are submitted",
+              "assetDetailsTitle": "Asset Details"
+            }
+          },
+          "additionalServicesForm": {
+            "tabs": {
+              "serviceDetails": "Service Details",
+              "review": "Review & Publish",
+              "sessionDetails": "Session Details"
+            },
+            "step1": {
+              "title": "Additional Service Details",
+              "subTitle": "Fields marked * are required",
+              "availabilityTitle": "Service Availability",
+              "resourceContent": "Resource Content / Documents",
+              "resourceUploadSub": "Upload PDF or Word service materials or guidelines (Max 10 MB per file)",
+              "uploadPrompt": "Click to browse or upload PDF / Word documents"
+            },
+            "step2": {
+              "title": "Review & Publish",
+              "infoTitle": "Before you publish:",
+              "infoBullet1": "This support will be visible to all Coaches in the GBL network",
+              "infoBullet2": "Coaches can submit requests on behalf of participants",
+              "infoBullet3": "You'll receive notifications when requests are submitted",
+              "serviceDetailsTitle": "Service Details"
+            }
+          }
+        },
         "passwordNote": "A temporary password will be generated and sent to the user's email address. The user will be required to change their password on first login.",
         "additionalInformation": "Additional Information",
         "organisation": "Organisation",
