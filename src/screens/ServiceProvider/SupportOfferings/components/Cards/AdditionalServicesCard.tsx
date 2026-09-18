@@ -16,19 +16,13 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '@contexts/LanguageContext';
 import type { ServiceItem } from '../../../../../types/supportOfferingsTypes';
-import { FORM_MODE, SESSION_STATUS, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { FORM_MODE, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { useSessionStatus, useRequesterInfo } from '@hooks/useSessionStatus';
 import { cancelSession } from '../../../../../services/mentoringService';
 import CancelInterventionModal from '../modals/CancelInterventionModal';
 import styles from '../../styles';
 
 // ---------- Card ----------
-
-const getRequesterInfo = (item: ServiceItem) => {
-  const requesterName = (item as any)?.mentor_name || (item as any)?.meta?.mentor_name;
-  const requesterOrg = (item as any)?.organization || (item as any)?.meta?.organization;
-  const requesterOrgName = typeof requesterOrg === 'object' ? requesterOrg?.name : requesterOrg;
-  return { requesterName, requesterOrgName };
-};
 
 interface CardProps {
   item: ServiceItem;
@@ -61,59 +55,8 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
     }
   };
 
-  // Normalize raw backend status (DRAFT / PUBLISHED / LIVE / COMPLETED) into a display label
-  const formatStatus = () => {
-    const rawStatus = (item as any)?.status || '';
-    const thisStatus = String(rawStatus).toUpperCase();
-
-    if (thisStatus === SESSION_STATUS.CANCELLED) {
-      return SESSION_STATUS_LABEL.CANCELLED;
-    }
-    if (thisStatus === SESSION_STATUS.DRAFT) {
-      return SESSION_STATUS_LABEL.DRAFT;
-    }
-    if (thisStatus === SESSION_STATUS.COMPLETED) {
-      return SESSION_STATUS_LABEL.COMPLETED;
-    }
-
-    const startDate = (item as any)?.start_date;
-    const endDate = (item as any)?.end_date;
-    if (startDate) {
-      const startMs =
-        typeof startDate === 'number' || !isNaN(Number(startDate))
-          ? Number(startDate) * 1000
-          : new Date(startDate).getTime();
-      const endMs = endDate
-        ? (typeof endDate === 'number' || !isNaN(Number(endDate))
-          ? Number(endDate) * 1000
-          : new Date(endDate).getTime())
-        : undefined;
-      const nowMs = Date.now();
-
-      if (endMs !== undefined && nowMs > endMs) {
-        return SESSION_STATUS_LABEL.COMPLETED;
-      }
-      if (nowMs < startMs) {
-        return SESSION_STATUS_LABEL.UPCOMING;
-      }
-      return SESSION_STATUS_LABEL.IN_PROGRESS;
-    }
-
-    if (thisStatus === SESSION_STATUS.LIVE) {
-      return SESSION_STATUS_LABEL.IN_PROGRESS;
-    }
-    if (thisStatus === SESSION_STATUS.PUBLISHED) {
-      return SESSION_STATUS_LABEL.UPCOMING;
-    }
-
-    return rawStatus || SESSION_STATUS_LABEL.UPCOMING;
-  };
-
-  const statusTag = statusOverride || formatStatus();
+  const { statusTag, isDraft, isUpcoming, isCancelled } = useSessionStatus(item as any, statusOverride);
   const statusColors = getStatusColors(statusTag);
-  const isDraft = statusTag === SESSION_STATUS_LABEL.DRAFT;
-  const isUpcoming = statusTag === SESSION_STATUS_LABEL.UPCOMING;
-  const isCancelled = statusTag === SESSION_STATUS_LABEL.CANCELLED;
 
   // Province / site names resolved from the option lists passed down from the parent screen
   const getOptionId = (e: any) => e?._id || e?.id || e?.value;
@@ -134,7 +77,7 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
     (item as any)?.meta?.requests ??
     undefined;
 
-  const { requesterName, requesterOrgName } = getRequesterInfo(item);
+  const { requesterName, requesterOrgName } = useRequesterInfo(item as any);
 
   const handleConfirmCancel = async () => {
     if (isCancelling) return;

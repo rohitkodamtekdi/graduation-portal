@@ -26,6 +26,7 @@ import SessionCompleteModal from '../modals/SessionCompleteModal';
 import openExternalLink from '@utils/openExternalLink';
 import styles from '../../styles';
 import { FORM_MODE, SESSION_STATUS, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { useSessionStatus, useRequesterInfo } from '@hooks/useSessionStatus';
 import { openDownload } from "@utils/helper";
 
 const getDeliveryMode = (item: TrainingSessionItem): 'offline' | 'online' | 'hybrid' => {
@@ -95,6 +96,14 @@ const getStatusColors = (status: string) => {
         border: '#fde68a',
         text: '$warningIconColor',
         icon: 'AlertCircle',
+      };
+
+    case SESSION_STATUS_LABEL.CANCELLED:
+      return {
+        bg: '$error50',
+        border: '$red200',
+        text: '$red600',
+        icon: 'XCircle',
       };
 
     case SESSION_STATUS_LABEL.COMPLETED:
@@ -176,47 +185,10 @@ const Card: React.FC<CardProps> = ({
   const deliveryMode = getDeliveryMode(item);
   const deliveryBadge = getDeliveryBadge(deliveryMode);
 
-  const formatStatus = () => {
-    const thisStatus = item.status.toUpperCase();
-    if (thisStatus === SESSION_STATUS.DRAFT) {
-      return SESSION_STATUS_LABEL.DRAFT;
-    }
-
-    if (thisStatus === SESSION_STATUS.COMPLETED) {
-      return SESSION_STATUS_LABEL.COMPLETED;
-    }
-
-    if (item.start_date) {
-      const startMs =
-        typeof item.start_date === 'number' ||
-          !isNaN(Number(item.start_date))
-          ? Number(item.start_date) * 1000
-          : new Date(item.start_date).getTime();
-
-      const endMs = item.end_date
-        ? (typeof item.end_date === 'number' || !isNaN(Number(item.end_date))
-          ? Number(item.end_date) * 1000
-          : new Date(item.end_date).getTime())
-        : undefined;
-
-      const nowMs = Date.now();
-
-      if (endMs !== undefined && nowMs > endMs) {
-        return SESSION_STATUS_LABEL.COMPLETED;
-      }
-
-      if (nowMs < startMs) {
-        return SESSION_STATUS_LABEL.UPCOMING;
-      }
-
-      return SESSION_STATUS_LABEL.IN_PROGRESS;
-    }
-
-    return item.status || SESSION_STATUS_LABEL.UPCOMING;
-  };
   const currentStatus = item.status.toUpperCase();
-  const statusTag = formatStatus();
+  const { statusTag } = useSessionStatus(item);
   const statusColors = getStatusColors(statusTag);
+  const { requesterName, requesterOrgName } = useRequesterInfo(item as any);
 
   const canCopy = !!item.can_be_copied && currentStatus !== SESSION_STATUS.DRAFT;
 
@@ -435,17 +407,13 @@ const Card: React.FC<CardProps> = ({
           footer(item)
         ) : (
           <HStack {...styles.requestedByRowHStack}>
-            {(item.mentor_name || (item as any).meta?.mentor_name) && (
+            {requesterName && (
               <Text {...styles.cardRequestedByText}>
                 {t('supportProvider.supportOfferings.cards.requestedByPrefix', 'Requested by: ')}
                 <Text fontWeight="$normal" color="$textPrimary" fontSize={'$xs'}>
-                  {item.mentor_name || (item as any).meta?.mentor_name}
+                  {requesterName}
                 </Text>
-                {(() => {
-                  const org = item.organization || (item as any).meta?.organization;
-                  const orgName = typeof org === 'object' ? org?.name : org;
-                  return orgName ? ` (${orgName})` : '';
-                })()}
+                {requesterOrgName ? ` (${requesterOrgName})` : ''}
               </Text>
             )}
             <HStack {...styles.badgeContentHStack}>

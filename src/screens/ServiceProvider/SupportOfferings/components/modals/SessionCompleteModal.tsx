@@ -30,12 +30,16 @@ interface SessionCompleteModalProps {
   onConfirmComplete: (selectedParticipantIds: string[]) => void;
 }
 
+// Stable reference so an omitted `initialParticipants` prop doesn't create a new
+// array on every render — the effect below re-syncs whenever that reference changes.
+const EMPTY_PARTICIPANTS: ParticipantAttendanceItem[] = [];
+
 const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
   isOpen,
   onClose,
   sessionTitle,
   expectedParticipantsCount,
-  initialParticipants = [],
+  initialParticipants = EMPTY_PARTICIPANTS,
   isLoadingParticipants = false,
   onConfirmComplete,
 }) => {

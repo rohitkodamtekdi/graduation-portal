@@ -15,6 +15,7 @@ import {
 } from '@ui';
 import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useRequesterInfo } from '@hooks/useSessionStatus';
 import type { AssetItem } from '../../../../../types/supportOfferingsTypes';
 import { cancelSession } from '../../../../../services/mentoringService';
 import CancelInterventionModal from '../modals/CancelInterventionModal';
@@ -53,9 +54,6 @@ const getLocationValue = (item: AssetItem, provinces?: any[], sites?: any[]) => 
   return { siteNames, locationValue };
 };
 
-const getRequesterOrgName = (item: AssetItem) =>
-  typeof item.organization === 'object' ? item.organization?.name : item.organization;
-
 const getClaimedCount = (item: AssetItem) => {
   const hasParticipantCounts = item.seats_limit !== undefined && item.seats_remaining !== undefined;
   return hasParticipantCounts ? (item.seats_limit || 0) - (item.seats_remaining || 0) : undefined;
@@ -79,7 +77,7 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
   const isUpcoming = item.status === 'Upcoming';
 
   const { siteNames, locationValue } = getLocationValue(item, provinces, sites);
-  const requesterOrgName = getRequesterOrgName(item);
+  const { requesterOrgName } = useRequesterInfo(item as any);
   const claimed = getClaimedCount(item);
   const totalFund = getTotalFund(item);
 
@@ -153,7 +151,7 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
             </HStack>
           ) : null}
 
-          {hasParticipantCounts ? (
+          {claimed !== undefined ? (
             <HStack {...styles.trainingMetaItemHStack}>
               <LucideIcon name="Users" {...styles.cardMetaIconProps} />
               <Text {...styles.cardMetaSmText}>
@@ -167,7 +165,7 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
             </HStack>
           ) : null}
 
-          {hasTotalFund ? (
+          {totalFund !== undefined ? (
             <Badge {...styles.badgeContainer('$success50', '#a7f3d0')}>
               <BadgeText {...styles.badgeText('$success600')}>
                 {`Total Fund: R ${totalFund} (${item.quantity} qty)`}
@@ -237,7 +235,7 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
         title={item.title}
         statusLabel={item.status}
         participantsInfo={
-          hasParticipantCounts
+          claimed !== undefined
             ? `${claimed} ${t('supportProvider.supportOfferings.cancelModal.assignedParticipants', 'assigned participants')}`
             : undefined
         }
