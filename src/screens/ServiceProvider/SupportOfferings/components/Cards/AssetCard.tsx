@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Box,
   HStack,
@@ -31,39 +31,6 @@ interface CardProps {
 
 const deliveryBadge = { label: 'Offline', icon: 'MapPin', bg: '$observationTaskBg', border: '#fde68a', color: '$warningIconColor' };
 
-const getStatusColors = (status: string) => {
-  switch (status) {
-    case 'Upcoming':
-      return { bg: '$blue50', border: '$blue200', text: '$blue600', icon: 'Clock' };
-    case 'Accepted':
-      return { bg: '$success50', border: '#a7f3d0', text: '$success600', icon: 'CheckCircle' };
-    case 'Pending':
-      return { bg: '$observationTaskBg', border: '#fde68a', text: '$warningIconColor', icon: 'AlertCircle' };
-    case 'Cancelled':
-      return { bg: '$error50', border: '$red200', text: '$red600', icon: 'XCircle' };
-    case 'Rejected':
-    default:
-      return { bg: '$error50', border: 'transparent', text: '$error600', icon: 'XCircle' };
-  }
-};
-
-const getLocationValue = (item: AssetItem, provinces?: any[], sites?: any[]) => {
-  const provinceName = provinces?.find((e: any) => e._id === item.province)?.name;
-  const siteNames = sites?.filter((e: any) => e._id === item.siteKey)?.map((e: any) => e.name).join(', ');
-  const locationValue = item.meeting_info_details?.location || item.meeting_info?.location || provinceName || item.location;
-  return { siteNames, locationValue };
-};
-
-const getClaimedCount = (item: AssetItem) => {
-  const hasParticipantCounts = item.seats_limit !== undefined && item.seats_remaining !== undefined;
-  return hasParticipantCounts ? (item.seats_limit || 0) - (item.seats_remaining || 0) : undefined;
-};
-
-const getTotalFund = (item: AssetItem) => {
-  const hasTotalFund = item.estimatedValuePerParticipant !== undefined && item.quantity !== undefined;
-  return hasTotalFund ? (item.estimatedValuePerParticipant || 0) * (item.quantity || 0) : undefined;
-};
-
 const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
@@ -72,6 +39,39 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
   const [item, setItem] = useState<AssetItem>(initialItem);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+
+  const getStatusColors = useCallback((status: string) => {
+    switch (status) {
+      case 'Upcoming':
+        return { bg: '$blue50', border: '$blue200', text: '$blue600', icon: 'Clock' };
+      case 'Accepted':
+        return { bg: '$success50', border: '#a7f3d0', text: '$success600', icon: 'CheckCircle' };
+      case 'Pending':
+        return { bg: '$observationTaskBg', border: '#fde68a', text: '$warningIconColor', icon: 'AlertCircle' };
+      case 'Cancelled':
+        return { bg: '$error50', border: '$red200', text: '$red600', icon: 'XCircle' };
+      case 'Rejected':
+      default:
+        return { bg: '$error50', border: 'transparent', text: '$error600', icon: 'XCircle' };
+    }
+  }, []);
+
+  const getLocationValue = useCallback((assetItem: AssetItem, provinceList?: any[], siteList?: any[]) => {
+    const provinceName = provinceList?.find((e: any) => e._id === assetItem.province)?.name;
+    const siteNames = siteList?.filter((e: any) => e._id === assetItem.siteKey)?.map((e: any) => e.name).join(', ');
+    const locationValue = assetItem.meeting_info_details?.location || assetItem.meeting_info?.location || provinceName || assetItem.location;
+    return { siteNames, locationValue };
+  }, []);
+
+  const getClaimedCount = useCallback((assetItem: AssetItem) => {
+    const hasParticipantCounts = assetItem.seats_limit !== undefined && assetItem.seats_remaining !== undefined;
+    return hasParticipantCounts ? (assetItem.seats_limit || 0) - (assetItem.seats_remaining || 0) : undefined;
+  }, []);
+
+  const getTotalFund = useCallback((assetItem: AssetItem) => {
+    const hasTotalFund = assetItem.estimatedValuePerParticipant !== undefined && assetItem.quantity !== undefined;
+    return hasTotalFund ? (assetItem.estimatedValuePerParticipant || 0) * (assetItem.quantity || 0) : undefined;
+  }, []);
 
   const statusColors = getStatusColors(item.status);
   const isUpcoming = item.status === 'Upcoming';
