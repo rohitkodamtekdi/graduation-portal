@@ -119,8 +119,11 @@ export function requestSessionPayloadMapping(formValues: any, optionMap: any = {
     idp_training_task: formValues.idp_training_task,
     description: formValues.description,
     learning_objectives: formValues.learning_objectives,
-    start_date: moment(formValues.start_date).unix(),
-    end_date: moment(formValues.end_date).unix(),
+    start_date: (formValues.start_date ? moment(formValues.start_date) : moment()).unix(),
+    end_date: (formValues.end_date
+      ? moment(formValues.end_date)
+      : (formValues.start_date ? moment(formValues.start_date) : moment()).add(30, 'minutes')
+    ).unix(),
     title:
       formValues.idp_training_task === 'custom'
         ? formValues.sessionTypeOther

@@ -33,7 +33,7 @@ const App = (): React.JSX.Element => {
     ...(isLc ? REQUEST_ASSET_HIDE_FIELDS : []),
   ];
 
-  const { isCardAllowed } = useProfileCompletion();
+  const { isCardAllowed, allowedProvinces, allowedSites } = useProfileCompletion();
   const isAllowed = isLc || Boolean(isCardAllowed(SUPPORT_CATEGORIES.ASSET));
   
   const [provinces, setProvinces] = useState<any[]>([]);
@@ -192,8 +192,7 @@ const App = (): React.JSX.Element => {
         });
       } else {
         // TODO: wire up SP-side asset offering creation (createSession) once its payload mapping is defined.
-        showAlert('success', t('supportProvider.assetForm.draftSuccessMessage'));
-        navigation.goBack();
+        showAlert('warning', t('supportProvider.createSupport.errors.featureUnderDevelopment'));
       }
     } catch (err: any) {
       const errMsg = err?.data?.message || err?.message || t('common.somethingWentWrong');

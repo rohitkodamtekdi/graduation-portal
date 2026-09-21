@@ -2643,7 +2643,8 @@
       },
       "errors": {
         "saveFailed": "Something went wrong while saving. Please try again.",
-        "incompleteWarning": "Please Complete Your Profile Before Proceeding."
+        "incompleteWarning": "Please Complete Your Profile Before Proceeding.",
+        "featureUnderDevelopment": "Asset offering creation is currently not available."
       }
     },
     "assetForm": {
