@@ -2,46 +2,48 @@ import api from '../api';
 import { API_ENDPOINTS } from '../apiEndpoints';
 import type { ServiceItem, AssetItem, FilterParams } from '../../types/supportOfferingsTypes';
 import { encodeSearchText } from '../../utils/helper';
+import { SUPPORT_CATEGORIES, OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL, OFFERING_QUERY_PARAM_KEYS as QUERY_PARAM } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { MENTORING_ENTITY_TYPES } from '@constants/SP_MENU_OPTIONS';
 
 /**
  * Fetches the created mentoring sessions list from the backend for the Support Offerings screen.
  */
 const getSupportOfferingsList = async (
   params: any,
-  offeringType: string = 'training'
+  offeringType: string = SUPPORT_CATEGORIES.TRAINING
 ): Promise<any> => {
   try {
     const { page, limit, status, search, provinces, sites } = params;
 
-    const apiStatus = (status && status !== 'all-statuses') ? status.toUpperCase() : '';
+    const apiStatus = (status && status !== FILTER_ALL.ALL_STATUSES) ? status.toUpperCase() : '';
 
     const queryParams = new URLSearchParams();
 
-    queryParams.append('support_offering_type', offeringType);
+    queryParams.append(MENTORING_ENTITY_TYPES.SUPPORT_OFFERING_TYPE, offeringType);
 
     if (apiStatus) {
-      queryParams.append('status', apiStatus);
+      queryParams.append(QUERY_PARAM.STATUS, apiStatus);
     }
 
     if (page !== undefined && page !== null) {
-      queryParams.append('page', page.toString());
+      queryParams.append(QUERY_PARAM.PAGE, page.toString());
     }
 
     if (limit !== undefined && limit !== null) {
-      queryParams.append('limit', limit.toString());
+      queryParams.append(QUERY_PARAM.LIMIT, limit.toString());
     }
 
     if (search?.trim()) {
-      // Must be sent base64-encoded 
-      queryParams.append('search', encodeSearchText(search.trim()));
+      // Must be sent base64-encoded
+      queryParams.append(QUERY_PARAM.SEARCH, encodeSearchText(search.trim()));
     }
 
-    if (provinces && provinces !== 'all-provinces') {
-      queryParams.append('provinces', provinces);
+    if (provinces && provinces !== FILTER_ALL.ALL_PROVINCES) {
+      queryParams.append(QUERY_PARAM.PROVINCES, provinces);
     }
 
-    if (sites && sites !== 'all-sites') {
-      queryParams.append('sites', sites);
+    if (sites && sites !== FILTER_ALL.ALL_SITES) {
+      queryParams.append(QUERY_PARAM.SITES, sites);
     }
 
     const queryString = queryParams.toString();
@@ -85,7 +87,7 @@ export const getTrainingSessions = async (
   };
 
   try {
-    responseData = await getSupportOfferingsList(params, 'training');
+    responseData = await getSupportOfferingsList(params, SUPPORT_CATEGORIES.TRAINING);
   } catch (error) {
     console.warn('Backend API endpoint unavailable for Training Sessions:', error);
     responseData = {
@@ -107,7 +109,7 @@ export const getAdditionalServices = async (params?: any): Promise<any> => {
   };
 
   try {
-    responseData = await getSupportOfferingsList(params, 'additional_service');
+    responseData = await getSupportOfferingsList(params, SUPPORT_CATEGORIES.ADDITIONAL_SERVICE);
   } catch (error) {
     console.warn('Backend API endpoint unavailable for Training Sessions:', error);
     responseData = {
@@ -166,7 +168,7 @@ export const getAssets = async (params?: any): Promise<any> => {
   };
 
   try {
-    const res = await getSupportOfferingsList(params, 'asset');
+    const res = await getSupportOfferingsList(params, SUPPORT_CATEGORIES.ASSET);
     const data = (res?.result?.data || []).map(mapToAssetItem);
     responseData = {
       ...res,

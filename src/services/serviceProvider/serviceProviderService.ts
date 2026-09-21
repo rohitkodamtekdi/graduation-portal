@@ -1,8 +1,13 @@
 import moment from 'moment';
 import api from '../api';
 import { API_ENDPOINTS } from '../apiEndpoints';
-import supportRequestsMock from './mockData/supportRequests.json';
 import { getProvincesList, getAllSites } from '../usersService';
+import {
+  SUPPORT_REQUEST_TABS,
+  SUPPORT_OFFERING_TYPE_VALUES,
+  REQUEST_STATUS,
+  OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL,
+} from '@constants/SUPPORT_PROVIDER_CARDS';
 
 export interface SupportRequestItem {
   id: string | number;
@@ -81,40 +86,6 @@ export interface DeclinePayload {
   details?: string;
 }
 
-const LOCAL_STORAGE_KEY = 'sp_support_requests_store';
-
-const loadMockStore = (): Record<string, SupportRequestItem[]> => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    }
-  } catch (err) {
-    console.error('Error loading support requests mockStore from localStorage:', err);
-  }
-  return {
-    sessions: [...((supportRequestsMock as any).sessions || [])],
-    additional_services: [...((supportRequestsMock as any).additional_services || [])],
-    assets: [...((supportRequestsMock as any).assets || [])],
-    declined: [],
-  };
-};
-
-const saveMockStore = (store: Record<string, SupportRequestItem[]>) => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(store));
-    }
-  } catch (err) {
-    console.error('Error saving support requests mockStore to localStorage:', err);
-  }
-};
-
-// In-memory & localStorage data store for fallback mock data
-const mockStore: Record<string, SupportRequestItem[]> = loadMockStore();
-
 /**
  * Maps a raw record from GET /mentoring/v1/requestSessions/list into the
  * SupportRequestItem shape consumed by the Support Requests cards.
@@ -123,7 +94,7 @@ const mockStore: Record<string, SupportRequestItem[]> = loadMockStore();
  */
 const mapRequestSessionItem = (
   item: any,
-  tab: 'sessions' | 'declined',
+  tab: 'sessions' | 'additional_services' | 'assets' | 'declined',
   provinceMap: Record<string, string> = {},
   siteMap: Record<string, string> = {}
 ): SupportRequestItem => {
@@ -167,7 +138,7 @@ const mapRequestSessionItem = (
     participants: participantsCount,
     preferredDate: startMoment ? startMoment.format('DD MMM YYYY') : '-',
     preferredTime: startMoment ? startMoment.format('hh:mm A') : '-',
-    status: tab === 'declined' ? 'Declined' : 'pending',
+    status: tab === SUPPORT_REQUEST_TABS.DECLINED ? REQUEST_STATUS.DECLINED : REQUEST_STATUS.PENDING,
     requestedDate: requestedMoment ? requestedMoment.format('DD MMM YYYY') : '-',
     overdueDays,
     declineReason: item.reason || item.decline_reason,
@@ -189,7 +160,7 @@ const applySupportRequestFilters = (
 ): SupportRequestItem[] => {
   let filtered = list;
 
-  if (province && province !== 'all-provinces') {
+  if (province && province !== FILTER_ALL.ALL_PROVINCES) {
     const targetProv = province.toLowerCase().replace(/[\s-_]/g, '');
     filtered = filtered.filter((item) => {
       const itemProv = (item.province || '').toLowerCase().replace(/[\s-_]/g, '');
@@ -197,7 +168,7 @@ const applySupportRequestFilters = (
     });
   }
 
-  if (site && site !== 'all-sites') {
+  if (site && site !== FILTER_ALL.ALL_SITES) {
     const targetSite = site.toLowerCase().replace(/[\s-_]/g, '');
     filtered = filtered.filter((item) => {
       const itemSite = (item.site || '').toLowerCase().replace(/[\s-_]/g, '');
@@ -262,80 +233,111 @@ export const getSupportRequests = async (
     overdueTotal: number;
   };
 }> => {
-  const { tab = 'sessions', provinces: province, sites: site, search } = params || {};
+  const { tab = SUPPORT_REQUEST_TABS.SESSIONS, provinces: province, sites: site, search } = params || {};
 
   const { provinceMap, siteMap } = await getProvinceAndSiteMaps();
 
   let sessionsData: SupportRequestItem[] | null = null;
+  let additionalServicesData: SupportRequestItem[] | null = null;
+  let assetsData: SupportRequestItem[] | null = null;
   let declinedData: SupportRequestItem[] | null = null;
-  let sessionsCount = mockStore.sessions.length;
-  let declinedCount = mockStore.declined.length;
-  let sessionsOverdueCount = mockStore.sessions.filter(i => (i.overdueDays || 0) > 0).length;
+  let sessionsCount = 0;
+  let additionalServicesCount = 0;
+  let assetsCount = 0;
+  let declinedCount = 0;
+  let sessionsOverdueCount = 0;
+
+  // support_offering_type value the requestSessions API expects for each tab (declined isn't
+  // type-scoped - it spans every offering type, so it's handled separately below).
+  const SUPPORT_OFFERING_TYPE: Record<'sessions' | 'additional_services' | 'assets', string> = {
+    sessions: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
+    additional_services: SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE,
+    assets: SUPPORT_OFFERING_TYPE_VALUES.ASSET,
+  };
+
+  const buildParams = (isDeclined: boolean, offeringTab?: 'sessions' | 'additional_services' | 'assets') => {
+    const apiParams: any = { status: isDeclined ? REQUEST_STATUS.REJECTED : REQUEST_STATUS.REQUESTED };
+    if (!isDeclined && offeringTab) {
+      apiParams.support_offering_type = SUPPORT_OFFERING_TYPE[offeringTab];
+    }
+    if (search && search.trim() !== '') apiParams.search = search.trim();
+    if (province && province !== FILTER_ALL.ALL_PROVINCES) apiParams.provinces = province;
+    if (site && site !== FILTER_ALL.ALL_SITES) apiParams.sites = site;
+    return apiParams;
+  };
 
   try {
-    if (tab === 'sessions' || tab === 'declined') {
-      const apiParams: any = {};
-      if (tab === 'sessions') {
-        apiParams.status = 'REQUESTED';
-      } else {
-        apiParams.status = 'REJECTED';
-      }
-      if (search && search.trim() !== '') {
-        apiParams.search = search.trim();
-      }
-      if (province && province !== 'all-provinces') {
-        apiParams.provinces = province;
-      }
-      if (site && site !== 'all-sites') {
-        apiParams.sites = site;
-      }
+    // Tab badge counts must stay accurate regardless of which tab is currently active, so every
+    // category is fetched in parallel on every call - not just the one the user happens to be on.
+    // Using Promise.allSettled ensures that a failure in one category does not discard the successful responses of others.
+    const [sessionsSettled, additionalServicesSettled, assetsSettled, declinedSettled] = await Promise.allSettled([
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, SUPPORT_REQUEST_TABS.SESSIONS) }),
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES) }),
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, SUPPORT_REQUEST_TABS.ASSETS) }),
+      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(true) }),
+    ]);
 
-      if (tab === 'sessions') {
-        const requestedRes = await api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, {
-          params: apiParams,
-        });
-        if (requestedRes?.data?.responseCode === 'OK') {
-          const resObj = requestedRes.data.result;
-          const rawList = Array.isArray(resObj) ? resObj : (resObj?.data || []);
-          const mapped: SupportRequestItem[] = rawList.map((item: any) =>
-            mapRequestSessionItem(item, 'sessions', provinceMap, siteMap));
-          sessionsData = mapped;
-          sessionsCount = resObj?.count ?? (Array.isArray(resObj) ? resObj.length : mapped.length);
-          sessionsOverdueCount = mapped.filter(i => (i.overdueDays || 0) > 0).length;
-        }
-      } else {
-        const rejectedRes = await api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, {
-          params: apiParams,
-        });
-        if (rejectedRes?.data?.responseCode === 'OK') {
-          const resObj = rejectedRes.data.result;
-          const rawList = Array.isArray(resObj) ? resObj : (resObj?.data || []);
-          const mapped: SupportRequestItem[] = rawList.map((item: any) =>
-            mapRequestSessionItem(item, 'declined', provinceMap, siteMap));
-          declinedData = mapped;
-          declinedCount = resObj?.count ?? (Array.isArray(resObj) ? resObj.length : mapped.length);
-        }
+    const extractSettled = (
+      result: PromiseSettledResult<any>,
+      mapTab: 'sessions' | 'additional_services' | 'assets' | 'declined'
+    ) => {
+      if (result.status !== 'fulfilled') {
+        console.warn(`[SupportRequests] Failed to fetch ${mapTab}:`, result.reason);
+        return null;
       }
+      const res = result.value;
+      if (res?.data?.responseCode !== 'OK') return null;
+      const resObj = res.data.result;
+      const rawList = Array.isArray(resObj) ? resObj : (resObj?.data || []);
+      const mapped: SupportRequestItem[] = rawList.map((item: any) =>
+        mapRequestSessionItem(item, mapTab, provinceMap, siteMap));
+      const count = resObj?.count ?? (Array.isArray(resObj) ? resObj.length : mapped.length);
+      return { mapped, count };
+    };
+
+    const sessionsResult = extractSettled(sessionsSettled, SUPPORT_REQUEST_TABS.SESSIONS);
+    if (sessionsResult) {
+      sessionsData = sessionsResult.mapped;
+      sessionsCount = sessionsResult.count;
+      sessionsOverdueCount = sessionsResult.mapped.filter(i => (i.overdueDays || 0) > 0).length;
+    }
+
+    const additionalServicesResult = extractSettled(additionalServicesSettled, SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES);
+    if (additionalServicesResult) {
+      additionalServicesData = additionalServicesResult.mapped;
+      additionalServicesCount = additionalServicesResult.count;
+    }
+
+    const assetsResult = extractSettled(assetsSettled, SUPPORT_REQUEST_TABS.ASSETS);
+    if (assetsResult) {
+      assetsData = assetsResult.mapped;
+      assetsCount = assetsResult.count;
+    }
+
+    const declinedResult = extractSettled(declinedSettled, SUPPORT_REQUEST_TABS.DECLINED);
+    if (declinedResult) {
+      declinedData = declinedResult.mapped;
+      declinedCount = declinedResult.count;
     }
   } catch (error) {
     console.warn('[SupportRequests] Failed to fetch session requests:', error);
   }
 
-  const additionalServicesList = [...mockStore.additional_services];
-  const assetsList = [...mockStore.assets];
+  const additionalServicesList = additionalServicesData ?? [];
+  const assetsList = assetsData ?? [];
 
   let list: SupportRequestItem[];
   switch (tab) {
-    case 'sessions':
-      list = sessionsData ?? [...mockStore.sessions];
+    case SUPPORT_REQUEST_TABS.SESSIONS:
+      list = sessionsData ?? [];
       break;
-    case 'declined':
-      list = declinedData ?? [...mockStore.declined];
+    case SUPPORT_REQUEST_TABS.DECLINED:
+      list = declinedData ?? [];
       break;
-    case 'additional_services':
+    case SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES:
       list = additionalServicesList;
       break;
-    case 'assets':
+    case SUPPORT_REQUEST_TABS.ASSETS:
       list = assetsList;
       break;
     default:
@@ -354,10 +356,10 @@ export const getSupportRequests = async (
 
   const counts = {
     sessions: sessionsCount,
-    additional_services: additionalServicesList.length,
-    assets: assetsList.length,
+    additional_services: additionalServicesCount,
+    assets: assetsCount,
     declined: declinedCount,
-    pendingTotal: sessionsCount + additionalServicesList.length + assetsList.length,
+    pendingTotal: sessionsCount + additionalServicesCount + assetsCount,
     overdueTotal,
   };
 
@@ -390,7 +392,7 @@ export const acceptAndScheduleSupportRequest = async (
   const body: Record<string, any> = {
     request_session_id: String(payload.requestId),
     type: 'public',
-    support_offering_type: 'training_session',
+    support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
     title: payload.title || '',
     description: payload.description || '',
     start_date: startDate,
@@ -457,37 +459,14 @@ export const requestMoreInfoForSupportRequest = async (
 export const declineSupportRequest = async (
   payload: DeclinePayload
 ): Promise<{ success: boolean; message: string }> => {
-  try {
-    if (API_ENDPOINTS && API_ENDPOINTS.SP_REQUEST_SESSIONS_REJECT) {
-      const response = await api.post(API_ENDPOINTS.SP_REQUEST_SESSIONS_REJECT, {
-        request_session_id: payload.requestId,
-        reason: payload.reason,
-        details: payload.details,
-      });
-      return response.data;
-    }
-  } catch (error) {
-    console.warn('Backend API unavailable, using simulated success for Decline Request:', error);
-  }
-
-  // Update in-memory mock store & persist to localStorage
-  const { requestId, reason, details } = payload;
-  const categories = ['sessions', 'additional_services', 'assets'];
-  for (const cat of categories) {
-    const idx = mockStore[cat].findIndex(item => String(item.id) === String(requestId));
-    if (idx !== -1) {
-      const [declinedItem] = mockStore[cat].splice(idx, 1);
-      declinedItem.status = 'Declined';
-      declinedItem.declineReason = reason;
-      declinedItem.declineDetails = details;
-      mockStore.declined.unshift(declinedItem);
-      saveMockStore(mockStore);
-      break;
-    }
-  }
-
+  const response = await api.post(API_ENDPOINTS.SP_REQUEST_SESSIONS_REJECT, {
+    request_session_id: payload.requestId,
+    reason: payload.reason,
+    details: payload.details,
+  });
+  const data = response.data;
   return {
-    success: true,
-    message: 'Support request declined successfully.',
+    success: data?.responseCode === 'OK' || data?.success === true,
+    message: data?.message || 'Support request declined successfully.',
   };
 };

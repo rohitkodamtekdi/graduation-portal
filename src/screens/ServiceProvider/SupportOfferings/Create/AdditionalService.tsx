@@ -1,21 +1,34 @@
 import React, { useCallback, useState } from 'react';
-import { Card, Container, VStack, useAlert } from '@ui';
+import { Box, Card, Container, HStack, Text, VStack, useAlert } from '@ui';
 import styles from '../styles';
+import lcStyles from '../../../SessionsSupport/styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
+import PageHeader from '@components/PageHeader';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import SchemaFormRenderer from '@components/SchemaFormRenderer';
-import { ADDITIONAL_SERVICES_FORM_SCHEMA } from '@constants/ADDITIONAL_SERVICES_SCHEMA';
+import { ADDITIONAL_SERVICES_FORM_SCHEMA, REQUEST_ADDITIONAL_SERVICE_HIDE_FIELDS } from '@constants/ADDITIONAL_SERVICES_SCHEMA';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useAuth } from '@contexts/AuthContext';
 import { getProvincesList } from '../../../../services/usersService';
 import {
   getAdditionalServiceCategories,
   getSessionDetails,
   MentoringOption,
-  createSession
+  createSession,
+  requestSession,
 } from '../../../../services/mentoringService';
 import logger from '@utils/logger';
-import { FORM_MODE, SESSION_STATUS, SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
-import { uploadService, valueMapping } from '@utils/supportProvider';
+import {
+  FORM_MODE,
+  SESSION_STATUS,
+  SUPPORT_CATEGORIES,
+  ADDITIONAL_SERVICE_FORM_FIELDS as FORM_FIELDS,
+  SUPPORT_PROVIDER_ROUTES as ROUTES,
+  SESSIONS_SUPPORT_TABS,
+  BUTTON_LOADING_STATE,
+} from '@constants/SUPPORT_PROVIDER_CARDS';
+import { ROLE_NAMES } from '@constants/ROLES';
+import { uploadService, valueMapping, requestSessionPayloadMapping } from '@utils/supportProvider';
 import { useTrainingFormOptions, useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
 
@@ -27,6 +40,8 @@ const App = (): React.JSX.Element => {
 
   const { t } = useLanguage();
   const { showAlert } = useAlert();
+  const { user } = useAuth() || {};
+  const isLc = user?.role === ROLE_NAMES.LC;
   const { isCardAllowed, allowedSubOptions, allowedProvinces, allowedSites } = useProfileCompletion();
   const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.ADDITIONAL_SERVICE));
 
@@ -35,13 +50,13 @@ const App = (): React.JSX.Element => {
 
   const [values, setValues] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [lodingButton, setLodingButton] = useState<false | "saveDraft" | "submit">(false);
+  const [lodingButton, setLodingButton] = useState<false | typeof BUTTON_LOADING_STATE[keyof typeof BUTTON_LOADING_STATE]>(false);
 
   const handleFieldChange = useCallback((name: string, value: string) => {
     setValues((prev: any) => {
       const next = { ...prev, [name]: value };
-      if (name === 'provinces') next.sites = '';
-      if (name === 'categories') next.idp_additional_services_tasks = [];
+      if (name === FORM_FIELDS.PROVINCES) next[FORM_FIELDS.SITES] = '';
+      if (name === FORM_FIELDS.CATEGORIES) next[FORM_FIELDS.IDP_ADDITIONAL_SERVICES_TASKS] = [];
       return next;
     });
   }, []);
@@ -58,7 +73,7 @@ const App = (): React.JSX.Element => {
         const rawResponse = await getSessionDetails(sessionId);
         const rawData = rawResponse?.result;
         if (rawData) {
-          const formattedValues: any = valueMapping(rawData, true, {}, 'additional_service'); // Reverse mapping to form values
+          const formattedValues: any = valueMapping(rawData, true, {}, SUPPORT_CATEGORIES.ADDITIONAL_SERVICE); // Reverse mapping to form values
           setValues(formattedValues);
         }
       }
@@ -89,53 +104,75 @@ const App = (): React.JSX.Element => {
     allowedSites,
   });
 
-  const hideFileds = sessionTypes.length === 0 ? ['idp_additional_services_tasks'] : [];
-
-  const handleSave = async (formValues: any, isDraft: boolean) => {
-    try {
-      setValues(formValues);
-      setLodingButton(isDraft ? "saveDraft" : "submit")
-      const payload: any = valueMapping({ ...formValues, isDraft }, false, optionsMap, 'additional_service');
-
-      if (modeType === 'edit') {
-        // update code api call
-      }
-      else {
-        await createSession(payload);
-      }
-
-      const successMsg = isDraft
-        ? t('supportProvider.supportOfferings.cards.alerts.draftSaved', 'Draft saved successfully!')
-        : modeType === FORM_MODE.COPY
-          ? t('supportProvider.supportOfferings.cards.alerts.supportCopied', 'Support copied successfully!')
-          : t('supportProvider.supportOfferings.cards.alerts.supportPublished', 'Support published successfully!');
-
-      showAlert('success', successMsg);
-      // @ts-ignore
-      navigation.navigate('opportunities');
-    } catch (error: any) {
-      logger.error('Error saving training session:', error);
-      // Show specific API error message if available, otherwise generic message
-      const errMsg =
-        error?.data?.message ||
-        error?.message ||
-        t('supportProvider.createSupport.errors.saveFailed', 'Something went wrong while saving. Please try again.');
-      showAlert('error', errMsg);
-    } finally {
-      setLodingButton(false);
-    }
-  };
+  const hideFileds = [
+    ...(sessionTypes.length === 0 ? [FORM_FIELDS.IDP_ADDITIONAL_SERVICES_TASKS] : []),
+    ...(isLc ? REQUEST_ADDITIONAL_SERVICE_HIDE_FIELDS : []),
+  ];
 
   const handleBackPress = () => {
     if (navigation.canGoBack && navigation.canGoBack()) {
       navigation.goBack();
     } else {
       // @ts-ignore
-      navigation.navigate('create-opportunity');
+      navigation.navigate(isLc ? ROUTES.SESSIONS_SUPPORT : ROUTES.CREATE_OPPORTUNITY);
     }
-  }
+  };
 
-  if (!isAllowed) {
+  const handleSave = async (formValues: any, isDraft: boolean) => {
+    try {
+      setValues(formValues);
+      setLodingButton(isDraft ? BUTTON_LOADING_STATE.SAVE_DRAFT : BUTTON_LOADING_STATE.SUBMIT);
+
+      if (isLc) {
+        const payload: any = requestSessionPayloadMapping(
+          { ...formValues, isDraft, support_offering_type: SUPPORT_CATEGORIES.ADDITIONAL_SERVICE },
+          optionsMap
+        );
+        await requestSession(payload);
+
+        const successMsg = isDraft
+          ? t('supportProvider.createSupport.training.alerts.draftSaved')
+          : t('supportProvider.createSupport.training.alerts.sessionSaved');
+
+        showAlert('success', successMsg);
+        // @ts-ignore
+        navigation.navigate(ROUTES.SESSIONS_SUPPORT, {
+          activeTab: SESSIONS_SUPPORT_TABS.ACTIVE_TAB,
+          activeSubTab: SESSIONS_SUPPORT_TABS.ACTIVE_SUB_TAB,
+          refreshRequests: Date.now(),
+        });
+      } else {
+        const payload: any = valueMapping({ ...formValues, isDraft }, false, optionsMap, SUPPORT_CATEGORIES.ADDITIONAL_SERVICE);
+
+        if (modeType === FORM_MODE.EDIT) {
+          // update code api call
+        } else {
+          await createSession(payload);
+        }
+
+        const successMsg = isDraft
+          ? t('supportProvider.supportOfferings.cards.alerts.draftSaved')
+          : modeType === FORM_MODE.COPY
+            ? t('supportProvider.supportOfferings.cards.alerts.supportCopied')
+            : t('supportProvider.supportOfferings.cards.alerts.supportPublished');
+
+        showAlert('success', successMsg);
+        // @ts-ignore
+        navigation.navigate(ROUTES.OPPORTUNITIES);
+      }
+    } catch (error: any) {
+      logger.error('Error saving additional service:', error);
+      const errMsg =
+        error?.data?.message ||
+        error?.message ||
+        t('supportProvider.createSupport.errors.saveFailed');
+      showAlert('error', errMsg);
+    } finally {
+      setLodingButton(false);
+    }
+  };
+
+  if (!isLc && modeType === FORM_MODE.CREATE && !isAllowed) {
     return (
       <NotFound
         message={t(
@@ -145,13 +182,34 @@ const App = (): React.JSX.Element => {
     );
   }
 
+  const lcHeaderTitle = (
+    <HStack {...lcStyles.headerTitleHStack}>
+      <Text {...lcStyles.headerSubTitleText}>
+        {t('lc.requestAdditionalService.title')}
+      </Text>
+      <Box {...lcStyles.headerBadgeBox}>
+        <Text {...lcStyles.headerBadgeText}>
+          {t('lc.requestAdditionalService.badge')}
+        </Text>
+      </Box>
+    </HStack>
+  );
+
   return (
     <VStack flex={1}>
-      <SPTitleHeader
-        title={t('supportProvider.createSupport.additionalService.title', 'Create Additional Service')}
-        backButtonText={t('supportProvider.createSupport.changeType', 'Change type')}
-        onNavigateBack={handleBackPress}
-      />
+      {isLc ? (
+        <PageHeader
+          title={lcHeaderTitle as any}
+          backButtonText={t('supportProvider.createSupport.changeType')}
+          onBackPress={handleBackPress}
+        />
+      ) : (
+        <SPTitleHeader
+          title={t('supportProvider.createSupport.additionalService.title')}
+          backButtonText={t('supportProvider.createSupport.changeType')}
+          onNavigateBack={handleBackPress}
+        />
+      )}
       <Container {...styles.container}>
         <Card borderRadius={"$2xl"} bg="$white">
           <SchemaFormRenderer
@@ -169,5 +227,4 @@ const App = (): React.JSX.Element => {
     </VStack>
   );
 };
-
-export default App;
+export default App; 

@@ -3,50 +3,56 @@ import { API_ENDPOINTS } from '../apiEndpoints';
 import { encodeSearchText } from '../../utils/helper';
 import { getParticipantsList } from '../participantService';
 import type { ParticipantSearchParams, ParticipantSearchResponse } from '@app-types/participant';
+import { OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL, OFFERING_QUERY_PARAM_KEYS as QUERY_PARAM } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { MENTORING_ENTITY_TYPES } from '@constants/SP_MENU_OPTIONS';
 
 export const getRequestSessionsList = async (params: any): Promise<any> => {
   try {
     const { page, limit, status, search, provinces, sites, pathway, pillar, type, format } = params;
     const queryParams = new URLSearchParams();
 
-    if (status && status !== 'all-statuses' && status !== 'all-status') {
-      queryParams.append('status', status.toUpperCase());
+    if (status && status !== FILTER_ALL.ALL_STATUSES && status !== FILTER_ALL.ALL_STATUS) {
+      queryParams.append(QUERY_PARAM.STATUS, status.toUpperCase());
     }
 
     if (page != null) {
-      queryParams.append('page', page.toString());
+      queryParams.append(QUERY_PARAM.PAGE, page.toString());
     }
 
     if (limit != null) {
-      queryParams.append('limit', limit.toString());
+      queryParams.append(QUERY_PARAM.LIMIT, limit.toString());
     }
 
     if (search?.trim()) {
-      queryParams.append('search', search.trim());
+      queryParams.append(QUERY_PARAM.SEARCH, search.trim());
     }
 
-    if (provinces && provinces !== 'all-provinces') {
-      queryParams.append('provinces', provinces);
+    if (provinces && provinces !== FILTER_ALL.ALL_PROVINCES) {
+      queryParams.append(QUERY_PARAM.PROVINCES, provinces);
     }
 
-    if (sites && sites !== 'all-sites') {
-      queryParams.append('sites', sites);
+    if (sites && sites !== FILTER_ALL.ALL_SITES) {
+      queryParams.append(QUERY_PARAM.SITES, sites);
     }
 
-    if (pathway && pathway !== 'all-pathways') {
-      queryParams.append('categories', pathway);
+    if (pathway && pathway !== FILTER_ALL.ALL_PATHWAYS) {
+      queryParams.append(QUERY_PARAM.CATEGORIES, pathway);
     }
 
-    if (pillar && pillar !== 'all-pillars') {
-      queryParams.append('pillar', pillar);
+    if (pillar && pillar !== FILTER_ALL.ALL_PILLARS) {
+      queryParams.append(QUERY_PARAM.PILLAR, pillar);
     }
 
-    if (type && type !== 'all-types') {
-      queryParams.append('type', type);
+    if (type && type !== FILTER_ALL.ALL_TYPES) {
+      queryParams.append(QUERY_PARAM.TYPE, type);
     }
 
-    if (format && format !== 'all-formats') {
-      queryParams.append('delivery_mode', format);
+    if (format && format !== FILTER_ALL.ALL_FORMATS) {
+      queryParams.append(QUERY_PARAM.DELIVERY_MODE, format);
+    }
+
+    if (params.support_offering_type) {
+      queryParams.append(MENTORING_ENTITY_TYPES.SUPPORT_OFFERING_TYPE, params.support_offering_type);
     }
 
     const endpoint = `${API_ENDPOINTS.USER_SESSIONS_LIST}?${queryParams.toString()}`;
@@ -63,44 +69,48 @@ export const getMyRequestsList = async (params: any): Promise<any> => {
     const { page, limit, status, search, provinces, sites, pathway, pillar, type, format } = params;
     const queryParams = new URLSearchParams();
 
-    if (status && status !== 'all-statuses' && status !== 'all-status') {
-      queryParams.append('status', status.toUpperCase());
+    if (status && status !== FILTER_ALL.ALL_STATUSES && status !== FILTER_ALL.ALL_STATUS) {
+      queryParams.append(QUERY_PARAM.STATUS, status.toUpperCase());
     }
 
     if (page != null) {
-      queryParams.append('page', page.toString());
+      queryParams.append(QUERY_PARAM.PAGE, page.toString());
     }
 
     if (limit != null) {
-      queryParams.append('limit', limit.toString());
+      queryParams.append(QUERY_PARAM.LIMIT, limit.toString());
     }
 
     if (search?.trim()) {
-      queryParams.append('search', search.trim());
+      queryParams.append(QUERY_PARAM.SEARCH, search.trim());
     }
 
-    if (provinces && provinces !== 'all-provinces') {
-      queryParams.append('provinces', provinces);
+    if (provinces && provinces !== FILTER_ALL.ALL_PROVINCES) {
+      queryParams.append(QUERY_PARAM.PROVINCES, provinces);
     }
 
-    if (sites && sites !== 'all-sites') {
-      queryParams.append('sites', sites);
+    if (sites && sites !== FILTER_ALL.ALL_SITES) {
+      queryParams.append(QUERY_PARAM.SITES, sites);
     }
 
-    if (pathway && pathway !== 'all-pathways') {
-      queryParams.append('categories', pathway);
+    if (pathway && pathway !== FILTER_ALL.ALL_PATHWAYS) {
+      queryParams.append(QUERY_PARAM.CATEGORIES, pathway);
     }
 
-    if (pillar && pillar !== 'all-pillars') {
-      queryParams.append('pillar', pillar);
+    if (pillar && pillar !== FILTER_ALL.ALL_PILLARS) {
+      queryParams.append(QUERY_PARAM.PILLAR, pillar);
     }
 
-    if (type && type !== 'all-types') {
-      queryParams.append('type', type);
+    if (type && type !== FILTER_ALL.ALL_TYPES) {
+      queryParams.append(QUERY_PARAM.TYPE, type);
     }
 
-    if (format && format !== 'all-formats') {
-      queryParams.append('delivery_mode', format);
+    if (format && format !== FILTER_ALL.ALL_FORMATS) {
+      queryParams.append(QUERY_PARAM.DELIVERY_MODE, format);
+    }
+
+    if (params.support_offering_type) {
+      queryParams.append(MENTORING_ENTITY_TYPES.SUPPORT_OFFERING_TYPE, params.support_offering_type);
     }
 
     const endpoint = `${API_ENDPOINTS.REQUEST_SESSIONS_LIST}?${queryParams.toString()}`;

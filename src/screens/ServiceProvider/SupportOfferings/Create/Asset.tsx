@@ -4,14 +4,22 @@ import styles from '../styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
 import { useNavigation } from '@react-navigation/native';
 import SchemaFormRenderer from '@components/SchemaFormRenderer';
-import { ASSET_FORM_SCHEMA } from '@constants/ASSET_SCHEMA';
+import { ASSET_FORM_SCHEMA, REQUEST_ASSET_HIDE_FIELDS } from '@constants/ASSET_SCHEMA';
 import type { FormSection } from '@components/SchemaFormRenderer/type';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useAuth } from '@contexts/AuthContext';
 import { getSitesByProvince, getProvincesList } from '../../../../services/usersService';
-import { createSession, getLivelihoodsOptions, getAssetTypesOptions } from '../../../../services/mentoringService';
+import { requestSession, getLivelihoodsOptions, getAssetTypesOptions, createSession } from '../../../../services/mentoringService';
+import { requestAssetPayloadMapping } from '@utils/supportProvider';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
-import { SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
+import {
+  SUPPORT_CATEGORIES,
+  SUPPORT_PROVIDER_ROUTES as ROUTES,
+  ASSET_FORM_FIELDS as FORM_FIELDS,
+  ASSET_SESSIONS_SUPPORT_TABS as SESSIONS_SUPPORT_TABS,
+} from '@constants/SUPPORT_PROVIDER_CARDS';
+import { ROLE_NAMES } from '@constants/ROLES';
 import moment from 'moment';
 
 /**
@@ -35,19 +43,27 @@ const App = (): React.JSX.Element => {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const { showAlert } = useAlert();
+  const { user } = useAuth() || {};
+  const isLc = user?.role === ROLE_NAMES.LC;
+
+  const hideFileds = [
+    ...(isLc ? REQUEST_ASSET_HIDE_FIELDS : []),
+  ];
+
   const { isCardAllowed, allowedProvinces, allowedSites } = useProfileCompletion();
-  const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.ASSET));
+  const isAllowed = isLc || Boolean(isCardAllowed(SUPPORT_CATEGORIES.ASSET));
   
   const [provinces, setProvinces] = useState<any[]>([]);
   const [dynamicSites, setDynamicSites] = useState<any[]>([]);
   const [livelihoodCats, setLivelihoodCats] = useState<any[]>([]);
   const [assetTypeOpts, setAssetTypeOpts] = useState<any[]>([]);
   const [values, setValues] = useState<any>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleFieldChange = useCallback((name: string, value: string) => {
     setValues((prev: any) => {
       const next = { ...prev, [name]: value };
-      if (name === 'province') next.site = '';
+      if (name === FORM_FIELDS.PROVINCE) next[FORM_FIELDS.SITE] = '';
       return next;
     });
   }, []);
@@ -61,14 +77,14 @@ const App = (): React.JSX.Element => {
   },[])
 
   useEffect(() => {
-    if (!values.province) {
+    if (!values[FORM_FIELDS.PROVINCE]) {
       setDynamicSites([]);
       return;
     }
-    getSitesByProvince({ provinceId: values.province, page: 1, limit: 100 })
+    getSitesByProvince({ provinceId: values[FORM_FIELDS.PROVINCE], page: 1, limit: 100 })
       .then(res => setDynamicSites(res.result?.data || []))
       .catch(() => setDynamicSites([]));
-  }, [values.province]);
+  }, [values[FORM_FIELDS.PROVINCE]]);
 
   useEffect(() => {
     getLivelihoodsOptions()
@@ -130,64 +146,82 @@ const App = (): React.JSX.Element => {
   }, [values.estimatedValue, values.availableQuantity, t]);
 
   const schema = useMemo(
-    () => patchFieldFallback(ASSET_FORM_SCHEMA, 'totalFundBreakdown', totalFundBreakdownText),
-    [totalFundBreakdownText],
+    () => patchFieldFallback(ASSET_FORM_SCHEMA(hideFileds), 'totalFundBreakdown', totalFundBreakdownText),
+    [hideFileds, totalFundBreakdownText],
   );
 
   const handleSave = useCallback(async (formValues: any, isDraft: boolean) => {
     try {
+      setIsSubmitting(true);
       setValues(formValues);
 
-      const payload = {
-        support_offering_type: SUPPORT_CATEGORIES.ASSET,
-        categories: [SUPPORT_CATEGORIES.ASSET],
-        title: formValues.assetTitle,
-        description: formValues.assetDescription,
-        asset_types: formValues.assetType ? [formValues.assetType] : [],
-        livelihoods: formValues.livelihoodCategory || '',
-        estimated_value: formValues.estimatedValue,
-        available_quantity: formValues.availableQuantity,
-        meta: {
+      if (isLc) {
+        const payload = requestAssetPayloadMapping({ ...formValues, isDraft });
+        await requestSession(payload);
+
+        showAlert(
+          'success',
+          isDraft
+            ? t('supportProvider.createSupport.training.alerts.draftSaved')
+            : t('supportProvider.assetForm.requestSuccessMessage'),
+        );
+        // @ts-ignore
+        navigation.navigate(ROUTES.SESSIONS_SUPPORT, {
+          activeTab: SESSIONS_SUPPORT_TABS.ACTIVE_TAB,
+          activeSubTab: SESSIONS_SUPPORT_TABS.ACTIVE_SUB_TAB,
+          refreshRequests: Date.now(),
+        });
+      } else {
+        const payload = {
+          support_offering_type: SUPPORT_CATEGORIES.ASSET,
+          categories: [SUPPORT_CATEGORIES.ASSET],
+          title: formValues.assetTitle,
+          description: formValues.assetDescription,
+          asset_types: formValues.assetType ? [formValues.assetType] : [],
+          livelihoods: formValues.livelihoodCategory || '',
           estimated_value: formValues.estimatedValue,
           available_quantity: formValues.availableQuantity,
-        },
-        resources: formValues.assetDocuments,
-        provinces: formValues.province ? [formValues.province] : [],
-        sites: Array.isArray(formValues.site) ? formValues.site : (formValues.site ? [formValues.site] : []),
-        recommended_for: ['user'],
-        start_date: formValues.startDate ? moment(formValues.startDate).unix() : moment().unix(),
-        end_date: formValues.endDate ? moment(formValues.endDate).unix() : moment().add(2, 'years').unix(),
-        status: isDraft ? 'DRAFT' : 'PUBLISHED',
-        can_be_copied: false,
-        certificate_provided: false,
-        delivery_mode: 'offline',
-      };
+          meta: {
+            estimated_value: formValues.estimatedValue,
+            available_quantity: formValues.availableQuantity,
+          },
+          resources: formValues.assetDocuments,
+          provinces: formValues.province ? [formValues.province] : [],
+          sites: Array.isArray(formValues.site) ? formValues.site : (formValues.site ? [formValues.site] : []),
+          recommended_for: ['user'],
+          start_date: formValues.startDate ? moment(formValues.startDate).unix() : moment().unix(),
+          end_date: formValues.endDate ? moment(formValues.endDate).unix() : moment().add(2, 'years').unix(),
+          status: isDraft ? 'DRAFT' : 'PUBLISHED',
+          can_be_copied: false,
+          certificate_provided: false,
+          delivery_mode: 'offline',
+        };
 
-      await createSession(payload);
+        await createSession(payload);
 
-      showAlert(
-        'success',
-        isDraft
-          ? t('supportProvider.supportOfferings.cards.alerts.draftSaved', 'Draft saved successfully!')
-          : t('supportProvider.supportOfferings.cards.alerts.supportPublished', 'Support published successfully!'),
-      );
-      // @ts-ignore
-      navigation.navigate('opportunities');
+        showAlert(
+          'success',
+          isDraft
+            ? t('supportProvider.assetForm.draftSuccessMessage')
+            : t('supportProvider.assetForm.requestSuccessMessage'),
+        );
+        // @ts-ignore
+        navigation.navigate(ROUTES.CREATE_OPPORTUNITY);
+      }
     } catch (err: any) {
-      const errMsg =
-        err?.data?.message ||
-        err?.message ||
-        t('supportProvider.createSupport.errors.saveFailed', 'Something went wrong while saving. Please try again.');
+      const errMsg = err?.data?.message || err?.message || t('common.somethingWentWrong');
       showAlert('error', errMsg);
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [navigation, showAlert, t]);
+  }, [isLc, navigation, showAlert, t]);
 
   const handleBackPress = () => {
     if (navigation.canGoBack && navigation.canGoBack()) {
       navigation.goBack();
     } else {
       // @ts-ignore
-      navigation.navigate('create-opportunity');
+      navigation.navigate(ROUTES.CREATE_OPPORTUNITY);
     }
   }
 
@@ -204,8 +238,8 @@ const App = (): React.JSX.Element => {
   return (
     <VStack flex={1}>
       <SPTitleHeader
-        title={t('supportProvider.createSupport.asset.title', 'Create Asset')}
-        backButtonText={t('supportProvider.createSupport.changeType', 'Change type')}
+        title={t('supportProvider.createSupport.asset.title')}
+        backButtonText={t('supportProvider.createSupport.changeType')}
         onNavigateBack={handleBackPress}
       />
       <Container {...styles.container}>
@@ -218,6 +252,7 @@ const App = (): React.JSX.Element => {
             onFieldChange={handleFieldChange}
             onSubmit={(formValues) => handleSave(formValues, false)}
             onSaveDraft={(formValues) => handleSave(formValues, true)}
+            isSubmitting={isSubmitting}
           />
         </Card>
       </Container>

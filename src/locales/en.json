@@ -1454,13 +1454,15 @@
         "livelihoodCategoryPlaceholder": "Select livelihood category",
         "assetTitle": "Asset Title",
         "assetTitlePlaceholder": "Name of this asset...",
-        "assetDescription": "Asset Description",
+        "assetDescription": "Asset Description (optional)",
         "assetDescriptionPlaceholder": "Describe this asset, its purpose, and how it benefits the recipient...",
         "estimatedValue": "Estimated Asset Value per Participant (Rands)",
         "estimatedValuePlaceholder": "R 0.00",
         "estimatedValueReview": "Estimated Value per Participant",
         "availableQuantity": "Available Quantity",
         "availableQuantityPlaceholder": "e.g. 50",
+        "quantity": "Quantity (optional)",
+        "quantityPlaceholder": "e.g. 10",
         "totalFundBreakdown": "",
         "trainingDetails": "Training Session Details",
         "trainingDetailsSubTitle": "Fields marked * are required",
@@ -2347,6 +2349,10 @@
         "browseSessions": "Browse Trainings & Sessions",
         "myRequests": "My Requests",
         "mySessions": "My Trainings & Sessions",
+        "browseServices": "Browse Services",
+        "myServices": "My Requests",
+        "browseAssets": "Browse Assets",
+        "myAssets": "My Requests",
         "history": "History"
       },
       "mySessionCard": {
@@ -2436,6 +2442,10 @@
     "requestSession": {
       "title": "Request a Session",
       "badge": "Training Session"
+    },
+    "requestAdditionalService": {
+      "title": "Request Additional Service",
+      "badge": "Service"
     }
   },
   "template": {
@@ -2739,7 +2749,11 @@
       "training": {
         "title": "Create Training Session",
         "discardMessage": "Are you sure you want to discard this session draft?",
-        "discard": "Discard Draft"
+        "discard": "Discard Draft",
+        "alerts": {
+          "draftSaved": "Draft saved successfully!",
+          "sessionSaved": "Additional Service request saved successfully!"
+        }
       },
       "additionalService": {
         "title": "Create Additional Service"
@@ -2764,8 +2778,13 @@
       "errors": {
         "saveFailed": "Something went wrong while saving. Please try again.",
         "incompleteWarning": "Please Complete your Profile before proceeding.",
+        "featureUnderDevelopment": "Asset offering creation is currently not available.",
         "categoryNotOffered": "This support category is not part of your offered categories. Please update your profile to enable it."
       }
+    },
+    "assetForm": {
+      "requestSuccessMessage": "Asset request saved successfully!",
+      "draftSuccessMessage": "Asset draft saved successfully!"
     },
     "supportRequests": {
       "buttonTexts": {
