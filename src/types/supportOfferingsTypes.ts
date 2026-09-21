@@ -80,6 +80,7 @@ export interface ServiceItem {
   actionType?: 'copy' | 'complete' | string;
   province?: string;
   siteKey?: string;
+  can_be_copied?: boolean;
 }
 
 export interface AssetItem {
@@ -94,6 +95,16 @@ export interface AssetItem {
   requests?: string;
   province?: string;
   siteKey?: string;
+  mentor_name?: string;
+  organization?: OrganizationObject | string;
+  delivery_mode?: DeliveryModeObject | string;
+  seats_limit?: number;
+  seats_remaining?: number;
+  can_be_copied?: boolean;
+  meeting_info?: MeetingInfo;
+  meeting_info_details?: any;
+  quantity?: number;
+  estimatedValuePerParticipant?: number;
 }
 
 export interface FilterParams {

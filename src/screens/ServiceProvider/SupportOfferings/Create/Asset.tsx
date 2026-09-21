@@ -5,14 +5,31 @@ import SPTitleHeader from '@components/Header/SPTitleHeader';
 import { useNavigation } from '@react-navigation/native';
 import SchemaFormRenderer from '@components/SchemaFormRenderer';
 import { ASSET_FORM_SCHEMA } from '@constants/ASSET_SCHEMA';
+import type { FormSection } from '@components/SchemaFormRenderer/type';
 import { useLanguage } from '@contexts/LanguageContext';
 import { getSitesByProvince, getProvincesList } from '../../../../services/usersService';
-import { getProjectCategoryList } from '../../../../services/projectService';
-import { createSession } from '../../../../services/mentoringService';
+import { createSession, getLivelihoodsOptions, getAssetTypesOptions } from '../../../../services/mentoringService';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
 import { SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
 import moment from 'moment';
+
+/**
+ * Clones the schema, overriding the given note field's fallback label text so
+ * it can show a live-computed value (e.g. a running total) without needing
+ * SchemaFormRenderer itself to know about per-field computed content.
+ */
+const patchFieldFallback = (schema: FormSection[], fieldName: string, fallback: string): FormSection[] =>
+  schema.map((node) => ({
+    ...node,
+    rows: node.rows?.map((row) => ({
+      ...row,
+      fields: row.fields.map((f) =>
+        f.name === fieldName ? { ...f, label: { ...f.label, fallback } } : f,
+      ),
+    })),
+    children: node.children ? patchFieldFallback(node.children, fieldName, fallback) : node.children,
+  }));
 
 const App = (): React.JSX.Element => {
   const navigation = useNavigation();
@@ -24,6 +41,7 @@ const App = (): React.JSX.Element => {
   const [provinces, setProvinces] = useState<any[]>([]);
   const [dynamicSites, setDynamicSites] = useState<any[]>([]);
   const [livelihoodCats, setLivelihoodCats] = useState<any[]>([]);
+  const [assetTypeOpts, setAssetTypeOpts] = useState<any[]>([]);
   const [values, setValues] = useState<any>({});
   
   const handleFieldChange = useCallback((name: string, value: string) => {
@@ -53,21 +71,16 @@ const App = (): React.JSX.Element => {
   }, [values.province]);
 
   useEffect(() => {
-    getProjectCategoryList()
-      .then((res: any[]) => {
-        // Collect all child categories under root IDP templates
-        const allChildren = res?.flatMap((root: any) => root.children || []) || [];
-        if (allChildren.length > 0) {
-          setLivelihoodCats(
-            allChildren.map((c: any) => ({
-              value: c.name || c.label || c._id,
-              label: c.name || c.label,
-            })),
-          );
-        }
-      })
-      .catch(err => {
-        console.warn('Failed to fetch livelihood categories, using fallback:', err);
+    getLivelihoodsOptions()
+      .then((res) => setLivelihoodCats(res || []))
+      .catch((err: any) => {
+        console.warn('Failed to fetch livelihood categories:', err);
+      });
+
+    getAssetTypesOptions()
+      .then((res) => setAssetTypeOpts(res || []))
+      .catch((err: any) => {
+        console.warn('Failed to fetch asset types:', err);
       });
   }, []);
 
@@ -97,60 +110,29 @@ const App = (): React.JSX.Element => {
         }))
       : [];
 
-    const livelihoodOpts =
-      livelihoodCats.length > 0
-        ? livelihoodCats
-        : [
-            {
-              value: 'Agriculture & Farming',
-              label:'Agriculture & Farming',
-            },
-            {
-              value: 'Livestock & Poultry',
-              label:'Livestock & Poultry',
-            },
-            {
-              value: 'Small Business & Retail',
-              label:'Small Business & Retail',
-            },
-            {
-              value: 'Vocational & Skills Trades',
-              label:'Vocational & Skills Trades',
-            },
-            {
-              value: 'Fisheries & Aquaculture',
-              label:'Fisheries & Aquaculture',
-            },
-            {
-              value: 'Services & Micro-enterprise',
-              label:'Services & Micro-enterprise',
-            },
-            {
-              value: 'Other',
-              label:'Other',
-            },
-          ];
-
     return {
       provinces: provinceOpts,
       sites: siteOpts,
-      assetTypes: [
-        {
-          value: 'Cash',
-          label: 'Cash',
-        },
-        {
-          value: 'In-kind',
-          label: 'In-kind',
-        },
-        {
-          value: 'Voucher',
-          label: 'Voucher',
-        },
-      ],
-      livelihoodCategories: livelihoodOpts,
+      assetTypes: assetTypeOpts,
+      livelihoodCategories: livelihoodCats,
     };
-  }, [provinces, dynamicSites, livelihoodCats, allowedProvinces, allowedSites, t]);
+  }, [provinces, dynamicSites, livelihoodCats, assetTypeOpts, allowedProvinces, allowedSites, t]);
+
+  const totalFundBreakdownText = useMemo(() => {
+    const perParticipant = Number(values.estimatedValue);
+    const quantity = Number(values.availableQuantity);
+    if (!perParticipant || !quantity) return '';
+    const totalFund = perParticipant * quantity;
+    return t(
+      'supportProvider.assetForm.step1.totalFundBreakdown',
+      `Total Asset Fund Breakdown: R ${perParticipant.toLocaleString()} per participant × ${quantity} funded participants = R ${totalFund.toLocaleString()} total`,
+    );
+  }, [values.estimatedValue, values.availableQuantity, t]);
+
+  const schema = useMemo(
+    () => patchFieldFallback(ASSET_FORM_SCHEMA, 'totalFundBreakdown', totalFundBreakdownText),
+    [totalFundBreakdownText],
+  );
 
   const handleSave = useCallback(async (formValues: any, isDraft: boolean) => {
     try {
@@ -164,6 +146,12 @@ const App = (): React.JSX.Element => {
         asset_types: formValues.assetType ? [formValues.assetType] : [],
         livelihoods: formValues.livelihoodCategory || '',
         estimated_value: formValues.estimatedValue,
+        available_quantity: formValues.availableQuantity,
+        meta: {
+          estimated_value: formValues.estimatedValue,
+          available_quantity: formValues.availableQuantity,
+        },
+        resources: formValues.assetDocuments,
         provinces: formValues.province ? [formValues.province] : [],
         sites: Array.isArray(formValues.site) ? formValues.site : (formValues.site ? [formValues.site] : []),
         recommended_for: ['user'],
@@ -223,7 +211,7 @@ const App = (): React.JSX.Element => {
       <Container {...styles.container}>
         <Card borderRadius={"$2xl"} bg="$white">
           <SchemaFormRenderer
-            schema={ASSET_FORM_SCHEMA}
+            schema={schema}
             optionsMap={optionsMap}
             values={values}
             t={t}

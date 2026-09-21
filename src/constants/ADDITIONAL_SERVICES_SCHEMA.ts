@@ -7,7 +7,6 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
     id: 'serviceDetails',
     title: {
       key: 'supportProvider.additionalServicesForm.tabs.serviceDetails',
-      fallback: 'Service Details',
     },
     icon: 'FileText',
     children: [
@@ -16,11 +15,9 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
         id: 'additionalServiceDetails',
         title: {
           key: 'supportProvider.additionalServicesForm.step1.title',
-          fallback: 'Additional Service Details',
         },
         subTitle: {
           key: 'supportProvider.additionalServicesForm.step1.subTitle',
-          fallback: 'Fields marked * are required',
         },
         rows: [
           {
@@ -29,15 +26,14 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 name: 'provinces',
                 type: 'select',
                 required: true,
-                label: { key: 'province', fallback: 'Province' },
-                placeholder: { fallback: 'Select province' },
+                label: { key: 'province' },
+                placeholder: { key: 'provincePlaceholder' },
                 optionsSource: 'provinces',
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.provinceRequired',
-                      fallback: 'Province is required',
                     },
                   },
                 ],
@@ -46,11 +42,10 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 name: 'sites',
                 type: 'multiselect',
                 required: true,
-                label: { key: 'site', fallback: 'Site' },
-                placeholder: { fallback: 'Select province first' },
+                label: { key: 'site' },
+                placeholder: { key: 'sitePlaceholder' },
                 placeholderWhenReady: {
                   key: 'sitePlaceholderReady',
-                  fallback: 'Select site',
                 },
                 optionsSource: 'sites',
                 dependsOn: 'provinces',
@@ -60,7 +55,6 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                     rule: 'required',
                     message: {
                       key: 'errors.siteRequired',
-                      fallback: 'Site is required',
                     },
                   },
                 ],
@@ -73,14 +67,13 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 name: 'categories',
                 type: 'pillselect',
                 required: true,
-                label: { key: 'servicesCategory', fallback: 'Services Category' },
+                label: { key: 'servicesCategory' },
                 optionsSource: 'pillars',
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.servicesCategoryRequired',
-                      fallback: 'Services category is required',
                     },
                   },
                 ],
@@ -91,7 +84,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
             fields: [{
               name: 'idp_additional_services_tasks',
               type: 'pillmultiselect',
-              label: { key: 'servicesCategory', fallback: 'Tags' },
+              label: { key: 'servicesTags' },
               optionsSource: 'sessionTypes',
               dependsOn: 'categories',
               visibleIf: [
@@ -106,14 +99,13 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 name: 'title',
                 type: 'text',
                 required: true,
-                label: { key: 'servicesTitle', fallback: 'Services Title' },
-                placeholder: { fallback: 'Name of this service...' },
+                label: { key: 'servicesTitle' },
+                placeholder: { key: 'servicesTitlePlaceholder' },
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.servicesTitleRequired',
-                      fallback: 'Services title is required',
                     },
                   },
                 ],
@@ -126,16 +118,15 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 name: 'description',
                 type: 'textarea',
                 required: true,
-                label: { key: 'servicesDescription', fallback: 'Services Description' },
+                label: { key: 'servicesDescription' },
                 placeholder: {
-                  fallback: 'Describe what this service provides and who it benefits...',
+                  key: 'servicesDescriptionPlaceholder',
                 },
                 validation: [
                   {
                     rule: 'required',
                     message: {
                       key: 'errors.servicesDescriptionRequired',
-                      fallback: 'Services description is required',
                     },
                   },
                 ],
@@ -149,7 +140,6 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
         id: 'serviceAvailability',
         title: {
           key: 'supportProvider.additionalServicesForm.step1.availabilityTitle',
-          fallback: 'Service Availability',
         },
         rows: [
           {
@@ -158,14 +148,13 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 name: 'start_date',
                 type: 'datetime',
                 required: false,
-                label: { key: 'startDate', fallback: 'Start Date' },
-                placeholder: { fallback: 'DD/MM/YYYY HH:MM' },
+                label: { key: 'startDate' },
+                placeholder: { key: 'startDatePlaceholder' },
                 validation: [
                   {
                     rule: 'dateNotInPast',
                     message: {
                       key: 'errors.dateNotInPast',
-                      fallback: 'Past dates are not allowed.',
                     },
                   },
                   {
@@ -176,7 +165,6 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                     },
                     message: {
                       key: "errors.dateCompare",
-                      fallback: "Start Date must be before or equal to End Date."
                     }
                   }
                 ],
@@ -185,8 +173,8 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
               //   name: 'startTime',
               //   type: 'time',
               //   required: false,
-              //   label: { key: 'startTime', fallback: 'Start Time' },
-              //   placeholder: { fallback: '--:--' },
+              //   label: { key: 'startTime' },
+              //   placeholder: { },
               //   validation: [
               //     {
               //       rule: "timeCompare",
@@ -196,8 +184,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
               //       },
               //       message: {
               //         key: "errors.timeCompareEndTime",
-              //         fallback: "Start Time must be before End Time."
-              //       }
+              //              //       }
               //     }
               //   ],
               // },
@@ -209,14 +196,13 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 name: 'end_date',
                 type: 'datetime',
                 required: false,
-                label: { key: 'endDate', fallback: 'End Date' },
-                placeholder: { fallback: 'DD/MM/YYYY HH:MM' },
+                label: { key: 'endDate' },
+                placeholder: { key: 'endDatePlaceholder' },
                 validation: [
                   {
                     rule: 'dateNotInPast',
                     message: {
                       key: 'errors.dateNotInPast',
-                      fallback: 'Past dates are not allowed.',
                     },
                   },
                   {
@@ -227,7 +213,6 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                     },
                     message: {
                       key: "errors.dateCompareStartDate",
-                      fallback: "End Date must be after or equal to Start Date."
                     }
                   }
                 ],
@@ -236,8 +221,8 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
               //   name: 'endTime',
               //   type: 'time',
               //   required: false,
-              //   label: { key: 'endTime', fallback: 'End Time' },
-              //   placeholder: { fallback: '--:--' },
+              //   label: { key: 'endTime' },
+              //   placeholder: { },
               //   validation: [
               //     {
               //       rule: "timeCompare",
@@ -247,8 +232,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
               //       },
               //       message: {
               //         key: "errors.timeCompareStartTime",
-              //         fallback: "End Time must be after Start Time."
-              //       }
+              //              //       }
               //     }
               //   ],
               // },
@@ -260,8 +244,8 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 name: 'location',
                 type: 'text',
                 required: false,
-                label: { key: 'serviceLocation', fallback: 'Location where service is provided' },
-                placeholder: { fallback: "Address or indicate 'Online / Remote'..." },
+                label: { key: 'serviceLocation' },
+                placeholder: { key: 'serviceLocationPlaceholder' },
               },
             ],
           },
@@ -271,8 +255,44 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 name: 'learning_objectives',
                 type: 'textarea',
                 required: false,
-                label: { key: 'eligibilityCriteria', fallback: 'Eligibility Criteria' },
-                placeholder: { fallback: 'Who can access this service? Any specific requirements?' },
+                label: { key: 'eligibilityCriteria' },
+                placeholder: { key: 'eligibilityCriteriaPlaceholder' },
+              },
+            ],
+          },
+          {
+            fields: [
+              {
+                name: 'resources',
+                type: 'file',
+                multiple: true,
+                required: false,
+                showOptionalTag: true,
+                label: {
+                  key: 'supportProvider.additionalServicesForm.step1.resourceContent',
+                },
+                subTitle: {
+                  key: 'supportProvider.additionalServicesForm.step1.resourceUploadSub',
+                },
+                placeholder: {
+                  key: 'supportProvider.additionalServicesForm.step1.uploadPrompt',
+                },
+                validation: [
+                  {
+                    rule: 'fileType',
+                    value: ['pdf', 'doc', 'docx'],
+                    message: {
+                      key: 'errors.fileType',
+                    },
+                  },
+                  {
+                    rule: 'fileSize',
+                    value: 10,
+                    message: {
+                      key: 'errors.fileSize10',
+                    },
+                  },
+                ],
               },
             ],
           },
@@ -287,7 +307,6 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
     id: 'review',
     title: {
       key: 'supportProvider.additionalServicesForm.tabs.review',
-      fallback: 'Review & Publish',
     },
     icon: 'Check',
     children: [
@@ -296,25 +315,20 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
         id: 'reviewPublishSection',
         title: {
           key: 'supportProvider.additionalServicesForm.step2.title',
-          fallback: 'Review & Publish',
         },
         hint: {
           title: {
             key: 'supportProvider.additionalServicesForm.step2.infoTitle',
-            fallback: 'Before you publish:',
           },
           bullets: [
             {
               key: 'supportProvider.additionalServicesForm.step2.infoBullet1',
-              fallback: 'This support will be visible to all Coaches in the GBL network',
             },
             {
               key: 'supportProvider.additionalServicesForm.step2.infoBullet2',
-              fallback: 'Coaches can submit requests on behalf of participants',
             },
             {
               key: 'supportProvider.additionalServicesForm.step2.infoBullet3',
-              fallback: "You'll receive notifications when requests are submitted",
             },
           ],
         },
@@ -324,7 +338,6 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
             id: 'reviewServiceDetails',
             title: {
               key: 'supportProvider.additionalServicesForm.step2.serviceDetailsTitle',
-              fallback: 'Service Details',
             },
             rows: [
               {
@@ -335,7 +348,6 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                     optionsSource: 'provinces',
                     label: {
                       key: 'province',
-                      fallback: 'Province',
                     },
                   },
                 ],
@@ -348,7 +360,6 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                     optionsSource: 'sites',
                     label: {
                       key: 'site',
-                      fallback: 'Site',
                     },
                   },
                 ],
@@ -360,8 +371,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                     name: 'categories',
                     optionsSource: 'pillars',
                     label: {
-                      key: 'servicesCategory',
-                      fallback: 'Category',
+                      key: 'servicesCategoryReview',
                     },
                   },
                 ],
@@ -373,8 +383,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                     name: 'idp_additional_services_tasks',
                     optionsSource: 'sessionTypes',
                     label: {
-                      key: 'servicesCategory',
-                      fallback: 'Tags',
+                      key: 'servicesTags',
                     },
                   },
                 ],
@@ -384,7 +393,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                   {
                     name: 'title',
                     type: 'view',
-                    label: { key: 'servicesTitle', fallback: 'Title' },
+                    label: { key: 'servicesTitleReview' },
                   },
                 ],
               },
@@ -394,12 +403,12 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                     name: 'start_date',
                     type: 'view',
                     displayFormat: "dateFormat@DD-MM-YYYY hh:mm A",
-                    label: { key: 'startDate', fallback: 'Start Date' },
+                    label: { key: 'startDate' },
                   },
                   // {
                   //   name: 'startTime',
                   //   type: 'view',
-                  //   label: { key: 'startTime', fallback: 'Start Time' },
+                  //   label: { key: 'startTime' },
                   // },
                 ],
               },
@@ -409,12 +418,12 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                     name: 'end_date',
                     type: 'view',
                     displayFormat: "dateFormat@DD-MM-YYYY hh:mm A",
-                    label: { key: 'endDate', fallback: 'End Date' },
+                    label: { key: 'endDate' },
                   },
                   // {
                   //   name: 'endTime',
                   //   type: 'view',
-                  //   label: { key: 'endTime', fallback: 'End Time' },
+                  //   label: { key: 'endTime' },
                   // },
                 ],
               },
@@ -423,7 +432,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                   {
                     name: 'location',
                     type: 'view',
-                    label: { key: 'serviceLocation', fallback: 'Location' },
+                    label: { key: 'serviceLocationReview' },
                   },
                 ],
               },

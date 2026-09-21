@@ -125,17 +125,36 @@ const ASSET_STATUS_LABEL: Record<string, AssetItem['status']> = {
   COMPLETED: 'Accepted',
 };
 
-const mapToAssetItem = (raw: any): AssetItem => ({
-  id: raw.id ?? raw._id,
-  title: raw.title,
-  status: ASSET_STATUS_LABEL[String(raw.status).toUpperCase()] || raw.status,
-  type: Array.isArray(raw.asset_types) ? raw.asset_types[0] : raw.asset_types,
-  description: raw.description,
-  sector: raw.livelihoods,
-  value: raw.estimated_value ? `R ${raw.estimated_value}` : undefined,
-  province: Array.isArray(raw.provinces) ? raw.provinces[0] : raw.provinces,
-  siteKey: Array.isArray(raw.sites) ? raw.sites[0] : raw.sites,
-});
+const mapToAssetItem = (raw: any): AssetItem => {
+  const assetType = Array.isArray(raw.asset_types) ? raw.asset_types[0] : raw.asset_types;
+  const estimatedValue = raw.estimated_value ?? raw.meta?.estimated_value;
+  const availableQuantity = raw.available_quantity ?? raw.meta?.available_quantity;
+
+  return {
+    id: raw.id ?? raw._id,
+    title: raw.title,
+    status: ASSET_STATUS_LABEL[String(raw.status).toUpperCase()] || raw.status,
+    type: typeof assetType === 'object' ? assetType?.label ?? assetType?.value : assetType,
+    description: raw.description,
+    sector: Array.isArray(raw.livelihoods)
+      ? raw.livelihoods.map((l: any) => (typeof l === 'object' ? l?.label ?? l?.value ?? l?.name : l)).join(', ')
+      : (typeof raw.livelihoods === 'object' ? raw.livelihoods?.label ?? raw.livelihoods?.value : raw.livelihoods),
+    value: estimatedValue ? `R ${estimatedValue} / participant` : undefined,
+    province: Array.isArray(raw.provinces) ? raw.provinces[0] : raw.provinces,
+    siteKey: Array.isArray(raw.sites) ? raw.sites[0] : raw.sites,
+    requests: raw.requests ?? raw.meta?.requests,
+    mentor_name: raw.mentor_name ?? raw.meta?.mentor_name,
+    organization: raw.organization ?? raw.meta?.organization,
+    delivery_mode: raw.delivery_mode,
+    seats_limit: raw.seats_limit,
+    seats_remaining: raw.seats_remaining,
+    can_be_copied: raw.can_be_copied,
+    meeting_info: raw.meeting_info,
+    meeting_info_details: raw.meeting_info_details,
+    quantity: availableQuantity !== undefined && availableQuantity !== null ? Number(availableQuantity) : undefined,
+    estimatedValuePerParticipant: estimatedValue !== undefined && estimatedValue !== null ? Number(estimatedValue) : undefined,
+  };
+};
 
 /**
  * Fetch Assets

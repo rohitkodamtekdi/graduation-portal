@@ -1407,6 +1407,7 @@
       "createUser": {
         "title": "Create New User",
         "description": "Training / Session Description",
+        "descriptionPlaceholder": "Describe this session...",
         "personalInformation": "Personal Information",
         "firstName": "First Name",
         "firstNamePlaceholder": "Enter first name",
@@ -1431,6 +1432,132 @@
         "site": "Site",
         "sitePlaceholder": "Select province first",
         "sitePlaceholderReady": "Select site",
+        "servicesCategory": "Services Category",
+        "servicesCategoryReview": "Category",
+        "servicesTags": "Tags",
+        "servicesTitle": "Services Title",
+        "servicesTitleReview": "Title",
+        "servicesTitlePlaceholder": "Name of this service...",
+        "servicesDescription": "Services Description",
+        "servicesDescriptionPlaceholder": "Describe what this service provides and who it benefits...",
+        "serviceLocation": "Location where service is provided",
+        "serviceLocationReview": "Location",
+        "serviceLocationPlaceholder": "Address or indicate 'Online / Remote'...",
+        "eligibilityCriteria": "Eligibility Criteria",
+        "eligibilityCriteriaPlaceholder": "Who can access this service? Any specific requirements?",
+        "startDate": "Start Date",
+        "startDatePlaceholder": "DD/MM/YYYY HH:MM",
+        "endDate": "End Date",
+        "endDatePlaceholder": "DD/MM/YYYY HH:MM",
+        "assetType": "Asset Type",
+        "livelihoodCategory": "Category of Livelihoods",
+        "livelihoodCategoryPlaceholder": "Select livelihood category",
+        "assetTitle": "Asset Title",
+        "assetTitlePlaceholder": "Name of this asset...",
+        "assetDescription": "Asset Description",
+        "assetDescriptionPlaceholder": "Describe this asset, its purpose, and how it benefits the recipient...",
+        "estimatedValue": "Estimated Asset Value per Participant (Rands)",
+        "estimatedValuePlaceholder": "R 0.00",
+        "estimatedValueReview": "Estimated Value per Participant",
+        "availableQuantity": "Available Quantity",
+        "availableQuantityPlaceholder": "e.g. 50",
+        "totalFundBreakdown": "",
+        "trainingDetails": "Training Session Details",
+        "trainingDetailsSubTitle": "Fields marked * are required",
+        "pillar": "Pillar",
+        "idp_training_task": "Training / Session Type",
+        "idp_training_taskPlaceholder": "Select session type",
+        "sessionType": "Please specify",
+        "sessionTypePlaceholder": "Describe this session...",
+        "learningObjectives": "Learning Objectives",
+        "learningObjectivesPlaceholder": "List the key learning outcomes, one per line...",
+        "targetAudience": "Target Audience",
+        "certificateProvided": "Certificate Provided",
+        "maxCapacity": "Maximum Capacity",
+        "maxCapacityPlaceholder": "e.g. 20",
+        "recurringSession": "Recurring Session",
+        "scheduleFormat": "Schedule & Format",
+        "scheduleDetails": "Schedule & Format",
+        "scheduleDetailsSubTitle": "Set when and how the session will be delivered",
+        "start_date": "Start Date & Time",
+        "start_datePlaceholder": "dd-mm-yyyy hh:mm",
+        "end_date": "End Date & Time",
+        "end_datePlaceholder": "dd-mm-yyyy hh:mm",
+        "formatType": "Type",
+        "location": "Venue Location",
+        "locationPlaceholder": "Venue name and address...",
+        "meetingLink": "Meeting Link",
+        "meetingLinkPlaceholder": "https://...",
+        "review": "Review & Publish",
+        "supportProvider": {
+          "trainingSession": {
+            "step1": {
+              "resourceContent": "Resource Content",
+              "resourceUploadSub": "Upload PDF or DOC training materials",
+              "uploadPrompt": "Click to upload PDF / DOC"
+            },
+            "step3": {
+              "title": "Review & Publish",
+              "sessionDetailsTitle": "Session Details",
+              "infoTitle": "Before you publish:",
+              "infoBullet1": "This support will be visible to all Coaches in the GBL network",
+              "infoBullet2": "Coaches can submit requests on behalf of participants",
+              "infoBullet3": "You'll receive notifications when requests are submitted",
+              "scheduleTitle": "Schedule",
+              "startLabel": "Start Date & Time",
+              "endLabel": "End Date & Time",
+              "formatLabel": "Format"
+            }
+          },
+          "assetForm": {
+            "tabs": {
+              "assetDetails": "Asset Details",
+              "review": "Review & Publish"
+            },
+            "step1": {
+              "title": "Asset Details",
+              "subTitle": "Fields marked * are required",
+              "livelihoodCategorySubTitle": "Select all applicable livelihood categories for this asset support",
+              "estimatedValueSubTitle": "Monetary value allocated per individual participant (1:1 ratio)",
+              "availableQuantitySubTitle": "Total number of participants / units funded for this asset",
+              "availabilityTitle": "Availability (optional)",
+              "resourceContent": "Resource Content / Asset Documents",
+              "resourceUploadSub": "Upload PDF or Word specification documents (Max 10 MB per file)",
+              "uploadPrompt": "Click to browse or upload PDF / Word documents"
+            },
+            "step2": {
+              "title": "Review & Publish",
+              "infoTitle": "Before you publish:",
+              "infoBullet1": "This support will be visible to all Coaches in the GBL network",
+              "infoBullet2": "Coaches can submit requests on behalf of participants",
+              "infoBullet3": "You'll receive notifications when requests are submitted",
+              "assetDetailsTitle": "Asset Details"
+            }
+          },
+          "additionalServicesForm": {
+            "tabs": {
+              "serviceDetails": "Service Details",
+              "review": "Review & Publish",
+              "sessionDetails": "Session Details"
+            },
+            "step1": {
+              "title": "Additional Service Details",
+              "subTitle": "Fields marked * are required",
+              "availabilityTitle": "Service Availability",
+              "resourceContent": "Resource Content / Documents",
+              "resourceUploadSub": "Upload PDF or Word service materials or guidelines (Max 10 MB per file)",
+              "uploadPrompt": "Click to browse or upload PDF / Word documents"
+            },
+            "step2": {
+              "title": "Review & Publish",
+              "infoTitle": "Before you publish:",
+              "infoBullet1": "This support will be visible to all Coaches in the GBL network",
+              "infoBullet2": "Coaches can submit requests on behalf of participants",
+              "infoBullet3": "You'll receive notifications when requests are submitted",
+              "serviceDetailsTitle": "Service Details"
+            }
+          }
+        },
         "passwordNote": "A temporary password will be generated and sent to the user's email address. The user will be required to change their password on first login.",
         "additionalInformation": "Additional Information",
         "organisation": "Organisation",
@@ -2549,8 +2676,12 @@
         "hideDetails": "Hide Details",
         "viewDetails": "View Details",
         "requestedBy": "Requested by: {{name}}",
+        "requestedByPrefix": "Requested by: ",
+        "requestsCount": "{{count}} requests / spots",
         "copySession": "Copy Session",
         "copyOffering": "Copy Offering",
+        "copyIntervention": "Copy Intervention",
+        "cancel": "Cancel",
         "viewRequests": "View Requests",
         "complete": "Complete",
         "sessionComplete": "Session Complete",
@@ -2579,7 +2710,8 @@
           "downloading": "Downloading {{name}}...",
           "navigatingRequests": "Navigating to support requests...",
           "offeringCopied": "Offering copied successfully!",
-          "offeringCompleted": "Offering marked as complete!"
+          "offeringCompleted": "Offering marked as complete!",
+          "offeringCancelled": "Intervention cancelled successfully!"
         }
       },
       "modal": {
@@ -2631,7 +2763,8 @@
       },
       "errors": {
         "saveFailed": "Something went wrong while saving. Please try again.",
-        "incompleteWarning": "Please Complete Your Profile Before Proceeding."
+        "incompleteWarning": "Please Complete your Profile before proceeding.",
+        "categoryNotOffered": "This support category is not part of your offered categories. Please update your profile to enable it."
       }
     },
     "supportRequests": {
@@ -2727,11 +2860,11 @@
     },
     "materialsLibrary": {
       "title": "Template & Resource Library",
-      "subtitle": "Standalone content repository of all workbooks, guides, templates, and manuals uploaded for support offerings.",
+      "subtitle": "Standalone content repository of all workbooks, guides, templates, and manuals uploaded for support interventions.",
       "uploadResource": "Upload Resource",
       "stats": {
         "totalResources": "Total Resources",
-        "pdfDocuments": "PDFs & Documents",
+        "pdfDocuments": "PDFs & Word Documents",
         "templatesDecks": "Templates & Decks",
         "totalDownloads": "Total Downloads"
       },
