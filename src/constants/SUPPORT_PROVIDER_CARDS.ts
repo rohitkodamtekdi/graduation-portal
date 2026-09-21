@@ -171,7 +171,7 @@ export const SUPPORT_OFFERING_SUB_TABS = {
 } as const;
 
 export const SUPPORT_OFFERING_TYPE_VALUES = {
-  TRAINING_SESSION: 'training_session',
+  TRAINING_SESSION: 'training',
   ADDITIONAL_SERVICE: 'additional_service',
   ASSET: 'asset',
 } as const;
