@@ -27,7 +27,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 type: 'select',
                 required: true,
                 label: { key: 'province' },
-                placeholder: { },
+                placeholder: { key: 'provincePlaceholder' },
                 optionsSource: 'provinces',
                 validation: [
                   {
@@ -43,7 +43,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 type: 'multiselect',
                 required: true,
                 label: { key: 'site' },
-                placeholder: { },
+                placeholder: { key: 'sitePlaceholder' },
                 placeholderWhenReady: {
                   key: 'sitePlaceholderReady',
                 },
@@ -89,7 +89,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 label: {
                   key: 'idp_training_task',
                 },
-                placeholder: { },
+                placeholder: { key: 'idp_training_taskPlaceholder' },
                 optionsSource: 'sessionTypes',
                 dependsOn: 'categories',
                 disabledWhen: { field: 'categories', empty: true },
@@ -113,7 +113,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 label: {
                   key: 'sessionType',
                 },
-                placeholder: { },
+                placeholder: { key: 'sessionTypePlaceholder' },
                 visibleIf: [
                   { name: 'idp_training_task', value: 'custom', operator: '===' },
                 ],
@@ -138,6 +138,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                   key: 'description',
                 },
                 placeholder: {
+                  key: 'descriptionPlaceholder',
                 },
                 validation: [
                   {
@@ -160,6 +161,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                   key: 'learningObjectives',
                 },
                 placeholder: {
+                  key: 'learningObjectivesPlaceholder',
                 },
               }]),
             ],
@@ -211,7 +213,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 type: 'text',
                 required: true,
                 label: { key: 'maxCapacity' },
-                placeholder: { },
+                placeholder: { key: 'maxCapacityPlaceholder' },
                 inputProps: { keyboardType: 'numeric' },
                 validation: [
                   {
@@ -299,7 +301,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 type: 'datetime',
                 required: true,
                 label: { key: 'start_date' },
-                placeholder: { },
+                placeholder: { key: 'start_datePlaceholder' },
                 validation: [
                   {
                     rule: 'required',
@@ -334,7 +336,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 type: 'datetime',
                 required: true,
                 label: { key: 'end_date' },
-                placeholder: { },
+                placeholder: { key: 'end_datePlaceholder' },
                 validation: [
                   {
                     rule: 'required',
@@ -388,7 +390,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 type: 'text',
                 required: true,
                 label: { key: 'location' },
-                placeholder: { },
+                placeholder: { key: 'locationPlaceholder' },
                 visibleIf: [
                   { name: 'delivery_mode', value: 'online', operator: '!=' },
                 ],
@@ -410,7 +412,7 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 type: 'text',
                 required: true,
                 label: { key: 'meetingLink' },
-                placeholder: { },
+                placeholder: { key: 'meetingLinkPlaceholder' },
                 visibleIf: [
                   { name: 'delivery_mode', value: 'offline', operator: '!=' },
                 ],

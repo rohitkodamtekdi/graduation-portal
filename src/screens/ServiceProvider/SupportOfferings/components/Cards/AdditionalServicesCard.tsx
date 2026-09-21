@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Box,
   HStack,
@@ -59,8 +59,11 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
   const statusColors = getStatusColors(statusTag);
 
   // Province / site names resolved from the option lists passed down from the parent screen
-  const getOptionId = (e: any) => e?._id || e?.id || e?.value;
-  const getOptionLabel = (e: any) => e?.metaInformation?.name || e?.name || e?.title || e?.label;
+  const getOptionId = useCallback((e: any) => e?._id || e?.id || e?.value, []);
+  const getOptionLabel = useCallback(
+    (e: any) => e?.metaInformation?.name || e?.name || e?.title || e?.label,
+    []
+  );
 
   const matchedProvince = provinces?.find(
     (e: any) => getOptionId(e) === (item as any)?.provinces?.[0] || getOptionId(e) === (item as any)?.meta?.provinces?.[0]

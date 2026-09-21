@@ -27,7 +27,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                 type: 'select',
                 required: true,
                 label: { key: 'province' },
-                placeholder: { },
+                placeholder: { key: 'provincePlaceholder' },
                 optionsSource: 'provinces',
                 validation: [
                   {
@@ -43,7 +43,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                 type: 'multiselect',
                 required: true,
                 label: { key: 'site' },
-                placeholder: { },
+                placeholder: { key: 'sitePlaceholder' },
                 placeholderWhenReady: {
                   key: 'sitePlaceholderReady',
                 },
@@ -109,7 +109,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                 type: 'text',
                 required: true,
                 label: { key: 'assetTitle' },
-                placeholder: { },
+                placeholder: { key: 'assetTitlePlaceholder' },
                 validation: [
                   {
                     rule: 'required',
@@ -129,6 +129,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                 required: true,
                 label: { key: 'assetDescription' },
                 placeholder: {
+                  key: 'assetDescriptionPlaceholder',
                 },
                 validation: [
                   {
@@ -151,7 +152,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                 subTitle: {
                   key: 'supportProvider.assetForm.step1.estimatedValueSubTitle',
                 },
-                placeholder: { },
+                placeholder: { key: 'estimatedValuePlaceholder' },
                 inputProps: { keyboardType: 'numeric' },
                 validation: [
                   {
@@ -170,7 +171,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                 subTitle: {
                   key: 'supportProvider.assetForm.step1.availableQuantitySubTitle',
                 },
-                placeholder: { },
+                placeholder: { key: 'availableQuantityPlaceholder' },
                 inputProps: { keyboardType: 'numeric' },
                 validation: [
                   {
@@ -212,7 +213,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                 type: 'datetime',
                 required: false,
                 label: { key: 'startDate' },
-                placeholder: { },
+                placeholder: { key: 'startDatePlaceholder' },
                 validation: [
                   {
                     rule: 'dateNotInPast',
@@ -260,7 +261,7 @@ export const ASSET_SCHEMA: FormSection[] = [
                 type: 'datetime',
                 required: false,
                 label: { key: 'endDate' },
-                placeholder: { },
+                placeholder: { key: 'endDatePlaceholder' },
                 validation: [
                   {
                     rule: 'dateNotInPast',

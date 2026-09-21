@@ -27,7 +27,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 type: 'select',
                 required: true,
                 label: { key: 'province' },
-                placeholder: { },
+                placeholder: { key: 'provincePlaceholder' },
                 optionsSource: 'provinces',
                 validation: [
                   {
@@ -43,7 +43,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 type: 'multiselect',
                 required: true,
                 label: { key: 'site' },
-                placeholder: { },
+                placeholder: { key: 'sitePlaceholder' },
                 placeholderWhenReady: {
                   key: 'sitePlaceholderReady',
                 },
@@ -100,7 +100,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 type: 'text',
                 required: true,
                 label: { key: 'servicesTitle' },
-                placeholder: { },
+                placeholder: { key: 'servicesTitlePlaceholder' },
                 validation: [
                   {
                     rule: 'required',
@@ -120,6 +120,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 required: true,
                 label: { key: 'servicesDescription' },
                 placeholder: {
+                  key: 'servicesDescriptionPlaceholder',
                 },
                 validation: [
                   {
@@ -148,7 +149,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 type: 'datetime',
                 required: false,
                 label: { key: 'startDate' },
-                placeholder: { },
+                placeholder: { key: 'startDatePlaceholder' },
                 validation: [
                   {
                     rule: 'dateNotInPast',
@@ -196,7 +197,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 type: 'datetime',
                 required: false,
                 label: { key: 'endDate' },
-                placeholder: { },
+                placeholder: { key: 'endDatePlaceholder' },
                 validation: [
                   {
                     rule: 'dateNotInPast',
@@ -244,7 +245,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 type: 'text',
                 required: false,
                 label: { key: 'serviceLocation' },
-                placeholder: { },
+                placeholder: { key: 'serviceLocationPlaceholder' },
               },
             ],
           },
@@ -255,7 +256,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (): FormSection[] => ([
                 type: 'textarea',
                 required: false,
                 label: { key: 'eligibilityCriteria' },
-                placeholder: { },
+                placeholder: { key: 'eligibilityCriteriaPlaceholder' },
               },
             ],
           },
