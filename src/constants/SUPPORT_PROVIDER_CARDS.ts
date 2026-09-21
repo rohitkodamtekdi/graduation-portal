@@ -45,7 +45,8 @@ export const SESSION_STATUS = {
   DRAFT: 'DRAFT',
   PUBLISHED: 'PUBLISHED',
   COMPLETED: "COMPLETED",
-  LIVE: "LIVE"
+  LIVE: "LIVE",
+  CANCELLED: "CANCELLED"
 } as const;
 
 export const SESSION_STATUS_LABEL = {
@@ -54,7 +55,8 @@ export const SESSION_STATUS_LABEL = {
   COMPLETED: "Completed",
   UPCOMING: "Upcoming",
   IN_PROGRESS: "In progress",
-  LIVE: "In progress"
+  LIVE: "In progress",
+  CANCELLED: "Cancelled"
 } as const;
 
 export const DEFAULT_SESSION_CONFIG = {

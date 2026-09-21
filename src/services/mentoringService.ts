@@ -123,12 +123,43 @@ export const getSessionDetails = async (sessionId: string | number): Promise<any
 };
 
 /**
+ * Get the list of mentees actually enrolled in a session (real attendees, not
+ * the session's static description) — used to populate the Confirm Attendance
+ * participant list with real users instead of placeholder data.
+ * Endpoint: GET /mentoring/v1/sessions/enrolledMentees/:sessionId
+ */
+export const getEnrolledMentees = async (sessionId: string | number): Promise<any[]> => {
+  try {
+    const response = await api.get(API_ENDPOINTS.MENTORING_ENROLLED_MENTEES(sessionId));
+    return response.data?.result || [];
+  } catch (error: any) {
+    return [];
+  }
+};
+
+/**
  * Delete a Mentoring Session by ID
  * Endpoint: DELETE /mentoring/v1/sessions/update/:sessionId
  */
 export const deleteSession = async (sessionId: string | number): Promise<any> => {
   try {
     const response = await api.delete(API_ENDPOINTS.MENTORING_UPDATE_SESSION(sessionId));
+    return response.data;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+/**
+ * Cancel a published Support Offering (Training/Additional Service/Asset) by
+ * setting its status to CANCELLED.
+ * Endpoint: POST /mentoring/v1/sessions/update/:sessionId
+ */
+export const cancelSession = async (sessionId: string | number): Promise<any> => {
+  try {
+    const response = await api.post(API_ENDPOINTS.MENTORING_UPDATE_SESSION(sessionId), {
+      status: 'CANCELLED',
+    });
     return response.data;
   } catch (error: any) {
     throw error;

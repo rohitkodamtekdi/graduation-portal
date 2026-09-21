@@ -328,6 +328,10 @@ const App = (): React.JSX.Element => {
               isShowLoadMore={isShowLoadMore}
               onLoadMoreItems={onLoadMoreItems}
               isLoadingMore={_loading && page > 1}
+              _card={{
+                provinces: provincesList,
+                sites: allSiteOptions
+              }}
             />
           )}
 
@@ -337,6 +341,10 @@ const App = (): React.JSX.Element => {
               isShowLoadMore={isShowLoadMore}
               onLoadMoreItems={onLoadMoreItems}
               isLoadingMore={_loading && page > 1}
+              _card={{
+                provinces: provincesList,
+                sites: allSiteOptions
+              }}
             />
           )}
         </VStack>

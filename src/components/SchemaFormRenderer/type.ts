@@ -30,7 +30,7 @@ export interface ValidationRule {
    * `{field, operator}` pair naming the other field to compare against.
    */
   value?: number | string | string[] | FieldCompareValue;
-  message: { key: string; fallback: string };
+  message: { key: string; fallback?: string };
 }
 
 export interface VisibleWhenFlag {
@@ -65,14 +65,14 @@ export type HintSeverity = 'info' | 'warning' | 'danger' | 'success';
 
 export interface HintBullet {
   key?: string;
-  fallback: string;
+  fallback?: string;
 }
 
 export interface HintObject {
   type?: HintSeverity;
   /** Lucide icon name; falls back to a default icon for `type` when omitted */
   icon?: string;
-  title?: { key?: string; fallback: string };
+  title?: { key?: string; fallback?: string };
   bullets?: HintBullet[];
   _icon?: any;
   _title?: any;
@@ -110,9 +110,9 @@ export type FormFieldType = typeof FORM_FIELD_TYPES[keyof typeof FORM_FIELD_TYPE
 export interface FormField {
   name?: string;
   type: FormFieldType;
-  label: { key: string; fallback: string };
+  label: { key: string; fallback?: string };
   required?: boolean;
-  placeholder?: { key?: string; fallback: string };
+  placeholder?: { key?: string; fallback?: string };
   /** Plain string for most fields; `string[]` for multiselect/pillmultiselect defaults */
   defaultValue?: string | string[];
   /** When present and the flag resolves to false, this field is hidden */
@@ -141,19 +141,19 @@ export interface FormField {
   toggleVisibility?: boolean;
   visibilityToggleGroup?: string;
   validation?: ValidationRule[];
-  placeholderWhenReady?: { key: string; fallback: string };
+  placeholderWhenReady?: { key: string; fallback?: string };
   fields?: FormField[];
   isReadOnly?: boolean;
   /** Field is rendered only when every condition here evaluates to true (AND logic) */
   visibleIf?: VisibleIfCondition[];
   /** Small helper text rendered under the field (currently used by `file` fields) */
-  subLabel?: { key?: string; fallback: string };
+  subLabel?: { key?: string; fallback?: string };
   /** Renders an "(optional)" tag next to the label (currently used by `file` fields) */
   showOptionalTag?: boolean;
   /** `file` fields only: allow selecting/storing more than one file (stored as an array). Default/undefined = single file, unchanged from before. */
   multiple?: boolean;
   /** Rendered below the label, above the input, using the standard helper-text typography */
-  subTitle?: { key?: string; fallback: string };
+  subTitle?: { key?: string; fallback?: string };
   /** Informational message rendered above the input — simple string or a severity banner */
   hint?: Hint;
   /**
@@ -184,11 +184,11 @@ export interface FormSection {
   type: string;
   /** Lucide icon name */
   icon?: string;
-  title?: { key: string; fallback: string };
+  title?: { key: string; fallback?: string };
   /** Alternate to `title` accepted for tab/section nodes */
-  label?: { key?: string; fallback: string };
+  label?: { key?: string; fallback?: string };
   /** Larger page-level heading, distinct from the compact card-header `title` */
-  subTitle?: { key?: string; fallback: string };
+  subTitle?: { key?: string; fallback?: string };
   /** Informational message rendered below the title/subTitle — simple string or a severity banner */
   hint?: Hint;
   children?: FormSection[]

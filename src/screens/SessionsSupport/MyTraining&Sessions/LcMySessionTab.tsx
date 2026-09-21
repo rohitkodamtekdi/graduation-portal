@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, HStack, VStack, Text, Button, ButtonText, Badge, BadgeText, Spinner, LucideIcon } from '@ui';
 import moment from 'moment';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useSessionStatus } from '@hooks/useSessionStatus';
 import styles from '../styles';
 
 interface LcMySessionTabProps {
@@ -39,29 +40,10 @@ const getStatusColors = (status: string) => {
   if (s === 'DRAFT') {
     return { bg: '$backgroundLight100', border: '$borderColor', text: '$textMuted', icon: 'FileText' };
   }
-  return { bg: '$blue50', border: '$blue200', text: '$blue600', icon: 'Clock' };
-};
-
-const resolveStatus = (item: LcMySessionTabProps['item']): string => {
-  const raw = (item.status || '').toUpperCase();
-  if (raw === 'DRAFT') return 'Draft';
-  if (raw === 'COMPLETED') return 'Completed';
-  if (item.start_date) {
-    const startMs =
-      typeof item.start_date === 'number' || !isNaN(Number(item.start_date))
-        ? Number(item.start_date) * 1000
-        : new Date(item.start_date).getTime();
-    const endMs = item.end_date
-      ? typeof item.end_date === 'number' || !isNaN(Number(item.end_date))
-        ? Number(item.end_date) * 1000
-        : new Date(item.end_date).getTime()
-      : undefined;
-    const now = Date.now();
-    if (endMs !== undefined && now > endMs) return 'Completed';
-    if (now < startMs) return 'Upcoming';
-    return 'In Progress';
+  if (s === 'CANCELLED') {
+    return { bg: '$error50', border: '$red200', text: '$red600', icon: 'XCircle' };
   }
-  return 'Upcoming';
+  return { bg: '$blue50', border: '$blue200', text: '$blue600', icon: 'Clock' };
 };
 
 const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
@@ -74,7 +56,7 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
   isLoadingMore = false,
 }) => {
   const { t } = useLanguage();
-  const statusLabel = resolveStatus(item);
+  const { statusTag: statusLabel } = useSessionStatus(item);
   const statusColors = getStatusColors(statusLabel);
 
   // Date & Time display matching Browse Trainings & Sessions card format
