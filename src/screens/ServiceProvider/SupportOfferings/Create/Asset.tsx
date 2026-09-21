@@ -9,7 +9,7 @@ import type { FormSection } from '@components/SchemaFormRenderer/type';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useAuth } from '@contexts/AuthContext';
 import { getSitesByProvince, getProvincesList } from '../../../../services/usersService';
-import { requestSession, getLivelihoodsOptions, getAssetTypesOptions } from '../../../../services/mentoringService';
+import { requestSession, getLivelihoodsOptions, getAssetTypesOptions, createSession } from '../../../../services/mentoringService';
 import { requestAssetPayloadMapping } from '@utils/supportProvider';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
@@ -58,6 +58,7 @@ const App = (): React.JSX.Element => {
   const [livelihoodCats, setLivelihoodCats] = useState<any[]>([]);
   const [assetTypeOpts, setAssetTypeOpts] = useState<any[]>([]);
   const [values, setValues] = useState<any>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleFieldChange = useCallback((name: string, value: string) => {
     setValues((prev: any) => {
@@ -145,8 +146,8 @@ const App = (): React.JSX.Element => {
   }, [values.estimatedValue, values.availableQuantity, t]);
 
   const schema = useMemo(
-    () => patchFieldFallback(ASSET_FORM_SCHEMA, 'totalFundBreakdown', totalFundBreakdownText),
-    [totalFundBreakdownText],
+    () => patchFieldFallback(ASSET_FORM_SCHEMA(hideFileds), 'totalFundBreakdown', totalFundBreakdownText),
+    [hideFileds, totalFundBreakdownText],
   );
 
   const handleSave = useCallback(async (formValues: any, isDraft: boolean) => {
@@ -154,32 +155,9 @@ const App = (): React.JSX.Element => {
       setIsSubmitting(true);
       setValues(formValues);
 
-      const payload = {
-        support_offering_type: SUPPORT_CATEGORIES.ASSET,
-        categories: [SUPPORT_CATEGORIES.ASSET],
-        title: formValues.assetTitle,
-        description: formValues.assetDescription,
-        asset_types: formValues.assetType ? [formValues.assetType] : [],
-        livelihoods: formValues.livelihoodCategory || '',
-        estimated_value: formValues.estimatedValue,
-        available_quantity: formValues.availableQuantity,
-        meta: {
-          estimated_value: formValues.estimatedValue,
-          available_quantity: formValues.availableQuantity,
-        },
-        resources: formValues.assetDocuments,
-        provinces: formValues.province ? [formValues.province] : [],
-        sites: Array.isArray(formValues.site) ? formValues.site : (formValues.site ? [formValues.site] : []),
-        recommended_for: ['user'],
-        start_date: formValues.startDate ? moment(formValues.startDate).unix() : moment().unix(),
-        end_date: formValues.endDate ? moment(formValues.endDate).unix() : moment().add(2, 'years').unix(),
-        status: isDraft ? 'DRAFT' : 'PUBLISHED',
-        can_be_copied: false,
-        certificate_provided: false,
-        delivery_mode: 'offline',
-      };
-
-      await createSession(payload);
+      if (isLc) {
+        const payload = requestAssetPayloadMapping({ ...formValues, isDraft });
+        await requestSession(payload);
 
         showAlert(
           'success',
@@ -194,8 +172,41 @@ const App = (): React.JSX.Element => {
           refreshRequests: Date.now(),
         });
       } else {
-        // TODO: wire up SP-side asset offering creation (createSession) once its payload mapping is defined.
-        showAlert('warning', t('supportProvider.createSupport.errors.featureUnderDevelopment'));
+        const payload = {
+          support_offering_type: SUPPORT_CATEGORIES.ASSET,
+          categories: [SUPPORT_CATEGORIES.ASSET],
+          title: formValues.assetTitle,
+          description: formValues.assetDescription,
+          asset_types: formValues.assetType ? [formValues.assetType] : [],
+          livelihoods: formValues.livelihoodCategory || '',
+          estimated_value: formValues.estimatedValue,
+          available_quantity: formValues.availableQuantity,
+          meta: {
+            estimated_value: formValues.estimatedValue,
+            available_quantity: formValues.availableQuantity,
+          },
+          resources: formValues.assetDocuments,
+          provinces: formValues.province ? [formValues.province] : [],
+          sites: Array.isArray(formValues.site) ? formValues.site : (formValues.site ? [formValues.site] : []),
+          recommended_for: ['user'],
+          start_date: formValues.startDate ? moment(formValues.startDate).unix() : moment().unix(),
+          end_date: formValues.endDate ? moment(formValues.endDate).unix() : moment().add(2, 'years').unix(),
+          status: isDraft ? 'DRAFT' : 'PUBLISHED',
+          can_be_copied: false,
+          certificate_provided: false,
+          delivery_mode: 'offline',
+        };
+
+        await createSession(payload);
+
+        showAlert(
+          'success',
+          isDraft
+            ? t('supportProvider.assetForm.draftSuccessMessage')
+            : t('supportProvider.assetForm.requestSuccessMessage'),
+        );
+        // @ts-ignore
+        navigation.navigate(ROUTES.CREATE_OPPORTUNITY);
       }
     } catch (err: any) {
       const errMsg = err?.data?.message || err?.message || t('common.somethingWentWrong');

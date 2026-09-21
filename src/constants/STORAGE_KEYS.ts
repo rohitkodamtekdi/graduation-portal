@@ -29,8 +29,6 @@ export const STORAGE_KEYS = {
   PARTICIPANTS_ACTIVE_FILTER: 'participants_active_filter',
   /** Participants List screen active status preference */
   PARTICIPANTS_ACTIVE_STATUS: 'participants_active_status',
-  /** Service Provider support requests mock data store */
-  SP_SUPPORT_REQUESTS_STORE: 'sp_support_requests_store',
 } as const;
 
 // ---------------------------------------------------------------------------

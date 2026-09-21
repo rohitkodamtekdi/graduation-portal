@@ -1,7 +1,6 @@
 import moment from 'moment';
 import api from '../api';
 import { API_ENDPOINTS } from '../apiEndpoints';
-import supportRequestsMock from './mockData/supportRequests.json';
 import { getProvincesList, getAllSites } from '../usersService';
 import {
   SUPPORT_REQUEST_TABS,
@@ -9,7 +8,6 @@ import {
   REQUEST_STATUS,
   OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL,
 } from '@constants/SUPPORT_PROVIDER_CARDS';
-import { STORAGE_KEYS } from '@constants/STORAGE_KEYS';
 
 export interface SupportRequestItem {
   id: string | number;
@@ -87,40 +85,6 @@ export interface DeclinePayload {
   reason: string;
   details?: string;
 }
-
-const LOCAL_STORAGE_KEY = STORAGE_KEYS.SP_SUPPORT_REQUESTS_STORE;
-
-const loadMockStore = (): Record<string, SupportRequestItem[]> => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    }
-  } catch (err) {
-    console.error('Error loading support requests mockStore from localStorage:', err);
-  }
-  return {
-    [SUPPORT_REQUEST_TABS.SESSIONS]: [...((supportRequestsMock as any).sessions || [])],
-    [SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES]: [...((supportRequestsMock as any).additional_services || [])],
-    [SUPPORT_REQUEST_TABS.ASSETS]: [...((supportRequestsMock as any).assets || [])],
-    [SUPPORT_REQUEST_TABS.DECLINED]: [],
-  };
-};
-
-const saveMockStore = (store: Record<string, SupportRequestItem[]>) => {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(store));
-    }
-  } catch (err) {
-    console.error('Error saving support requests mockStore to localStorage:', err);
-  }
-};
-
-// In-memory & localStorage data store for fallback mock data
-const mockStore: Record<string, SupportRequestItem[]> = loadMockStore();
 
 /**
  * Maps a raw record from GET /mentoring/v1/requestSessions/list into the
@@ -277,11 +241,11 @@ export const getSupportRequests = async (
   let additionalServicesData: SupportRequestItem[] | null = null;
   let assetsData: SupportRequestItem[] | null = null;
   let declinedData: SupportRequestItem[] | null = null;
-  let sessionsCount = mockStore.sessions.length;
-  let additionalServicesCount = mockStore.additional_services.length;
-  let assetsCount = mockStore.assets.length;
-  let declinedCount = mockStore.declined.length;
-  let sessionsOverdueCount = mockStore.sessions.filter(i => (i.overdueDays || 0) > 0).length;
+  let sessionsCount = 0;
+  let additionalServicesCount = 0;
+  let assetsCount = 0;
+  let declinedCount = 0;
+  let sessionsOverdueCount = 0;
 
   // support_offering_type value the requestSessions API expects for each tab (declined isn't
   // type-scoped - it spans every offering type, so it's handled separately below).
@@ -359,16 +323,16 @@ export const getSupportRequests = async (
     console.warn('[SupportRequests] Failed to fetch session requests:', error);
   }
 
-  const additionalServicesList = additionalServicesData ?? [...mockStore.additional_services];
-  const assetsList = assetsData ?? [...mockStore.assets];
+  const additionalServicesList = additionalServicesData ?? [];
+  const assetsList = assetsData ?? [];
 
   let list: SupportRequestItem[];
   switch (tab) {
     case SUPPORT_REQUEST_TABS.SESSIONS:
-      list = sessionsData ?? [...mockStore.sessions];
+      list = sessionsData ?? [];
       break;
     case SUPPORT_REQUEST_TABS.DECLINED:
-      list = declinedData ?? [...mockStore.declined];
+      list = declinedData ?? [];
       break;
     case SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES:
       list = additionalServicesList;
@@ -495,37 +459,14 @@ export const requestMoreInfoForSupportRequest = async (
 export const declineSupportRequest = async (
   payload: DeclinePayload
 ): Promise<{ success: boolean; message: string }> => {
-  try {
-    if (API_ENDPOINTS && API_ENDPOINTS.SP_REQUEST_SESSIONS_REJECT) {
-      const response = await api.post(API_ENDPOINTS.SP_REQUEST_SESSIONS_REJECT, {
-        request_session_id: payload.requestId,
-        reason: payload.reason,
-        details: payload.details,
-      });
-      return response.data;
-    }
-  } catch (error) {
-    console.warn('Backend API unavailable, using simulated success for Decline Request:', error);
-  }
-
-  // Update in-memory mock store & persist to localStorage
-  const { requestId, reason, details } = payload;
-  const categories = [SUPPORT_REQUEST_TABS.SESSIONS, SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES, SUPPORT_REQUEST_TABS.ASSETS];
-  for (const cat of categories) {
-    const idx = mockStore[cat].findIndex(item => String(item.id) === String(requestId));
-    if (idx !== -1) {
-      const [declinedItem] = mockStore[cat].splice(idx, 1);
-      declinedItem.status = REQUEST_STATUS.DECLINED;
-      declinedItem.declineReason = reason;
-      declinedItem.declineDetails = details;
-      mockStore[SUPPORT_REQUEST_TABS.DECLINED].unshift(declinedItem);
-      saveMockStore(mockStore);
-      break;
-    }
-  }
-
+  const response = await api.post(API_ENDPOINTS.SP_REQUEST_SESSIONS_REJECT, {
+    request_session_id: payload.requestId,
+    reason: payload.reason,
+    details: payload.details,
+  });
+  const data = response.data;
   return {
-    success: true,
-    message: 'Support request declined successfully.',
+    success: data?.responseCode === 'OK' || data?.success === true,
+    message: data?.message || 'Support request declined successfully.',
   };
 };
