@@ -76,7 +76,7 @@ const SessionsSupportScreen: React.FC = () => {
         assetType: selectedAsset.type,
         livelihoodCategory: selectedAsset.sector,
         estimatedValue: selectedAsset.estimatedValuePerParticipant,
-        quantity: selectedIds.length,
+        availableQuantity: selectedIds.length,
         provinces: selectedAsset.province,
         sites: selectedAsset.siteKey,
         requestees: selectedIds,

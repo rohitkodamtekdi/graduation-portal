@@ -50,7 +50,9 @@ export interface SupportRequestsFilterParams {
 
 export interface AcceptAndSchedulePayload {
   requestId: string | number;
+  support_offering_type?: 'session' | 'asset' | 'additional_service';
   province?: string;
+  sites?: string[];
   category?: string;
   title?: string;
   description?: string;
@@ -389,34 +391,49 @@ export const acceptAndScheduleSupportRequest = async (
   const durationHours = DURATION_HOURS[payload.duration] ?? 2;
   const endDate = startDate + Math.round(durationHours * 3600);
 
+  const isAsset = payload.support_offering_type === 'asset';
+
   const body: Record<string, any> = {
     request_session_id: String(payload.requestId),
     type: 'public',
-    support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
+    support_offering_type: isAsset
+      ? SUPPORT_OFFERING_TYPE_VALUES.ASSET
+      : SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
     title: payload.title || '',
-    description: payload.description || '',
     start_date: startDate,
     end_date: endDate,
-    delivery_mode: payload.delivery_mode || 'online',
+    delivery_mode: payload.delivery_mode || (isAsset ? 'offline' : 'online'),
     can_be_copied: false,
     certificate_provided: false,
-    meeting_info: { link: payload.meetingLink || '' },
+    ...(isAsset
+      ? { agenda: payload.description || payload.title || '', meeting_info: { link: '', location: payload.location || '' } }
+      : { description: payload.description || '', meeting_info: { link: payload.meetingLink || '' } }),
   };
 
   if (payload.province) {
     body.provinces = [payload.province];
   }
 
+  if (isAsset && payload.sites && payload.sites.length) {
+    body.sites = payload.sites;
+  }
+
   if (payload.category) {
     body.categories = [payload.category];
   }
 
-  if (payload.targetAudience) {
-    body.learning_objectives = payload.targetAudience;
-  }
+  if (isAsset) {
+    if (payload.capacity) {
+      body.meta = { quantity: Number(payload.capacity) };
+    }
+  } else {
+    if (payload.targetAudience) {
+      body.learning_objectives = payload.targetAudience;
+    }
 
-  if (payload.capacity) {
-    body.seats = Number(payload.capacity);
+    if (payload.capacity) {
+      body.seats = Number(payload.capacity);
+    }
   }
 
   const response = await api.post(API_ENDPOINTS.REQUEST_SESSIONS_ACCEPT, body);
