@@ -151,3 +151,28 @@ export const requestorAssignMenteesToSession = async (
     throw error;
   }
 };
+
+/**
+ * Get the list of mentees/participants already enrolled in a session.
+ * Used by the Assign Participants flow to exclude already-enrolled users
+ * from the eligible participants list.
+ * Endpoint: GET /mentoring/v1/sessions/enrolledMentees/:sessionId
+ *
+ * @param sessionId - Session ID
+ * @returns A promise resolving to an array of enrolled user ids (as strings)
+ */
+export const getEnrolledMenteeIds = async (
+  sessionId: string | number
+): Promise<string[]> => {
+  try {
+    const response = await api.get(API_ENDPOINTS.SESSION_ENROLLED_MENTEES(sessionId));
+    const list = response?.data?.result || [];
+    return (Array.isArray(list) ? list : [])
+      .map((mentee: any) => mentee?.id ?? mentee?.user_id)
+      .filter(Boolean)
+      .map((id: any) => String(id));
+  } catch (error) {
+    console.error('Error fetching enrolled mentees:', error);
+    return [];
+  }
+};

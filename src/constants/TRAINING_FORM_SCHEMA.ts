@@ -247,7 +247,11 @@ export const TRAINING_SESSION_SCHEMA = (hideFileds: string[] = []) => ([
                 validation:[
                    {
                     rule: 'fileType',
-                    value: ['pdf','doc'],
+                    value: [
+                      'application/pdf',
+                      'application/msword',
+                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    ],
                     message: {
                       key: 'errors.fileType',
                     },

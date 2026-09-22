@@ -120,14 +120,23 @@ export const RequestDetailsScreen: React.FC = () => {
               : null;
 
             const diffMinutes = startMoment && endMoment ? endMoment.diff(startMoment, 'minutes') : 0;
-            const durationHours = Math.floor(diffMinutes / 60);
+            const durationDays = Math.floor(diffMinutes / 1440);
+            const durationHours = Math.floor((diffMinutes % 1440) / 60);
             const durationMins = diffMinutes % 60;
             const durationText = diffMinutes > 0
-              ? (durationHours > 0 && durationMins > 0
-                ? t('lc.sessionsSupport.sessionDetails.durationValueHoursMinutes', { hours: durationHours, minutes: durationMins })
-                : durationHours > 0
-                  ? t('lc.sessionsSupport.sessionDetails.durationValueHours', { count: durationHours })
-                  : t('lc.sessionsSupport.sessionDetails.durationValueMinutes', { count: durationMins }))
+              ? (durationDays > 0
+                ? (durationHours > 0 && durationMins > 0
+                  ? t('lc.sessionsSupport.sessionDetails.durationValueDaysHoursMinutes', { days: durationDays, hours: durationHours, minutes: durationMins })
+                  : durationHours > 0
+                    ? t('lc.sessionsSupport.sessionDetails.durationValueDaysHours', { days: durationDays, hours: durationHours })
+                    : durationMins > 0
+                      ? t('lc.sessionsSupport.sessionDetails.durationValueDaysMinutes', { days: durationDays, minutes: durationMins })
+                      : t('lc.sessionsSupport.sessionDetails.durationValueDays', { count: durationDays }))
+                : (durationHours > 0 && durationMins > 0
+                  ? t('lc.sessionsSupport.sessionDetails.durationValueHoursMinutes', { hours: durationHours, minutes: durationMins })
+                  : durationHours > 0
+                    ? t('lc.sessionsSupport.sessionDetails.durationValueHours', { count: durationHours })
+                    : t('lc.sessionsSupport.sessionDetails.durationValueMinutes', { count: durationMins })))
               : '';
 
             const rawDeliveryMode = (

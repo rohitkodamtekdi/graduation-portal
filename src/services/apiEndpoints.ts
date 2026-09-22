@@ -57,4 +57,7 @@ export const API_ENDPOINTS = {
   REQUEST_SESSIONS_GET_DETAILS: `${prefix}/mentoring/v1/requestSessions/getDetails`,
   REQUESTOR_ASSIGN_MENTEES: (sessionId: string | number) => `${prefix}/mentoring/v1/sessions/addMentees/${sessionId}`,
   RESOURCES_LIST: `${prefix}/mentoring/v1/resources/list`,
+  SESSION_ENROLLED_MENTEES: (sessionId: string | number) => `${prefix}/mentoring/v1/sessions/enrolledMentees/${sessionId}`,
+  // Sessions a given mentee/participant is enrolled in. type: SCHEDULED | ATTENDED | MISSED
+  MENTEE_SESSIONS: `${prefix}/mentoring/v1/mentees/sessions`,
 };

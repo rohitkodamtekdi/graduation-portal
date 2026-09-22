@@ -7,28 +7,25 @@ import styles from '../styles';
 interface RequestFooterProps {
   item: any;
   onAssignSession?: (item: any) => void;
+  provinces?: any[];
 }
 
-export const RequestFooter: React.FC<RequestFooterProps> = ({ item, onAssignSession }) => {
+export const RequestFooter: React.FC<RequestFooterProps> = ({ item, onAssignSession, provinces }) => {
   const { t } = useLanguage();
   const navigation = useNavigation();
 
   const sessionId = item?.id || item?._id || '';
-  const mentorName = item?.mentor_name || '';
-  const provinceName = (Array.isArray(item?.provinces) ? item.provinces[0] : item?.provinces) || '';
+  const mentorName = item?.providedBy || item?.mentor_name || (typeof item?.organization === 'object' ? item?.organization?.name : item?.organization) || '';
+  const rawProvinceId = (Array.isArray(item?.provinces) ? item.provinces[0] : item?.provinces)
+    || item?.meta?.provinces?.[0]
+    || item?.province
+    || '';
+  const provinceName = provinces?.find((p: any) => p._id === rawProvinceId)?.name || rawProvinceId;
 
   const handleViewDetails = () => {
     // @ts-ignore
     navigation.navigate('session-details', { sessionId });
   }
-  // const handleAssignSession = () => {
-  //   if (onAssignSession) {
-  //     onAssignSession(item);
-  //   } else {
-  //     // @ts-ignore
-  //     navigation.navigate('AssignSession', { sessionId });
-  //   }
-  // }
 
   return (
     <HStack {...styles.requestorFooter}>
@@ -44,7 +41,7 @@ export const RequestFooter: React.FC<RequestFooterProps> = ({ item, onAssignSess
 
       <HStack {...styles.requestorFooterActions}>
         <Button
-          variant={"outlineghost" as any}
+          variant="solid"
           {...styles.requestorFooterViewDetailsButton}
           onPress={handleViewDetails}
         >

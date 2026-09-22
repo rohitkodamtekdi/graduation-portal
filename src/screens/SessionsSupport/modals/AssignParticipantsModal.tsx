@@ -8,7 +8,7 @@ import { STATUS } from '@constants/app.constant';
 import { getStatusColors } from '../../ParticipantsList/StatusBadge';
 import { getInitials } from '@utils/helper';
 import { useAuth } from '@contexts/AuthContext';
-import { getParticipants } from '../../../services/SessionSupportServices/sessionRequestorService';
+import { getParticipants, getEnrolledMenteeIds } from '../../../services/SessionSupportServices/sessionRequestorService';
 import { useLanguage } from '@contexts/LanguageContext';
 import styles from '../styles';
 import ConfirmAssignment from './ConfirmAssignment';
@@ -40,6 +40,7 @@ export default function AssignParticipantsModal({
   const [isLoading, setIsLoading] = useState(false);
   const [total, setTotal] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const enrolledIdsRef = useRef<Set<string>>(new Set());
 
   const selectedParticipants = useMemo(() => {
     return participants.filter((p) => selectedIds.includes(p.userId));
@@ -61,7 +62,7 @@ export default function AssignParticipantsModal({
    * `requestCountRef` ensures stale responses from earlier requests are discarded.
    */
   const doFetch = useCallback(
-    async (page: number, search: string, reset: boolean) => {
+    async (startPage: number, search: string, reset: boolean) => {
       if (!user?.id) return;
       if (!reset && (isLoadingRef.current)) return;
 
@@ -76,26 +77,49 @@ export default function AssignParticipantsModal({
       }
 
       try {
-        const response = await getParticipants({
-          userId: user.id,
-          page,
-          limit: PAGE_SIZE,
-          search: search || undefined,
-          status: `${STATUS.IN_PROGRESS},${STATUS.GRADUATED}`,
+        let page = startPage;
+        let accumulated: any[] = [];
+        let apiTotal = 0;
+        let lastPageFetched = startPage;
+
+        for (let guard = 0; guard < 20; guard++) {
+          const response = await getParticipants({
+            userId: user.id,
+            page,
+            limit: PAGE_SIZE,
+            search: search || undefined,
+            status: `${STATUS.IN_PROGRESS},${STATUS.GRADUATED}`,
+          });
+
+          // Discard response if a newer request has been initiated
+          if (requestId !== requestCountRef.current) return;
+
+          const fetchedList: any[] = response?.result?.data || [];
+          apiTotal = response?.total ?? response?.count ?? apiTotal;
+          lastPageFetched = page;
+
+          const eligible = fetchedList.filter((p) => !enrolledIdsRef.current.has(String(p.userId)));
+          accumulated = accumulated.concat(eligible);
+
+          const isLastRawPage = fetchedList.length < PAGE_SIZE;
+          if (accumulated.length >= PAGE_SIZE || isLastRawPage) break;
+
+          page += 1;
+        }
+        const adjustedTotal = Math.max(0, apiTotal - enrolledIdsRef.current.size);
+
+        setTotal(adjustedTotal);
+        setCurrentPage(lastPageFetched);
+        setParticipants((prev) => {
+          const combined = reset ? accumulated : [...prev, ...accumulated];
+          const seen = new Set<string>();
+          return combined.filter((p) => {
+            const id = String(p.userId);
+            if (seen.has(id)) return false;
+            seen.add(id);
+            return true;
+          });
         });
-
-        // Discard response if a newer request has been initiated
-        if (requestId !== requestCountRef.current) return;
-
-        const fetchedList: any[] = response?.result?.data || [];
-        const eligible = fetchedList;
-
-        // Total from the API; fall back to fetched data length
-        const apiTotal = response?.total ?? response?.count ?? fetchedList.length;
-
-        setTotal(apiTotal);
-        setCurrentPage(page);
-        setParticipants((prev) => (reset ? eligible : [...prev, ...eligible]));
       } catch (error) {
         if (requestId === requestCountRef.current) {
           console.error('Error fetching participants:', error);
@@ -117,8 +141,18 @@ export default function AssignParticipantsModal({
     setSearchQuery('');
     isLoadingRef.current = false;
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    doFetch(1, '', true);
-  }, [isOpen, doFetch]);
+
+    const sessionId = session?.id || session?._id;
+
+    (async () => {
+      let ids: string[] = [];
+      if (sessionId) {
+        ids = await getEnrolledMenteeIds(sessionId);
+      }
+      enrolledIdsRef.current = new Set(ids);
+      doFetch(1, '', true);
+    })();
+  }, [isOpen, doFetch, session?.id, session?._id]);
 
   // Debounced search — resets pagination and list on each new query
   const handleSearch = useCallback(

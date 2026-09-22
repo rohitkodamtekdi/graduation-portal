@@ -17,7 +17,7 @@ import {
 import moment from 'moment';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useNavigation } from '@react-navigation/native';
-import { completeTrainingSession } from '../../../../../services/SupportOfferingsServices/supportOfferingsService';
+import { completeTrainingSession, getSessionEnrolledParticipants } from '../../../../../services/SupportOfferingsServices/supportOfferingsService';
 import { getEnrolledMentees } from '../../../../../services/mentoringService';
 // import { uploadFiles } from '../../../../../project-player/services/projectPlayerService';
 // import { openFilePicker } from '../../../../../project-player/components/Task/FileEvidence/file-picker';
@@ -58,16 +58,16 @@ const getDeliveryBadge = (deliveryMode: 'offline' | 'online' | 'hybrid') => {
     return {
       label: 'Hybrid',
       icon: 'MapPin',
-      bg: '$purple50',
-      border: '$purple200',
-      color: '$purple600',
+      bg: '#FFFBEB',
+      border: '#FDE68A',
+      color: '$warningIconColor',
     };
   }
   return {
     label: 'Offline',
     icon: 'MapPin',
-    bg: '$observationTaskBg',
-    border: '#fde68a',
+    bg: '#FFFBEB',
+    border: '#FDE68A',
     color: '$warningIconColor',
   };
 };
@@ -85,9 +85,9 @@ const getStatusColors = (status: string) => {
     case SESSION_STATUS_LABEL.UPCOMING:
       return {
         bg: '$blue50',
-        border: '$blue200',
+        border: 'transparent',
         text: '$blue600',
-        icon: 'Clock',
+        icon: '',
       };
 
     case SESSION_STATUS_LABEL.IN_PROGRESS:
@@ -179,6 +179,9 @@ const Card: React.FC<CardProps> = ({
   const [files, setFiles] = useState<MaterialItem[] | null>(null);
   const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  // Real enrolled participants, fetched on demand when the Complete/Confirm Attendance modal is
+  // opened - `item.participantList` is never populated anywhere, so relying on it silently fell
+  // back to fabricated placeholder names that could never actually be marked complete.
   const [enrolledParticipants, setEnrolledParticipants] = useState<ParticipantAttendanceItem[] | null>(null);
   const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
 
@@ -192,10 +195,60 @@ const Card: React.FC<CardProps> = ({
 
   const canCopy = !!item.can_be_copied && currentStatus !== SESSION_STATUS.DRAFT;
 
+  // Helper to parse unix seconds, ms timestamp, ISO string to ms
+  const parseToMs = (val: any): number | null => {
+    if (!val) return null;
+    const num = Number(val);
+    if (!isNaN(num)) {
+      return num < 10000000000 ? num * 1000 : num;
+    }
+    const ms = new Date(val).getTime();
+    return isNaN(ms) ? null : ms;
+  };
+
+  const startMs = parseToMs(item.start_date);
+  const endMs = parseToMs(item.end_date);
+
+  // Date & Time display matching Figma: "Fri, 20 Mar 2026, 10:00"
+  const displayDateTime = startMs
+    ? moment(startMs).format('ddd, D MMM YYYY, HH:mm')
+    : '--';
+
+  // Duration display matching Figma: "3 hours" (or "2 days 2 hours" when >= 24 hours)
+  const displayDuration = (() => {
+    if (startMs && endMs && endMs > startMs) {
+      const diffMins = Math.round((endMs - startMs) / 60000);
+      if (diffMins > 0) {
+        const days = Math.floor(diffMins / 1440);
+        const hours = Math.floor((diffMins % 1440) / 60);
+        const mins = diffMins % 60;
+
+        const parts: string[] = [];
+        if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+        if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+        if (mins > 0) parts.push(`${mins} min${mins > 1 ? 's' : ''}`);
+
+        return parts.join(' ');
+      }
+    }
+    if ((item as any).duration) {
+      const dur = (item as any).duration;
+      return typeof dur === 'number' ? `${dur} hours` : dur;
+    }
+    return null;
+  })();
+
   // Expected participants and confirmed present dynamically from seats_limit and seats_remaining
-  const expectedParticipants = item.seats_limit || 0;
-  const confirmedPresent =
-    (item.seats_limit || 0) - (item.seats_remaining || 0);
+  const expectedParticipants = item.seats_limit || (item as any).max_participants || 0;
+  const seatsRemaining = item.seats_remaining ?? expectedParticipants;
+  const confirmedPresent = expectedParticipants > 0 ? Math.max(0, expectedParticipants - seatsRemaining) : 0;
+  const spotsText = expectedParticipants > 0 ? ` (${seatsRemaining} spots)` : '';
+
+  // Editing is only allowed for draft sessions, or upcoming sessions that have
+  // no participants assigned yet.
+  const canEditSession =
+    currentStatus === SESSION_STATUS.DRAFT ||
+    (statusTag === SESSION_STATUS_LABEL.UPCOMING && confirmedPresent <= 0);
   const participantsDisplay = `${confirmedPresent} / ${expectedParticipants} participants`;
 
   // Location & Link dynamically from meeting_info_details or meeting_info
@@ -207,6 +260,15 @@ const Card: React.FC<CardProps> = ({
     (item as any).meeting_info_details?.link ||
     item.meeting_info?.link ||
     '';
+
+  const provinceName = provinces?.find((e: any) => e._id === item.provinces?.[0] || e._id === item?.meta?.provinces?.[0])?.name || item.province || '';
+  const locationName =
+    locationValue ||
+    item.hubOffice ||
+    (item as any).hub_office ||
+    item.site ||
+    provinceName ||
+    '-';
 
   const descriptionText = item.description || item.notes || '';
 
@@ -290,38 +352,6 @@ const Card: React.FC<CardProps> = ({
   /*
    * Upload functionality via uploadFiles API
    */
-  // const handleUploadPress = async () => {
-  //   try {
-  //     const selectedFiles = await openFilePicker({
-  //       allowMultiSelection: true,
-  //       type: [
-  //         'application/pdf',
-  //         'image/*',
-  //         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  //       ],
-  //     });
-
-  //     if (!selectedFiles || selectedFiles.length === 0) return;
-
-  //     const uploadPromises = selectedFiles.map((file) => uploadFile(file));
-  //     const uploadedResults = await Promise.all(uploadPromises);
-
-  //     setFiles((prev) => [...prev, ...uploadedResults]);
-
-  //     showAlert(
-  //       'success',
-  //       t(
-  //         'supportProvider.supportOfferings.cards.alerts.materialUploaded'
-  //       )
-  //     );
-  //   } catch (err: any) {
-  //     console.error('Error uploading material:', err);
-  //     showAlert(
-  //       'error',
-  //       err?.message || 'Failed to upload file. Please try again.'
-  //     );
-  //   }
-  // };
 
   useEffect(() => {
     setItem(initialItem);
@@ -338,7 +368,9 @@ const Card: React.FC<CardProps> = ({
 
             <Badge {...styles.badgeContainer(statusColors.bg, statusColors.border)}>
               <HStack {...styles.badgeContentHStack}>
-                <LucideIcon name={statusColors.icon} {...styles.badgeIconProps(statusColors.text)} />
+                {statusColors.icon ? (
+                  <LucideIcon name={statusColors.icon} {...styles.badgeIconProps(statusColors.text)} />
+                ) : null}
                 <BadgeText {...styles.badgeText(statusColors.text)}>{statusTag}</BadgeText>
               </HStack>
             </Badge>
@@ -352,54 +384,46 @@ const Card: React.FC<CardProps> = ({
           </Badge>
         </HStack>
 
-        {/* ROW 2 - METADATA */}
-        <HStack {...styles.headerMetaHStack}>
-          <HStack {...styles.trainingMetaItemHStack}>
+        {/* ROW 2 - METADATA (single row: Date & Time, Duration, Location - matching Figma) */}
+        <HStack {...styles.trainingMetaRowHStack}>
+          {/* Date & Time */}
+          <HStack space="xs" alignItems="center">
             <LucideIcon name="Calendar" {...styles.cardMetaIconProps} />
-            <Text {...styles.cardMetaSmText}>
-              {/* @ts-ignore */}
-              {moment.unix(item.start_date).format('ddd, D MMM YYYY HH:mm')} -
-              {/* @ts-ignore */}
-              {moment.unix(item.end_date).format('HH:mm')}
+            <Text fontSize="$xs" color="$textPrimary" fontWeight="$semibold">
+              {displayDateTime}
             </Text>
           </HStack>
-          <HStack {...styles.trainingMetaItemHStack}>
-            <LucideIcon name="MapPin" {...styles.cardMetaIconProps} />
-            <Text {...styles.cardMetaSmText}>{provinces?.find((e: any) => e._id === item.provinces?.[0] || e._id === item?.meta?.provinces?.[0])?.name || '-'}</Text>
-            {/* {!!(item?.sites || item?.meta?.sites) &&
-              <Text {...styles.cardMetaSmText}>
-                {sites?.filter((e: any) => item?.sites?.includes(e._id) || item?.meta?.sites?.includes(e._id))?.map(e => e.name).join(", ") || '-'}
+
+          {/* Duration */}
+          {displayDuration ? (
+            <HStack space="xs" alignItems="center">
+              <LucideIcon name="Clock" {...styles.cardMetaIconProps} />
+              <Text fontSize="$xs" color="$textSecondary">
+                {displayDuration}
               </Text>
-            } */}
+            </HStack>
+          ) : null}
+
+          {/* Location / Venue */}
+          <HStack space="xs" alignItems="center">
+            <LucideIcon name="MapPin" {...styles.cardMetaIconProps} />
+            <Text fontSize="$xs" color="$textSecondary">
+              {locationName}
+            </Text>
           </HStack>
-
-          {(deliveryMode === 'online' || deliveryMode === 'hybrid') && (
-            <Pressable
-              onPress={(e) => {
-                e?.stopPropagation?.();
-                if (linkValue) openExternalLink(linkValue);
-              }}
-            >
-              <HStack {...styles.trainingMetaItemHStack}>
-                <LucideIcon name="Video" {...styles.cardMetaIconProps} />
-                <Text {...styles.headerLinkText}>{linkValue || '-'}</Text>
-              </HStack>
-            </Pressable>
-          )}
-
-          <HStack {...styles.trainingMetaItemHStack}>
+          <HStack space="xs" alignItems="center">
             <LucideIcon name="Users" {...styles.cardMetaIconProps} />
-            <Text {...styles.cardMetaSmText}>{participantsDisplay}</Text>
+            <Text fontSize="$xs" color="$textPrimary">
+              {participantsDisplay}
+            </Text>
           </HStack>
         </HStack>
 
-        {/* ROW 3 - NOTES / DESCRIPTION */}
+        {/* ROW 3 - NOTES / DESCRIPTION (plain text, matching Figma) */}
         {descriptionText ? (
-          <Box {...styles.notesBox}>
-            <Text {...styles.notesText} numberOfLines={2} ellipsizeMode="tail">
-              {descriptionText}
-            </Text>
-          </Box>
+          <Text {...styles.trainingDescriptionText}>
+            {descriptionText}
+          </Text>
         ) : null}
 
         {/* ROW 4 - ACTIONS */}
@@ -417,8 +441,8 @@ const Card: React.FC<CardProps> = ({
               </Text>
             )}
             <HStack {...styles.badgeContentHStack}>
-              {/* DRAFT */}
-              {currentStatus === SESSION_STATUS.DRAFT && (
+              {/* DRAFT, or UPCOMING with no participants assigned yet */}
+              {canEditSession && (
                 <Button
                   // @ts-ignore
                   variant="outlineghost" {...styles.outlineActionBtn} onPress={() => { (navigation as any).navigate('form-training-session', { id: item.id, type: FORM_MODE.EDIT, }); }}>
@@ -606,7 +630,7 @@ const Card: React.FC<CardProps> = ({
         onClose={() => setIsCompleteModalOpen(false)}
         sessionTitle={item.title}
         expectedParticipantsCount={expectedParticipants}
-        initialParticipants={enrolledParticipants || item.participantList}
+        initialParticipants={enrolledParticipants ?? undefined}
         isLoadingParticipants={isLoadingParticipants}
         onConfirmComplete={handleConfirmSessionComplete}
       />

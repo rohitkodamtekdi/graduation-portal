@@ -21,6 +21,7 @@ import { PARTICIPANT_DETAIL_TABS } from '@constants/TABS';
 // import { PROVINCES } from '@constants/PARTICIPANTS_LIST';
 import InterventionPlan from './InterventionPlan';
 import AssessmentSurveys from './AssessmentSurveys';
+import AttendedSessions from './AttendedSessions';
 import type {
   ParticipantData,
   // PathwayType,
@@ -577,6 +578,11 @@ export default function ParticipantDetail() {
                     completionPercentage={updatedProgress || 0}
                     {...(isdminPanalAccess || participant?.accountUserStatus === USER_STATUS.INACTIVE ? {isReadOnly:true}:{})}
                   />
+                </Box>
+              )}
+              {activeTab === PARTICIPANT_DETAILS_TABS.ATTENDED_SESSIONS && (
+                <Box mt="$6">
+                  <AttendedSessions participant={participant as ParticipantData} />
                 </Box>
               )}
             </Box>

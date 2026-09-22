@@ -110,10 +110,19 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
     };
   }, []);
 
-  // Fetch sub-category options lazily - only when the matching category is actually selected,
-  // and only once per group (cached in optionsState afterwards).
+  // Fetch sub-category options lazily - either when the matching category is actively
+  // selected for editing, or when the saved `value` already contains items of that
+  // category (so preview-mode pills can resolve their labels too) - and only once per
+  // group (cached in optionsState afterwards).
+  const neededCategories = useMemo(() => {
+    const categories = new Set<string>();
+    if (selectedCategory) categories.add(selectedCategory);
+    value.forEach(item => categories.add(item.categoryName));
+    return categories;
+  }, [selectedCategory, value]);
+
   useEffect(() => {
-    if (!selectedCategory) return;
+    if (neededCategories.size === 0) return;
     let isMounted = true;
 
     const fetchTrainingOptions = async () => {
@@ -171,18 +180,20 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
       }
     };
 
-    if (isTrainingCategory(selectedCategory)) {
-      fetchTrainingOptions();
-    } else if (isLinkageCategory(selectedCategory)) {
-      fetchLinkageOptions();
-    } else if (isAssetCategory(selectedCategory)) {
-      fetchAssetOptions();
-    }
+    neededCategories.forEach(category => {
+      if (isTrainingCategory(category)) {
+        fetchTrainingOptions();
+      } else if (isLinkageCategory(category)) {
+        fetchLinkageOptions();
+      } else if (isAssetCategory(category)) {
+        fetchAssetOptions();
+      }
+    });
 
     return () => {
       isMounted = false;
     };
-  }, [selectedCategory]);
+  }, [neededCategories]);
 
   const categoryOptions = useMemo(() => {
     return optionsState?.categoryOpts?.filter(opt => {

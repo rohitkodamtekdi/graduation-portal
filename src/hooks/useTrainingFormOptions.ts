@@ -70,12 +70,14 @@ export function useTrainingFormOptions({
   // Fetch sites when province changes
   useEffect(() => {
     const init = async () => {
-      if (!values.provinces) {
+      const rawProv = values.provinces;
+      const provId = Array.isArray(rawProv) ? rawProv[0] : (typeof rawProv === 'object' ? rawProv?._id || rawProv?.id || rawProv?.value : rawProv);
+      if (!provId) {
         setSites([]);
         return;
       }
       try {
-        const res = await getSitesByProvince({ provinceId: values.provinces });
+        const res = await getSitesByProvince({ provinceId: provId });
         setSites(res.result?.data || []);
       } catch (err) {
         console.error('Error fetching sites:', err);
