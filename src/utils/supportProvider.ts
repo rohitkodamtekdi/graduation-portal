@@ -36,23 +36,15 @@ export function valueMapping(
     }
 
     const rawProvinces = formValues?.provinces;
-    const provinceVal = Array.isArray(rawProvinces)
-      ? (typeof rawProvinces[0] === 'object' ? rawProvinces[0]?._id || rawProvinces[0]?.id || rawProvinces[0]?.value : rawProvinces[0])
-      : (typeof rawProvinces === 'object' ? rawProvinces?._id || rawProvinces?.id || rawProvinces?.value : rawProvinces);
+    const provinceVal = Array.isArray(rawProvinces) ? rawProvinces[0] : rawProvinces;
 
     const rawSites = formValues?.sites;
-    let sitesVal: string[] = [];
-    if (Array.isArray(rawSites)) {
-      sitesVal = rawSites.map((s: any) => (typeof s === 'object' ? s?._id || s?.id || s?.value : String(s))).filter(Boolean);
-    } else if (rawSites) {
-      const s = typeof rawSites === 'object' ? rawSites?._id || rawSites?.id || rawSites?.value : String(rawSites);
-      if (s) sitesVal = [s];
-    }
+    const sitesVal: string[] = Array.isArray(rawSites)
+      ? rawSites.filter(Boolean)
+      : (rawSites ? [String(rawSites)] : []);
 
     const rawCategories = formValues?.categories;
-    const categoryVal = Array.isArray(rawCategories)
-      ? (typeof rawCategories[0] === 'object' ? rawCategories[0]?.value || rawCategories[0]?.name || rawCategories[0]?.label : rawCategories[0])
-      : (typeof rawCategories === 'object' ? rawCategories?.value || rawCategories?.name || rawCategories?.label : rawCategories);
+    const categoryVal = Array.isArray(rawCategories) ? rawCategories[0] : rawCategories;
 
     return {
       title: formValues?.title,

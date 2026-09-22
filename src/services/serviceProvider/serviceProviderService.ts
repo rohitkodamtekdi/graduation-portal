@@ -157,7 +157,7 @@ const mapRequestSessionItem = (
  * since /requestSessions/list does not currently accept those as query params.
  */
 const applySupportRequestFilters = (
-  list: SupportRequestItem[],                                   
+  list: SupportRequestItem[],
   { province, site, search }: { province?: string; site?: string; search?: string }
 ): SupportRequestItem[] => {
   let filtered = list;

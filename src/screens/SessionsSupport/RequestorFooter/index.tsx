@@ -15,11 +15,8 @@ export const RequestFooter: React.FC<RequestFooterProps> = ({ item, onAssignSess
   const navigation = useNavigation();
 
   const sessionId = item?.id || item?._id || '';
-  const mentorName = item?.providedBy || item?.mentor_name || (typeof item?.organization === 'object' ? item?.organization?.name : item?.organization) || '';
-  const rawProvinceId = (Array.isArray(item?.provinces) ? item.provinces[0] : item?.provinces)
-    || item?.meta?.provinces?.[0]
-    || item?.province
-    || '';
+  const mentorName = item?.providedBy || item?.mentor_name || '';
+  const rawProvinceId = (Array.isArray(item?.provinces) ? item.provinces[0] : item?.provinces);
   const provinceName = provinces?.find((p: any) => p._id === rawProvinceId)?.name || rawProvinceId;
 
   const handleViewDetails = () => {

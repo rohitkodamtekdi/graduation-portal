@@ -209,48 +209,6 @@ export const getSessionEnrolledParticipants = async (
   }
 };
 
-export interface AttendedSessionItem {
-  id: number | string;
-  title: string;
-  description?: string;
-  status: string;
-  start_date?: number | string;
-  end_date?: number | string;
-  medium?: string[];
-  categories?: string[];
-  attendee_joined_at?: string | null;
-}
-
-/**
- * Fetches sessions a participant (mentee) is enrolled in, for the "Attended Sessions" tab on the
- * Participant Detail screen. `type` switches between the Attended and Missed filters.
- * Endpoint: GET /mentoring/v1/mentees/sessions?mentee_id=:participantId&type=ATTENDED|MISSED
- */
-export const getAttendedSessions = async (
-  participantId: string | number,
-  params?: { page?: number; limit?: number; search?: string; type?: 'ATTENDED' | 'MISSED' }
-): Promise<{ data: AttendedSessionItem[]; count: number }> => {
-  try {
-    const queryParams = new URLSearchParams();
-    queryParams.append('mentee_id', String(participantId));
-    queryParams.append('type', params?.type ?? 'ATTENDED');
-    queryParams.append('page', String(params?.page ?? 1));
-    queryParams.append('limit', String(params?.limit ?? 20));
-    if (params?.search?.trim()) {
-      queryParams.append('search', params.search.trim());
-    }
-
-    const response = await api.get(`${API_ENDPOINTS.MENTEE_SESSIONS}?${queryParams.toString()}`);
-    const data = response?.data?.result?.data || [];
-    const count = response?.data?.result?.count ?? data.length;
-
-    return { data, count };
-  } catch (error) {
-    console.error('Error fetching attended sessions:', error);
-    return { data: [], count: 0 };
-  }
-};
-
 /**
  * Complete Training Session API
  */

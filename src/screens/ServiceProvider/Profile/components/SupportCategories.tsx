@@ -110,10 +110,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
     };
   }, []);
 
-  // Fetch sub-category options lazily - either when the matching category is actively
-  // selected for editing, or when the saved `value` already contains items of that
-  // category (so preview-mode pills can resolve their labels too) - and only once per
-  // group (cached in optionsState afterwards).
+  // Lazily fetch sub-options for categories that are selected or already saved; cached per group.
   const neededCategories = useMemo(() => {
     const categories = new Set<string>();
     if (selectedCategory) categories.add(selectedCategory);

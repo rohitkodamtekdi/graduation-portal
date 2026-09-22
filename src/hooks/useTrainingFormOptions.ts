@@ -71,7 +71,7 @@ export function useTrainingFormOptions({
   useEffect(() => {
     const init = async () => {
       const rawProv = values.provinces;
-      const provId = Array.isArray(rawProv) ? rawProv[0] : (typeof rawProv === 'object' ? rawProv?._id || rawProv?.id || rawProv?.value : rawProv);
+      const provId = Array.isArray(rawProv) ? rawProv[0] : rawProv;
       if (!provId) {
         setSites([]);
         return;

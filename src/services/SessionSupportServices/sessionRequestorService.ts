@@ -167,12 +167,16 @@ export const getEnrolledMenteeIds = async (
   try {
     const response = await api.get(API_ENDPOINTS.SESSION_ENROLLED_MENTEES(sessionId));
     const list = response?.data?.result || [];
-    return (Array.isArray(list) ? list : [])
+    console.log('[getEnrolledMenteeIds] raw response.data:', response?.data);
+    console.log('[getEnrolledMenteeIds] raw list:', list);
+    const ids = (Array.isArray(list) ? list : [])
       .map((mentee: any) => mentee?.id ?? mentee?.user_id)
       .filter(Boolean)
       .map((id: any) => String(id));
+    console.log('[getEnrolledMenteeIds] extracted ids:', ids);
+    return ids;
   } catch (error) {
     console.error('Error fetching enrolled mentees:', error);
-    return [];
+    throw error;
   }
 };

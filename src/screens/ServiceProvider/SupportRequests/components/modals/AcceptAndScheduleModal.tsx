@@ -93,6 +93,8 @@ export default function AcceptAndScheduleModal({
   // Fetch sites whenever the selected province changes - mirrors the Training/Additional
   // Service request forms' province -> site cascading pattern.
   useEffect(() => {
+    let isCurrent = true;
+
     const fetchSites = async () => {
       if (!values.province) {
         setSites([]);
@@ -100,14 +102,19 @@ export default function AcceptAndScheduleModal({
       }
       try {
         const res = await getSitesByProvince({ provinceId: values.province });
+        if (!isCurrent) return;
         setSites(res?.result?.data || []);
       } catch (error) {
         console.error('[AcceptAndScheduleModal] Error fetching sites:', error);
-        setSites([]);
+        if (isCurrent) setSites([]);
       }
     };
 
     fetchSites();
+
+    return () => {
+      isCurrent = false;
+    };
   }, [values.province]);
 
   useEffect(() => {

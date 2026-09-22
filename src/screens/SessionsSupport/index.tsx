@@ -37,10 +37,8 @@ import { RequestFooter } from './RequestorFooter';
 import AssignParticipantsModal from './modals/AssignParticipantsModal';
 import LcMySessionTab from './MyTraining&Sessions/LcMySessionTab';
 
-// Safety net in case the backend's `support_offering_type` filter isn't applied for a request:
-// only keep items whose own recorded type matches the tab we're rendering (missing type = assume it belongs).
-// The field comes back as a plain string from the request-list API, but as an entity-type
-// `{ value, label }` object from the browse/sessions-list API - normalize both shapes.
+// Fallback filter if the backend doesn't apply `support_offering_type`; normalizes both string
+// and `{ value, label }` shapes across APIs (missing type = assume it belongs).
 const matchesOfferingType = (item: any, expectedType: string): boolean => {
   const rawType = item?.support_offering_type || item?.type || item?.session?.support_offering_type;
   const itemType = rawType && typeof rawType === 'object' ? rawType.value : rawType;
