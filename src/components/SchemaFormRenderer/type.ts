@@ -156,6 +156,13 @@ export interface FormField {
   subTitle?: { key?: string; fallback?: string };
   /** Informational message rendered above the input — simple string or a severity banner */
   hint?: Hint;
+  /** `note` fields only: 'success' renders the highlighted banner-with-badge layout instead of the plain info box */
+  variant?: 'success';
+  /** `note` fields only, paired with `variant: 'success'`: a value badge shown on the right of the banner */
+  badge?: {
+    label: { key: string; fallback?: string };
+    value: { key: string; fallback?: string };
+  };
   /**
    * UI-only prop overrides, merged (never replacing) over the corresponding
    * element's default props in `FieldContainer`. `_input` is distinct from

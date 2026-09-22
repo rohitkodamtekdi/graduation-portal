@@ -1463,7 +1463,6 @@
         "availableQuantityPlaceholder": "e.g. 50",
         "quantity": "Quantity (optional)",
         "quantityPlaceholder": "e.g. 10",
-        "totalFundBreakdown": "",
         "trainingDetails": "Training Session Details",
         "trainingDetailsSubTitle": "Fields marked * are required",
         "pillar": "Pillar",

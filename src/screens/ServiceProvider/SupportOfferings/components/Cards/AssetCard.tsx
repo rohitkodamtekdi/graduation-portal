@@ -13,12 +13,12 @@ import {
   ButtonIcon,
   ButtonSpinner,
 } from '@ui';
-import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useRequesterInfo } from '@hooks/useSessionStatus';
 import type { AssetItem } from '../../../../../types/supportOfferingsTypes';
 import { cancelSession } from '../../../../../services/mentoringService';
 import CancelInterventionModal from '../modals/CancelInterventionModal';
+import AssetRequestsModal from '../modals/AssetRequestsModal';
 import styles from '../../styles';
 
 // ---------- Card ----------
@@ -27,18 +27,21 @@ interface CardProps {
   item: AssetItem;
   provinces?: any[];
   sites?: any[];
+  // LC (via SessionsSupport) passes this to open its own participant-assignment flow instead
+  // of the SP-only approve/decline requests modal this card opens by default.
+  onViewRequests?: (item: AssetItem) => void;
 }
 
 const deliveryBadge = { label: 'Offline', icon: 'MapPin', bg: '$observationTaskBg', border: '#fde68a', color: '$warningIconColor' };
 
-const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
+const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onViewRequests }) => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
-  const navigation = useNavigation();
 
   const [item, setItem] = useState<AssetItem>(initialItem);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isRequestsModalOpen, setIsRequestsModalOpen] = useState(false);
 
   const getStatusColors = useCallback((status: string) => {
     switch (status) {
@@ -212,13 +215,7 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
 
             <Button
               variant="solid" {...styles.detailsBtn}
-              onPress={() => {
-                try {
-                  (navigation as any).navigate('requests');
-                } catch (e) {
-                  showAlert('info', t('supportProvider.supportOfferings.cards.alerts.navigatingRequests'));
-                }
-              }}
+              onPress={() => (onViewRequests ? onViewRequests(item) : setIsRequestsModalOpen(true))}
             >
               {/* @ts-ignore */}
               <ButtonText {...styles.detailsBtnText}>
@@ -243,6 +240,12 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites }) => {
         location={locationValue}
         isSubmitting={isCancelling}
         onConfirmCancel={handleConfirmCancel}
+      />
+
+      <AssetRequestsModal
+        isOpen={isRequestsModalOpen}
+        onClose={() => setIsRequestsModalOpen(false)}
+        asset={item}
       />
     </Box>
   );

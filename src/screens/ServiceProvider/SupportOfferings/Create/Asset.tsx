@@ -5,7 +5,7 @@ import SPTitleHeader from '@components/Header/SPTitleHeader';
 import { useNavigation } from '@react-navigation/native';
 import SchemaFormRenderer from '@components/SchemaFormRenderer';
 import { ASSET_FORM_SCHEMA, REQUEST_ASSET_HIDE_FIELDS } from '@constants/ASSET_SCHEMA';
-import type { FormSection } from '@components/SchemaFormRenderer/type';
+import type { FormSection, FormField } from '@components/SchemaFormRenderer/type';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useAuth } from '@contexts/AuthContext';
 import { getSitesByProvince, getProvincesList } from '../../../../services/usersService';
@@ -23,20 +23,18 @@ import { ROLE_NAMES } from '@constants/ROLES';
 import moment from 'moment';
 
 /**
- * Clones the schema, overriding the given note field's fallback label text so
- * it can show a live-computed value (e.g. a running total) without needing
- * SchemaFormRenderer itself to know about per-field computed content.
+ * Clones the schema, running `patcher` over the named field so it can show a
+ * live-computed value (e.g. a running total) without needing SchemaFormRenderer
+ * itself to know about per-field computed content.
  */
-const patchFieldFallback = (schema: FormSection[], fieldName: string, fallback: string): FormSection[] =>
+const patchField = (schema: FormSection[], fieldName: string, patcher: (field: FormField) => FormField): FormSection[] =>
   schema.map((node) => ({
     ...node,
     rows: node.rows?.map((row) => ({
       ...row,
-      fields: row.fields.map((f) =>
-        f.name === fieldName ? { ...f, label: { ...f.label, fallback } } : f,
-      ),
+      fields: row.fields.map((f) => (f.name === fieldName ? patcher(f) : f)),
     })),
-    children: node.children ? patchFieldFallback(node.children, fieldName, fallback) : node.children,
+    children: node.children ? patchField(node.children, fieldName, patcher) : node.children,
   }));
 
 const App = (): React.JSX.Element => {
@@ -138,16 +136,29 @@ const App = (): React.JSX.Element => {
     const perParticipant = Number(values.estimatedValue);
     const quantity = Number(values.availableQuantity);
     if (!perParticipant || !quantity) return '';
-    const totalFund = perParticipant * quantity;
     return t(
       'supportProvider.assetForm.step1.totalFundBreakdown',
-      `Total Asset Fund Breakdown: R ${perParticipant.toLocaleString()} per participant × ${quantity} funded participants = R ${totalFund.toLocaleString()} total`,
+      `R ${perParticipant.toLocaleString()} per participant × ${quantity} funded participants`,
     );
   }, [values.estimatedValue, values.availableQuantity, t]);
 
+  const totalFundAvailableText = useMemo(() => {
+    const perParticipant = Number(values.estimatedValue);
+    const quantity = Number(values.availableQuantity);
+    if (!perParticipant || !quantity) return '';
+    const totalFund = perParticipant * quantity;
+    return `R ${totalFund.toLocaleString()}`;
+  }, [values.estimatedValue, values.availableQuantity]);
+
   const schema = useMemo(
-    () => patchFieldFallback(ASSET_FORM_SCHEMA(hideFileds), 'totalFundBreakdown', totalFundBreakdownText),
-    [hideFileds, totalFundBreakdownText],
+    () => patchField(ASSET_FORM_SCHEMA(hideFileds), 'totalFundBreakdown', (field) => ({
+      ...field,
+      subTitle: { ...field.subTitle, fallback: totalFundBreakdownText },
+      badge: field.badge
+        ? { ...field.badge, value: { ...field.badge.value, fallback: totalFundAvailableText } }
+        : field.badge,
+    })),
+    [hideFileds, totalFundBreakdownText, totalFundAvailableText],
   );
 
   const handleSave = useCallback(async (formValues: any, isDraft: boolean) => {

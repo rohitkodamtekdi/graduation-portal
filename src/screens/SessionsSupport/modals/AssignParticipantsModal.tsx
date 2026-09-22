@@ -19,6 +19,13 @@ interface AssignParticipantsModalProps {
   onClose: () => void;
   session: any;
   onConfirm: (selectedIds: string[]) => Promise<boolean> | void;
+  skipEnrolledCheck?: boolean;
+  title?: string;
+  description?: string;
+  submitActionVerb?: string;
+  confirmTitle?: string;
+  confirmSubtitle?: string;
+  confirmButtonLabel?: string;
 }
 
 const PAGE_SIZE = 5;
@@ -29,6 +36,13 @@ export default function AssignParticipantsModal({
   onClose,
   session,
   onConfirm,
+  skipEnrolledCheck = false,
+  title,
+  description,
+  submitActionVerb,
+  confirmTitle,
+  confirmSubtitle,
+  confirmButtonLabel,
 }: AssignParticipantsModalProps): React.JSX.Element {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -155,7 +169,7 @@ export default function AssignParticipantsModal({
         disabled={selectedIds.length === 0 || isLoading}
         opacity={selectedIds.length === 0 || isLoading ? 0.5 : 1}>
         <ButtonText {...styles.assignParticipantsConfirmButtonText}>
-          {t('lc.sessionsSupport.assignParticipantsModal.assignButtonText', { defaultValue: 'Assign ({{count}})', count: selectedIds.length })}
+          {t('lc.sessionsSupport.assignParticipantsModal.assignButtonText', { defaultValue: `${submitActionVerb || 'Assign'} ({{count}})`, count: selectedIds.length })}
         </ButtonText>
       </Button>
     </HStack>
@@ -167,8 +181,8 @@ export default function AssignParticipantsModal({
         isOpen={isOpen}
         onClose={onClose}
         size="lg"
-        headerTitle="Assign Participants to Session"
-        headerDescription={`Select participants from your caseload to assign to "${sessionName}"`}
+        headerTitle={title || 'Assign Participants to Session'}
+        headerDescription={description || `Select participants from your caseload to assign to "${sessionName}"`}
         showCloseButton={true}
         footerContent={footerContent}
         bodyProps={styles.assignParticipantsModalBodyProps}
@@ -329,6 +343,9 @@ export default function AssignParticipantsModal({
         }}
         session={session}
         selectedParticipants={selectedParticipants}
+        title={confirmTitle}
+        subtitle={confirmSubtitle}
+        confirmButtonLabel={confirmButtonLabel}
       />
     </>
   );

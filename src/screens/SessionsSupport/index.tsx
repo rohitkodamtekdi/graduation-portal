@@ -22,13 +22,15 @@ import { TabButton } from '@components/Tabs';
 import FilterButton from '@components/Filter';
 import TrainingCard from '../ServiceProvider/SupportOfferings/components/Cards/TrainingCard';
 import AdditionalServicesCard from '../ServiceProvider/SupportOfferings/components/Cards/AdditionalServicesCard';
-import AssetCard from '../ServiceProvider/SupportOfferings/components/Cards/AssetCard';
+import AssetsCard from './AssetsCard';
 import { getProvincesList, getSitesByProvince } from '../../services/usersService';
-import { getTrainingSessions, getAdditionalServices, getAssets } from '../../services/SupportOfferingsServices/supportOfferingsService';
+import { getTrainingSessions, getAdditionalServices, getAssets, mapToAssetItem } from '../../services/SupportOfferingsServices/supportOfferingsService';
 import { getRequestSessionsList, requestorAssignMenteesToSession, getMyRequestsList } from '../../services/SessionSupportServices/sessionRequestorService';
 import type { ProvinceEntity } from '@app-types/Users';
-import { getSessionCategories, getDeliveryModes, getSessionTypesByPillar } from '../../services/mentoringService';
+import type { AssetItem } from '../../types/supportOfferingsTypes';
+import { getSessionCategories, getDeliveryModes, getSessionTypesByPillar, requestSession } from '../../services/mentoringService';
 import { getProjectCategoryList } from '../../services/projectService';
+import { requestAssetPayloadMapping } from '@utils/supportProvider';
 import { PATHWAY_TAGS, DEFAULT_FORMAT_OPTIONS, DEFAULT_PILLAR_OPTIONS, DEFAULT_TYPE_OPTIONS, DEFAULT_STATUS_OPTIONS } from '../../constants/REQUESTOR_CONSTANTS';
 import { RequestorFilter } from './RequestorFilter';
 import styles from './styles';
@@ -51,11 +53,50 @@ const SessionsSupportScreen: React.FC = () => {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const [mySessions, setMySessions] = useState<any[]>([]);
+  const [isRequestAssetModalOpen, setIsRequestAssetModalOpen] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<AssetItem | null>(null);
   const { showAlert } = useAlert();
 
   const handleAssignSessionClick = (item: any) => {
     setSelectedSession(item);
     setIsAssignModalOpen(true);
+  };
+
+  const handleRequestAssetClick = (item: AssetItem) => {
+    setSelectedAsset(item);
+    setIsRequestAssetModalOpen(true);
+  };
+
+  const handleConfirmAssetRequest = async (selectedIds: string[]): Promise<boolean> => {
+    if (!selectedAsset) return false;
+    try {
+      const payload = requestAssetPayloadMapping({
+        assetTitle: selectedAsset.title,
+        assetDescription: selectedAsset.description,
+        assetType: selectedAsset.type,
+        livelihoodCategory: selectedAsset.sector,
+        estimatedValue: selectedAsset.estimatedValuePerParticipant,
+        quantity: selectedIds.length,
+        provinces: selectedAsset.province,
+        sites: selectedAsset.siteKey,
+        requestees: selectedIds,
+        isDraft: false,
+      });
+      await requestSession(payload);
+      showAlert(
+        'success',
+        t(
+          'lc.sessionsSupport.alerts.assetRequestSuccess',
+          { count: selectedIds.length, defaultValue: `Asset request submitted for ${selectedIds.length} participant(s).` }
+        )
+      );
+      return true;
+    } catch (err: any) {
+      console.error('Error requesting asset:', err);
+      const errMsg = err?.response?.data?.message || err?.message || 'Failed to submit asset request.';
+      showAlert('error', errMsg);
+      return false;
+    }
   };
 
   const handleConfirmAssignment = async (selectedIds: string[]): Promise<boolean> => {
@@ -451,25 +492,28 @@ const SessionsSupportScreen: React.FC = () => {
           totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
           setCounts((prev) => ({ ...prev, additional_services: totalCount }));
         } else if (activeTab === SUPPORT_OFFERING_TABS.ASSETS) {
+          const isBrowse = activeSubTab !== SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS && activeSubTab !== SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS;
           let res;
-          if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS || activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS) {
+          if (!isBrowse) {
             res = await getMyRequestsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.ASSET });
           } else {
             res = await getRequestSessionsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.ASSET });
           }
           const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
             .filter((item: any) => matchesOfferingType(item, SUPPORT_OFFERING_TYPE_VALUES.ASSET));
-          fetchedData = rawList.map((item: any) => {
-            const session = item.session || item.session_details || {};
-            return {
-              ...item,
-              title: item.title || session.title || 'Untitled Request',
-              status: item.status || REQUEST_STATUS.REQUESTED,
-              start_date: item.start_date || session.start_date,
-              end_date: item.end_date || session.end_date,
-              delivery_mode: item.delivery_mode || session.delivery_mode,
-            };
-          });
+          fetchedData = isBrowse
+            ? rawList.map(mapToAssetItem)
+            : rawList.map((item: any) => {
+              const session = item.session || item.session_details || {};
+              return {
+                ...item,
+                title: item.title || session.title || 'Untitled Request',
+                status: item.status || REQUEST_STATUS.REQUESTED,
+                start_date: item.start_date || session.start_date,
+                end_date: item.end_date || session.end_date,
+                delivery_mode: item.delivery_mode || session.delivery_mode,
+              };
+            });
           totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
           setCounts((prev) => ({ ...prev, assets: totalCount }));
         }
@@ -683,11 +727,12 @@ const SessionsSupportScreen: React.FC = () => {
               )}
 
               {activeTab === SUPPORT_OFFERING_TABS.ASSETS && (
-                <AssetCard
+                <AssetsCard
                   items={items}
                   isShowLoadMore={isShowLoadMore}
                   onLoadMoreItems={onLoadMoreItems}
                   isLoadingMore={_loading && page > 1}
+                  onRequestAsset={handleRequestAssetClick}
                 />
               )}
             </>
@@ -730,6 +775,23 @@ const SessionsSupportScreen: React.FC = () => {
         onClose={() => setIsAssignModalOpen(false)}
         session={selectedSession}
         onConfirm={handleConfirmAssignment}
+      />
+
+      <AssignParticipantsModal
+        isOpen={isRequestAssetModalOpen}
+        onClose={() => setIsRequestAssetModalOpen(false)}
+        session={selectedAsset}
+        onConfirm={handleConfirmAssetRequest}
+        skipEnrolledCheck
+        title={t('lc.sessionsSupport.requestAssetModal.title', 'Request Asset for Participants')}
+        description={t(
+          'lc.sessionsSupport.requestAssetModal.description',
+          { defaultValue: 'Select participants from your caseload to request "{{title}}" for.', title: selectedAsset?.title || '' }
+        )}
+        submitActionVerb={t('lc.sessionsSupport.requestAssetModal.submitActionVerb', 'Request')}
+        confirmTitle={t('lc.sessionsSupport.requestAssetModal.confirmTitle', 'Confirm Asset Request')}
+        confirmSubtitle={t('lc.sessionsSupport.requestAssetModal.confirmSubtitle', 'You are about to request this asset for the following participants:')}
+        confirmButtonLabel={t('lc.sessionsSupport.requestAssetModal.confirmButtonText', 'Confirm Request')}
       />
     </VStack>
   );

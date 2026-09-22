@@ -140,6 +140,9 @@ export const ASSET_SCHEMA = (hideFileds: string[] = []): FormSection[] => {
                   type: 'text',
                   required: true,
                   label: { key: 'estimatedValue' },
+                  subTitle: {
+                    key: 'supportProvider.assetForm.step1.estimatedValueSubTitle',
+                  },
                   placeholder: { key: 'estimatedValuePlaceholder' },
                   inputProps: { keyboardType: 'numeric' },
                   validation: [
@@ -151,18 +154,50 @@ export const ASSET_SCHEMA = (hideFileds: string[] = []): FormSection[] => {
                     },
                   ],
                 }]),
+                ...(hideFileds.includes('availableQuantity') ? [] : [{
+                  name: 'availableQuantity',
+                  type: 'text',
+                  required: true,
+                  label: { key: 'availableQuantity' },
+                  subTitle: {
+                    key: 'supportProvider.assetForm.step1.availableQuantitySubTitle',
+                  },
+                  placeholder: { key: 'availableQuantityPlaceholder' },
+                  inputProps: { keyboardType: 'numeric' },
+                  validation: [
+                    {
+                      rule: 'required',
+                      message: {
+                        key: 'errors.availableQuantityRequired',
+                      },
+                    },
+                  ],
+                }]),
               ] as FormField[],
             },
             {
               fields: [
-                ...(hideFileds.includes('quantity') ? [] : [{
-                  name: 'quantity',
-                  type: 'text',
-                  required: false,
-                  label: { key: 'quantity' },
-                  placeholder: { key: 'quantityPlaceholder' },
-                  inputProps: { keyboardType: 'numeric' },
-                }]),
+                {
+                  name: 'totalFundBreakdown',
+                  type: 'note',
+                  variant: 'success',
+                  label: {
+                    key: 'totalFundBreakdownTitle',
+                    fallback: 'Total Asset Fund Breakdown',
+                  },
+                  subTitle: { key: 'totalFundBreakdown' },
+                  badge: {
+                    label: {
+                      key: 'totalFundAvailableLabel',
+                      fallback: 'Total Fund Available',
+                    },
+                    value: { key: 'totalFundAvailableValue' },
+                  },
+                  visibleIf: [
+                    { name: 'estimatedValue', operator: '!=', value: '' },
+                    { name: 'availableQuantity', operator: '!=', value: '' },
+                  ],
+                } as FormField,
               ] as FormField[],
             },
           ],
@@ -234,6 +269,48 @@ export const ASSET_SCHEMA = (hideFileds: string[] = []): FormSection[] => {
             },
           ],
         },
+        ...(hideFileds.includes('assetDocuments') ? [] : [{
+          type: 'section',
+          id: 'assetDocuments',
+          rows: [
+            {
+              fields: [
+                {
+                  name: 'assetDocuments',
+                  type: 'file',
+                  multiple: true,
+                  required: false,
+                  showOptionalTag: true,
+                  label: {
+                    key: 'supportProvider.assetForm.step1.resourceContent',
+                  },
+                  subTitle: {
+                    key: 'supportProvider.assetForm.step1.resourceUploadSub',
+                  },
+                  placeholder: {
+                    key: 'supportProvider.assetForm.step1.uploadPrompt',
+                  },
+                  validation: [
+                    {
+                      rule: 'fileType',
+                      value: ['pdf', 'doc', 'docx'],
+                      message: {
+                        key: 'errors.fileType',
+                      },
+                    },
+                    {
+                      rule: 'fileSize',
+                      value: 10,
+                      message: {
+                        key: 'errors.fileSize10',
+                      },
+                    },
+                  ],
+                },
+              ] as FormField[],
+            },
+          ],
+        } as FormSection]),
       ],
     },
 

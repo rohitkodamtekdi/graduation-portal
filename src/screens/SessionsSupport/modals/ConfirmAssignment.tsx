@@ -11,6 +11,9 @@ interface ConfirmAssignmentProps {
   onConfirm: () => void | Promise<any>;
   session: any;
   selectedParticipants: any[];
+  title?: string;
+  subtitle?: string;
+  confirmButtonLabel?: string;
 }
 
 export default function ConfirmAssignment({
@@ -19,6 +22,9 @@ export default function ConfirmAssignment({
   onConfirm,
   session,
   selectedParticipants,
+  title,
+  subtitle,
+  confirmButtonLabel,
 }: ConfirmAssignmentProps): React.JSX.Element {
   const { t } = useLanguage();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -64,7 +70,7 @@ export default function ConfirmAssignment({
         isDisabled={isSubmitting}
       >
         <ButtonText {...styles.confirmAssignmentConfirmButtonText}>
-          {t('lc.sessionsSupport.confirmAssignment.confirm', 'Confirm Assignment')}
+          {confirmButtonLabel || t('lc.sessionsSupport.confirmAssignment.confirm', 'Confirm Assignment')}
         </ButtonText>
       </Button>
     </HStack>
@@ -75,8 +81,8 @@ export default function ConfirmAssignment({
       isOpen={isOpen}
       onClose={onClose}
       size="md"
-      headerTitle={t('lc.sessionsSupport.confirmAssignment.title', 'Confirm Assignment')}
-      headerDescription={t('lc.sessionsSupport.confirmAssignment.subtitle', 'You are about to assign the following participants to this session:')}
+      headerTitle={title || t('lc.sessionsSupport.confirmAssignment.title', 'Confirm Assignment')}
+      headerDescription={subtitle || t('lc.sessionsSupport.confirmAssignment.subtitle', 'You are about to assign the following participants to this session:')}
       showCloseButton={true}
       footerContent={footerContent}
     >

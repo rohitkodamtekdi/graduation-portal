@@ -454,6 +454,23 @@ export const requestMoreInfoForSupportRequest = async (
 };
 
 /**
+ * Fetch the raw detail record for a single request-session (best-effort - the exact response
+ * shape, and whether it embeds per-requestee names, is unconfirmed against a real backend
+ * response; callers should parse defensively and fall back gracefully).
+ */
+export const getRequestSessionDetails = async (requestId: string | number): Promise<any> => {
+  try {
+    const response = await api.get(API_ENDPOINTS.REQUEST_SESSIONS_GET_DETAILS, {
+      params: { request_session_id: String(requestId) },
+    });
+    return response.data?.result ?? null;
+  } catch (error) {
+    console.warn('[getRequestSessionDetails] Failed to fetch request details:', error);
+    return null;
+  }
+};
+
+/**
  * Decline a support request with reason and details
  */
 export const declineSupportRequest = async (

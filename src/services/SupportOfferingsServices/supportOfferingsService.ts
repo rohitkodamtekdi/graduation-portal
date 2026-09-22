@@ -127,7 +127,7 @@ const ASSET_STATUS_LABEL: Record<string, AssetItem['status']> = {
   COMPLETED: 'Accepted',
 };
 
-const mapToAssetItem = (raw: any): AssetItem => {
+export const mapToAssetItem = (raw: any): AssetItem => {
   const assetType = Array.isArray(raw.asset_types) ? raw.asset_types[0] : raw.asset_types;
   const estimatedValue = raw.estimated_value ?? raw.meta?.estimated_value;
   const availableQuantity = raw.available_quantity ?? raw.meta?.available_quantity;

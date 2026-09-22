@@ -224,6 +224,42 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                 },
               ] as FormField[],
             }]),
+            ...(hideFileds.includes('resources') ? [] : [{
+              fields: [
+                {
+                  name: 'resources',
+                  type: 'file',
+                  multiple: true,
+                  required: false,
+                  showOptionalTag: true,
+                  label: {
+                    key: 'supportProvider.additionalServicesForm.step1.resourceContent',
+                  },
+                  subTitle: {
+                    key: 'supportProvider.additionalServicesForm.step1.resourceUploadSub',
+                  },
+                  placeholder: {
+                    key: 'supportProvider.additionalServicesForm.step1.uploadPrompt',
+                  },
+                  validation: [
+                    {
+                      rule: 'fileType',
+                      value: ['pdf', 'doc', 'docx'],
+                      message: {
+                        key: 'errors.fileType',
+                      },
+                    },
+                    {
+                      rule: 'fileSize',
+                      value: 10,
+                      message: {
+                        key: 'errors.fileSize10',
+                      },
+                    },
+                  ],
+                },
+              ] as FormField[],
+            }]),
           ],
         },
       ],
