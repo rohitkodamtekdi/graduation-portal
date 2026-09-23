@@ -27,7 +27,7 @@ export const RequestFooter: React.FC<RequestFooterProps> = ({ item, onAssignSess
   return (
     <HStack {...styles.requestorFooter}>
       <Text {...styles.requestorFooterText}>
-        {t('supportProvider.supportOfferings.cards.providedBy', 'Provided by:')}{' '}
+        {t('supportProvider.supportOfferings.cards.providedBy')}{' '}
         <Text {...styles.requestorFooterOrgText}>
           {mentorName}
         </Text>
@@ -43,7 +43,7 @@ export const RequestFooter: React.FC<RequestFooterProps> = ({ item, onAssignSess
           onPress={handleViewDetails}
         >
           <ButtonText {...(styles.requestorFooterViewDetailsText as any)}>
-            {t('supportProvider.supportOfferings.cards.viewDetails', 'View Details')}
+            {t('supportProvider.supportOfferings.cards.viewDetails')}
           </ButtonText>
         </Button>
 

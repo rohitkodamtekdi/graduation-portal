@@ -2091,13 +2091,16 @@
       "attendedSessions": "Attended Sessions"
     },
     "attendedSessions": {
+      "title": "Sessions",
       "sectionTitle": "Attended Sessions",
       "attended": "Attended",
       "missed": "Missed",
       "serviceProvider": "Service Provider",
-      "noSessionsTitle": "No Attended Sessions",
+      "noSessionsTitle": "No Sessions Found",
       "noMissedSessionsTitle": "No Missed Sessions",
-      "noSessionsDescription": "Sessions this participant has attended will appear here."
+      "noSessionsDescription": "Sessions this participant has attended will appear here.",
+      "noAttended": "This participant has not attended any sessions yet.",
+      "noMissed": "No missed sessions recorded for this participant."
     },
     "interventionPlan": {
       "noPlanAssigned": "No Intervention Plan Assigned",
@@ -2700,6 +2703,8 @@
       "cards": {
         "hideDetails": "Hide Details",
         "viewDetails": "View Details",
+        "providedBy": "Provided by:",
+        "bothAudience": "Both",
         "requestedBy": "Requested by: {{name}}",
         "requestedByPrefix": "Requested by: ",
         "requestsCount": "{{count}} requests / spots",

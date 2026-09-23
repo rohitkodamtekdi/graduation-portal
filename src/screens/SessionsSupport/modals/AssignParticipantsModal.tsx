@@ -102,9 +102,6 @@ export default function AssignParticipantsModal({
           apiTotal = response?.total ?? response?.count ?? apiTotal;
           lastPageFetched = page;
 
-          console.log('[AssignParticipantsModal] enrolledIds:', Array.from(enrolledIdsRef.current));
-          console.log('[AssignParticipantsModal] fetchedList sample:', fetchedList.map((p) => ({ userId: p.userId, name: p.name })));
-
           const eligible = fetchedList.filter((p) => !enrolledIdsRef.current.has(String(p.userId)));
           accumulated = accumulated.concat(eligible);
 

@@ -19,8 +19,8 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = () => {
   const [filterType, setFilterType] = useState<'ATTENDED' | 'MISSED'>('ATTENDED');
 
   const filterOptions = [
-    { label: t('participantDetail.attendedSessions.attended', 'Attended'), value: 'ATTENDED' },
-    { label: t('participantDetail.attendedSessions.missed', 'Missed'), value: 'MISSED' },
+    { label: t('participantDetail.attendedSessions.attended'), value: 'ATTENDED' },
+    { label: t('participantDetail.attendedSessions.missed'), value: 'MISSED' },
   ];
 
   const isAttended = filterType === 'ATTENDED';
@@ -30,7 +30,7 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = () => {
       {/* Header with Title and Filter */}
       <HStack {...styles.headerHStack}>
         <Text {...styles.headerTitleText}>
-          {t('participantDetail.attendedSessions.title', 'Sessions')}
+          {t('participantDetail.attendedSessions.title')}
         </Text>
         <Box {...styles.filterSelectBox}>
           <Select
@@ -44,18 +44,12 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = () => {
       {/* Empty State */}
       <VStack {...styles.content} py="$10" space="xs">
         <Text {...styles.emptyTitle}>
-          {t('participantDetail.attendedSessions.noSessionsTitle', 'No Sessions Found')}
+          {t('participantDetail.attendedSessions.noSessionsTitle')}
         </Text>
         <Text {...styles.emptyDescription}>
           {isAttended
-            ? t(
-                'participantDetail.attendedSessions.noAttended',
-                'This participant has not attended any sessions yet.'
-              )
-            : t(
-                'participantDetail.attendedSessions.noMissed',
-                'No missed sessions recorded for this participant.'
-              )}
+            ? t('participantDetail.attendedSessions.noAttended')
+            : t('participantDetail.attendedSessions.noMissed')}
         </Text>
       </VStack>
     </Box>

@@ -74,7 +74,7 @@ const formatDisplayStatus = (item: any): string => {
  * sends this as `recommended_for: [{ value, label }]` (e.g. [{value:'user', label:'Participant'}]).
  * When both audience types are present, show the combined "Both" label like the Figma design.
  */
-const getAudienceLabel = (item: any): string => {
+const getAudienceLabel = (item: any, t: (key: string) => string): string => {
   const recommendedFor: any[] = Array.isArray(item.recommended_for) ? item.recommended_for : [];
   if (recommendedFor.length === 0) return '';
 
@@ -82,7 +82,7 @@ const getAudienceLabel = (item: any): string => {
   const hasOrgAdmin = values.includes('org_admin');
   const hasUser = values.includes('user');
 
-  if (hasOrgAdmin && hasUser) return 'Both';
+  if (hasOrgAdmin && hasUser) return t('supportProvider.supportOfferings.cards.bothAudience');
   return recommendedFor[0]?.label || recommendedFor[0] || '';
 };
 
@@ -92,7 +92,7 @@ const Card: React.FC<AdditionalServiceCardItemProps> = ({ item, provinces, sites
 
   const displayStatus = formatDisplayStatus(item);
   const statusColors = getStatusColors(displayStatus);
-  const audienceLabel = getAudienceLabel(item);
+  const audienceLabel = getAudienceLabel(item, t);
 
   const providedByName = item.providedBy || item.mentor_name || (typeof item.organization === 'object' ? item.organization?.name : item.organization) || '';
 
@@ -167,7 +167,7 @@ const Card: React.FC<AdditionalServiceCardItemProps> = ({ item, provinces, sites
             <HStack {...soStyles.metaItemHStack}>
               <LucideIcon name="Users" {...soStyles.cardMetaIconProps} />
               <Text {...soStyles.cardMetaSmText}>
-                {requestsCount} {t('supportProvider.supportOfferings.cards.requestsSpots', 'requests / spots')}
+                {t('supportProvider.supportOfferings.cards.requestsCount', { count: requestsCount })}
               </Text>
             </HStack>
           ) : null}
@@ -176,7 +176,7 @@ const Card: React.FC<AdditionalServiceCardItemProps> = ({ item, provinces, sites
         {/* Row 4: Footer - Provided by + View Details */}
         <HStack {...lcStyles.requestorFooter}>
           <Text {...lcStyles.requestorFooterText}>
-            {t('supportProvider.supportOfferings.cards.providedBy', 'Provided by:')}{' '}
+            {t('supportProvider.supportOfferings.cards.providedBy')}{' '}
             <Text {...lcStyles.requestorFooterOrgText}>{providedByName}</Text>
             {/* {provinceName ? (
               <Text {...lcStyles.requestorFooterProvinceText}>{` • ${provinceName}`}</Text>
@@ -190,7 +190,7 @@ const Card: React.FC<AdditionalServiceCardItemProps> = ({ item, provinces, sites
               onPress={handleViewDetails}
             >
               <ButtonText {...(lcStyles.requestorFooterViewDetailsText as any)}>
-                {t('supportProvider.supportOfferings.cards.viewDetails', 'View Details')}
+                {t('supportProvider.supportOfferings.cards.viewDetails')}
               </ButtonText>
             </Button>
           </HStack>
@@ -230,7 +230,7 @@ export default function AdditionalServiceCard({
         <Box alignItems="center" mt="$4" width="100%">
           <Button onPress={onLoadMoreItems} disabled={isLoadingMore}>
             {isLoadingMore && <ButtonSpinner mr="$2" color="$white" />}
-            <ButtonText>{t('common.loadMore', 'Load More')}</ButtonText>
+            <ButtonText>{t('supportProvider.supportOfferings.buttonTexts.loadMoreSessions')}</ButtonText>
           </Button>
         </Box>
       )}

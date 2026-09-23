@@ -580,11 +580,11 @@ export default function ParticipantDetail() {
                   />
                 </Box>
               )}
-              {activeTab === PARTICIPANT_DETAILS_TABS.ATTENDED_SESSIONS && (
+              {/* {activeTab === PARTICIPANT_DETAILS_TABS.ATTENDED_SESSIONS && (
                 <Box mt="$6">
                   <AttendedSessions participant={participant as ParticipantData} />
                 </Box>
-              )}
+              )} */}
             </Box>
           </Box>
         )}
