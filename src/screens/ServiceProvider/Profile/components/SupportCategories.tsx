@@ -110,17 +110,12 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
     };
   }, []);
 
-  // Lazily fetch sub-options for categories that are selected or already saved; cached per group.
-  const neededCategories = useMemo(() => {
-    const categories = new Set<string>();
-    if (selectedCategory) categories.add(selectedCategory);
-    value.forEach(item => categories.add(item.categoryName));
-    return categories;
-  }, [selectedCategory, value]);
-
+  // Fetch sub-options lazily if a category is selected or present in saved items
   useEffect(() => {
-    if (neededCategories.size === 0) return;
     let isMounted = true;
+
+    const hasCategory = (isCategoryMatch: (cat?: string) => boolean) =>
+      isCategoryMatch(selectedCategory) || value.some(item => isCategoryMatch(item.categoryName));
 
     const fetchTrainingOptions = async () => {
       if (fetchedGroupsRef.current.training) return;
@@ -177,20 +172,20 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
       }
     };
 
-    neededCategories.forEach(category => {
-      if (isTrainingCategory(category)) {
-        fetchTrainingOptions();
-      } else if (isLinkageCategory(category)) {
-        fetchLinkageOptions();
-      } else if (isAssetCategory(category)) {
-        fetchAssetOptions();
-      }
-    });
+    if (hasCategory(isTrainingCategory)) {
+      fetchTrainingOptions();
+    }
+    if (hasCategory(isLinkageCategory)) {
+      fetchLinkageOptions();
+    }
+    if (hasCategory(isAssetCategory)) {
+      fetchAssetOptions();
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [neededCategories]);
+  }, [selectedCategory, value]);
 
   const categoryOptions = useMemo(() => {
     return optionsState?.categoryOpts?.filter(opt => {
