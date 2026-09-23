@@ -5,6 +5,7 @@ import { useRequesterInfo } from '@hooks/useSessionStatus';
 import SessionCompleteModal from './SessionCompleteModal';
 import type { ParticipantAttendanceItem, ServiceItem } from '../../../../../types/supportOfferingsTypes';
 import { getEnrolledMentees } from '../../../../../services/mentoringService';
+import { completeTrainingSession } from '../../../../../services/SupportOfferingsServices/supportOfferingsService';
 
 const BASE_PATH = 'supportProvider.supportOfferings.additionalServiceCompletionModal';
 
@@ -54,10 +55,14 @@ export default function AdditionalServiceCompletionModal({
     if (isOpen) fetchParticipants();
   }, [isOpen, fetchParticipants]);
 
-  const handleConfirmComplete = () => {
-    // No backend endpoint exists yet to persist additional-service completion - this stays a
-    // UI-only confirmation until that API is available.
-    showAlert('success', t(`${BASE_PATH}.saved`, 'Completion status saved.'));
+  const handleConfirmComplete = async (selectedParticipantIds: string[]) => {
+    if (!service) return;
+    try {
+      await completeTrainingSession(service.id, { mentees: selectedParticipantIds });
+      showAlert('success', t(`${BASE_PATH}.saved`, 'Completion status saved.'));
+    } catch (error) {
+      showAlert('error', t(`${BASE_PATH}.completeFailed`, 'Failed to save completion. Please try again.'));
+    }
   };
 
   if (!service) return null;

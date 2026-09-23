@@ -199,7 +199,7 @@ export const completeTrainingSession = async (
       : [];
 
   const endpoint = API_ENDPOINTS.SUPPORT_OFFERINGS_COMPLETE_SESSION(sessionId);
-  const response = await api.post(endpoint, { mentees });
+  const response = await api.patch(endpoint, { mentees });
   return response.data;
 };
 
