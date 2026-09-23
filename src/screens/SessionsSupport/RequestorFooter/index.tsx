@@ -15,7 +15,6 @@ export const RequestFooter: React.FC<RequestFooterProps> = ({ item, onAssignSess
 
   const sessionId = item?.id || item?._id || '';
   const mentorName = item?.mentor_name || '';
-  const provinceName = (Array.isArray(item?.provinces) ? item.provinces[0] : item?.provinces) || '';
 
   const handleViewDetails = () => {
     // @ts-ignore
@@ -33,13 +32,10 @@ export const RequestFooter: React.FC<RequestFooterProps> = ({ item, onAssignSess
   return (
     <HStack {...styles.requestorFooter}>
       <Text {...styles.requestorFooterText}>
-        {t('supportProvider.supportOfferings.cards.providedBy', 'Provided by:')}{' '}
+        {t('supportProvider.supportOfferings.cards.providedBy')}{' '}
         <Text {...styles.requestorFooterOrgText}>
           {mentorName}
         </Text>
-        {provinceName ? (
-          <Text {...styles.requestorFooterProvinceText}>{` • ${provinceName}`}</Text>
-        ) : null}
       </Text>
 
       <HStack {...styles.requestorFooterActions}>

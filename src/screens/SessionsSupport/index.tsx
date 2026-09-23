@@ -723,6 +723,11 @@ const SessionsSupportScreen: React.FC = () => {
                   isShowLoadMore={isShowLoadMore}
                   onLoadMoreItems={onLoadMoreItems}
                   isLoadingMore={_loading && page > 1}
+                  _card={{
+                    footer: (item: any) => <RequestFooter item={item} />,
+                    provinces: provincesList,
+                    sites: allSiteOptions
+                  }}
                 />
               )}
 

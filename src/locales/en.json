@@ -2687,6 +2687,7 @@
         "requestedBy": "Requested by: {{name}}",
         "requestedByPrefix": "Requested by: ",
         "requestsCount": "{{count}} requests / spots",
+        "providedBy": "Provided by:",
         "copySession": "Copy Session",
         "copyOffering": "Copy Offering",
         "copyIntervention": "Copy Intervention",

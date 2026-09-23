@@ -29,9 +29,10 @@ interface CardProps {
   item: ServiceItem;
   provinces?: any[];
   sites?: any[];
+  footer?: (item: any) => React.ReactNode;
 }
 
-const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
+const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
   const navigation = useNavigation();
@@ -152,6 +153,9 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
         </HStack>
 
         {/* ROW 4 - ACTIONS */}
+        {footer ? (
+          footer(item)
+        ) : (
         <HStack {...styles.requestedByRowHStack}>
           {requesterName ? (
             <Text {...styles.cardRequestedByText}>
@@ -206,6 +210,7 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
             </Button>
           </HStack>
         </HStack>
+        )}
       </VStack>
 
       <CancelInterventionModal
