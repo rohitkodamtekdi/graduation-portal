@@ -44,7 +44,7 @@ export default function AdditionalServiceCompletionModal({
         })),
       );
     } catch (error) {
-      showAlert('error', t(`${BASE_PATH}.fetchFailed`, 'Failed to load participants. Please try again.'));
+      showAlert('error', t(`${BASE_PATH}.fetchFailed`));
     } finally {
       setIsLoading(false);
     }
@@ -59,9 +59,9 @@ export default function AdditionalServiceCompletionModal({
     if (!service) return;
     try {
       await completeTrainingSession(service.id, { mentees: selectedParticipantIds });
-      showAlert('success', t(`${BASE_PATH}.saved`, 'Completion status saved.'));
+      showAlert('success', t(`${BASE_PATH}.saved`));
     } catch (error) {
-      showAlert('error', t(`${BASE_PATH}.completeFailed`, 'Failed to save completion. Please try again.'));
+      showAlert('error', t(`${BASE_PATH}.completeFailed`));
     }
   };
 
@@ -77,11 +77,11 @@ export default function AdditionalServiceCompletionModal({
       isLoadingParticipants={isLoading}
       onConfirmComplete={handleConfirmComplete}
       onCancel={onClose}
-      title={t(`${BASE_PATH}.title`, 'Service Completion & Attendance')}
+      title={t(`${BASE_PATH}.title`)}
       headerBadge={
         <Badge bg="$primary100" borderRadius="$full" px="$2.5" py="$0.5" alignSelf="flex-start">
           <BadgeText fontSize="$xs" color="$primary600">
-            {t(`${BASE_PATH}.badge`, 'Additional Service')}
+            {t(`${BASE_PATH}.badge`)}
           </BadgeText>
         </Badge>
       }
@@ -90,7 +90,6 @@ export default function AdditionalServiceCompletionModal({
           {service.title}
           {requesterName
             ? ` • ${t(`${BASE_PATH}.requestedBy`, {
-              defaultValue: 'Requested by {{name}}{{org}}',
               name: requesterName,
               org: requesterOrgName ? ` (${requesterOrgName})` : '',
             })}`
@@ -98,8 +97,8 @@ export default function AdditionalServiceCompletionModal({
         </Text>
       }
       showParticipantStatusBadge
-      cancelButtonText={t('common.cancel', 'Cancel')}
-      confirmButtonText={t(`${BASE_PATH}.confirmButton`, 'Confirm & Save Completion')}
+      cancelButtonText={t('common.cancel')}
+      confirmButtonText={t(`${BASE_PATH}.confirmButton`)}
     />
   );
 }

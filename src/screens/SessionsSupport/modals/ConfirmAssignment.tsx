@@ -37,10 +37,10 @@ export default function ConfirmAssignment({
     : '';
 
   const formatText = session?.delivery_mode === 'in_person' || session?.delivery_mode === 'in-person'
-    ? t('lc.sessionsSupport.confirmAssignment.inPerson', 'In-person')
+    ? t('lc.sessionsSupport.confirmAssignment.inPerson')
     : session?.delivery_mode === 'online'
-      ? t('lc.sessionsSupport.confirmAssignment.online', 'Online')
-      : t('lc.sessionsSupport.confirmAssignment.hybrid', 'Hybrid');
+      ? t('lc.sessionsSupport.confirmAssignment.online')
+      : t('lc.sessionsSupport.confirmAssignment.hybrid');
 
   const sessionMeta = dateStr && formatText ? `${dateStr}  •  ${formatText}` : (dateStr || formatText || '');
 
@@ -53,7 +53,7 @@ export default function ConfirmAssignment({
         isDisabled={isSubmitting}
       >
         <ButtonText {...styles.confirmAssignmentCancelButtonText}>
-          {t('lc.sessionsSupport.confirmAssignment.cancel', 'Cancel')}
+          {t('lc.sessionsSupport.confirmAssignment.cancel')}
         </ButtonText>
       </Button>
       <Button
@@ -70,7 +70,7 @@ export default function ConfirmAssignment({
         isDisabled={isSubmitting}
       >
         <ButtonText {...styles.confirmAssignmentConfirmButtonText}>
-          {confirmButtonLabel || t('lc.sessionsSupport.confirmAssignment.confirm', 'Confirm Assignment')}
+          {confirmButtonLabel || t('lc.sessionsSupport.confirmAssignment.confirm')}
         </ButtonText>
       </Button>
     </HStack>
@@ -81,8 +81,8 @@ export default function ConfirmAssignment({
       isOpen={isOpen}
       onClose={onClose}
       size="md"
-      headerTitle={title || t('lc.sessionsSupport.confirmAssignment.title', 'Confirm Assignment')}
-      headerDescription={subtitle || t('lc.sessionsSupport.confirmAssignment.subtitle', 'You are about to assign the following participants to this session:')}
+      headerTitle={title || t('lc.sessionsSupport.confirmAssignment.title')}
+      headerDescription={subtitle || t('lc.sessionsSupport.confirmAssignment.subtitle')}
       showCloseButton={true}
       footerContent={footerContent}
     >
@@ -98,7 +98,6 @@ export default function ConfirmAssignment({
         {/* Selected participants list */}
         <Text {...styles.confirmAssignmentSectionHeader}>
           {t('lc.sessionsSupport.confirmAssignment.participantsCount', {
-            defaultValue: '{{count}} Participants:',
             count: selectedParticipants.length,
           })}
         </Text>

@@ -2734,6 +2734,15 @@
       "buttonTexts": {
         "publishSupport": "Publish support",
         "loadMoreSessions": "Load More Sessions"
+      },
+      "additionalServiceCompletionModal": {
+        "title": "Service Completion & Attendance",
+        "badge": "Additional Service",
+        "requestedBy": "Requested by {{name}}{{org}}",
+        "confirmButton": "Confirm & Save Completion",
+        "fetchFailed": "Failed to load participants. Please try again.",
+        "saved": "Completion status saved.",
+        "completeFailed": "Failed to save completion. Please try again."
       }
     },
     "dashboard": {
