@@ -293,7 +293,11 @@ export const ASSET_SCHEMA = (hideFileds: string[] = []): FormSection[] => {
                   validation: [
                     {
                       rule: 'fileType',
-                      value: ['pdf', 'doc', 'docx'],
+                      value: [
+                        'application/pdf',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                      ],
                       message: {
                         key: 'errors.fileType',
                       },

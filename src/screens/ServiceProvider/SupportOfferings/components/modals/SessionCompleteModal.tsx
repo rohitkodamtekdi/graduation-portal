@@ -30,9 +30,6 @@ interface SessionCompleteModalProps {
   initialParticipants?: ParticipantAttendanceItem[];
   isLoadingParticipants?: boolean;
   onConfirmComplete: (selectedParticipantIds: string[]) => void;
-  // Optional overrides so other flows (e.g. Additional Service completion) can reuse this same
-  // checkbox/Mark-all UI with different header framing, per-row status badges, and a plain Cancel
-  // (no submission) instead of "Skip & Mark Complete" (which still submits an empty list).
   title?: string;
   headerDescription?: React.ReactNode;
   headerBadge?: React.ReactNode;

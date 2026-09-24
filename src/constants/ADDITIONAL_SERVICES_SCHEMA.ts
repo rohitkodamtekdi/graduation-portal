@@ -244,7 +244,11 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   validation: [
                     {
                       rule: 'fileType',
-                      value: ['pdf', 'doc', 'docx'],
+                      value: [
+                        'application/pdf',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                      ],
                       message: {
                         key: 'errors.fileType',
                       },

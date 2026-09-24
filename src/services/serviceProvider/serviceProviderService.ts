@@ -50,7 +50,7 @@ export interface SupportRequestsFilterParams {
 
 export interface AcceptAndSchedulePayload {
   requestId: string | number;
-  support_offering_type?: 'training' | 'session' | 'additional_service' | 'asset';
+  support_offering_type?: 'training' | 'additional_service' | 'asset';
   province?: string;
   sites?: string[];
   category?: string;
@@ -398,7 +398,7 @@ export const acceptAndScheduleSupportRequest = async (
     type: 'public',
     support_offering_type: isAsset
       ? SUPPORT_OFFERING_TYPE_VALUES.ASSET
-      : (payload.support_offering_type === 'session' ? SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION : (payload.support_offering_type || SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION)),
+      : (payload.support_offering_type || SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION),
     title: payload.title || '',
     start_date: startDate,
     end_date: endDate,
