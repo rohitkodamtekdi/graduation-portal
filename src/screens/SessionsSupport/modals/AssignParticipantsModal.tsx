@@ -8,7 +8,7 @@ import { STATUS } from '@constants/app.constant';
 import { getStatusColors } from '../../ParticipantsList/StatusBadge';
 import { getInitials } from '@utils/helper';
 import { useAuth } from '@contexts/AuthContext';
-import { getParticipants } from '../../../services/SessionSupportServices/sessionRequestorService';
+import { getParticipants, getEnrolledMenteeIds } from '../../../services/SessionSupportServices/sessionRequestorService';
 import { useLanguage } from '@contexts/LanguageContext';
 import styles from '../styles';
 import ConfirmAssignment from './ConfirmAssignment';
@@ -54,6 +54,9 @@ export default function AssignParticipantsModal({
   const [isLoading, setIsLoading] = useState(false);
   const [total, setTotal] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isRawExhausted, setIsRawExhausted] = useState(false);
+  const [enrolledLookupError, setEnrolledLookupError] = useState(false);
+  const enrolledIdsRef = useRef<Set<string>>(new Set());
 
   const selectedParticipants = useMemo(() => {
     return participants.filter((p) => selectedIds.includes(p.userId));
@@ -67,7 +70,7 @@ export default function AssignParticipantsModal({
   const requestCountRef = useRef(0);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const hasMore = total === null || participants.length < total;
+  const hasMore = !isRawExhausted;
 
   /**
    * Core paginated fetch — mirrors the Choose Supervisor doFetch pattern.
@@ -75,7 +78,7 @@ export default function AssignParticipantsModal({
    * `requestCountRef` ensures stale responses from earlier requests are discarded.
    */
   const doFetch = useCallback(
-    async (page: number, search: string, reset: boolean) => {
+    async (startPage: number, search: string, reset: boolean) => {
       if (!user?.id) return;
       if (!reset && (isLoadingRef.current)) return;
 
@@ -87,29 +90,55 @@ export default function AssignParticipantsModal({
         setParticipants([]);
         setTotal(null);
         setCurrentPage(1);
+        setIsRawExhausted(false);
       }
 
       try {
-        const response = await getParticipants({
-          userId: user.id,
-          page,
-          limit: PAGE_SIZE,
-          search: search || undefined,
-          status: `${STATUS.IN_PROGRESS},${STATUS.GRADUATED}`,
-        });
+        let page = startPage;
+        let accumulated: any[] = [];
+        let apiTotal = 0;
+        let lastPageFetched = startPage;
+        let reachedRawEnd = false;
 
-        // Discard response if a newer request has been initiated
-        if (requestId !== requestCountRef.current) return;
+        for (let guard = 0; guard < 20; guard++) {
+          const response = await getParticipants({
+            userId: user.id,
+            page,
+            limit: PAGE_SIZE,
+            search: search || undefined,
+            status: `${STATUS.IN_PROGRESS},${STATUS.GRADUATED}`,
+          });
 
-        const fetchedList: any[] = response?.result?.data || [];
-        const eligible = fetchedList;
+          // Discard response if a newer request has been initiated
+          if (requestId !== requestCountRef.current) return;
 
-        // Total from the API; fall back to fetched data length
-        const apiTotal = response?.total ?? response?.count ?? fetchedList.length;
+          const fetchedList: any[] = response?.result?.data || [];
+          apiTotal = response?.total ?? response?.count ?? apiTotal;
+          lastPageFetched = page;
+
+          const eligible = fetchedList.filter((p) => !enrolledIdsRef.current.has(String(p.userId)));
+          accumulated = accumulated.concat(eligible);
+
+          const isLastRawPage = fetchedList.length < PAGE_SIZE;
+          if (isLastRawPage) reachedRawEnd = true;
+          if (accumulated.length >= PAGE_SIZE || isLastRawPage) break;
+
+          page += 1;
+        }
 
         setTotal(apiTotal);
-        setCurrentPage(page);
-        setParticipants((prev) => (reset ? eligible : [...prev, ...eligible]));
+        setIsRawExhausted(reachedRawEnd);
+        setCurrentPage(lastPageFetched);
+        setParticipants((prev) => {
+          const combined = reset ? accumulated : [...prev, ...accumulated];
+          const seen = new Set<string>();
+          return combined.filter((p) => {
+            const id = String(p.userId);
+            if (seen.has(id)) return false;
+            seen.add(id);
+            return true;
+          });
+        });
       } catch (error) {
         if (requestId === requestCountRef.current) {
           console.error('Error fetching participants:', error);
@@ -124,6 +153,23 @@ export default function AssignParticipantsModal({
     [user?.id],
   );
 
+  // Loads the enrolled-mentee ids for the session, then kicks off the eligible-participants fetch. This is done on modal open and on search reset.
+  const loadEnrolledAndFetch = useCallback(async () => {
+    const sessionId = session?.id || session?._id;
+    setEnrolledLookupError(false);
+    try {
+      let ids: string[] = [];
+      if (sessionId) {
+        ids = await getEnrolledMenteeIds(sessionId);
+      }
+      enrolledIdsRef.current = new Set(ids);
+      doFetch(1, '', true);
+    } catch (error) {
+      console.error('Error fetching enrolled mentees:', error);
+      setEnrolledLookupError(true);
+    }
+  }, [session?.id, session?._id, doFetch]);
+
   // Fetch first page when the modal opens; reset all state
   useEffect(() => {
     if (!isOpen) return;
@@ -131,8 +177,9 @@ export default function AssignParticipantsModal({
     setSearchQuery('');
     isLoadingRef.current = false;
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    doFetch(1, '', true);
-  }, [isOpen, doFetch]);
+
+    loadEnrolledAndFetch();
+  }, [isOpen, loadEnrolledAndFetch]);
 
   // Debounced search — resets pagination and list on each new query
   const handleSearch = useCallback(
@@ -166,8 +213,8 @@ export default function AssignParticipantsModal({
         onPress={() => {
           setIsConfirmOpen(true);
         }}
-        disabled={selectedIds.length === 0 || isLoading}
-        opacity={selectedIds.length === 0 || isLoading ? 0.5 : 1}>
+        disabled={selectedIds.length === 0 || isLoading || enrolledLookupError}
+        opacity={selectedIds.length === 0 || isLoading || enrolledLookupError ? 0.5 : 1}>
         <ButtonText {...styles.assignParticipantsConfirmButtonText}>
           {t('lc.sessionsSupport.assignParticipantsModal.assignButtonText', { defaultValue: `${submitActionVerb || 'Assign'} ({{count}})`, count: selectedIds.length })}
         </ButtonText>
@@ -188,6 +235,20 @@ export default function AssignParticipantsModal({
         bodyProps={styles.assignParticipantsModalBodyProps}
       >
         <VStack {...styles.assignParticipantsContentVStack}>
+          {enrolledLookupError ? (
+            <Box {...styles.assignParticipantsEmptyContainer}>
+              <LucideIcon name="AlertTriangle" size={36} color="$textMutedForeground" />
+              <Text {...styles.assignParticipantsEmptyText}>
+                {t('lc.sessionsSupport.assignParticipantsModal.enrolledLookupFailed', 'Could not check already-enrolled participants. Please try again.')}
+              </Text>
+              <Button variant="outline" mt="$3" onPress={loadEnrolledAndFetch}>
+                <ButtonText>
+                  {t('common.retry', 'Retry')}
+                </ButtonText>
+              </Button>
+            </Box>
+          ) : (
+          <>
           {/* Search Input */}
           <Input {...styles.assignParticipantsSearchInput}>
             <InputSlot>
@@ -207,7 +268,7 @@ export default function AssignParticipantsModal({
               <LucideIcon name="Users" size={14} color="$textMuted" />
               <Text {...styles.assignParticipantsCountLeftText}>
                 <Text fontWeight="$medium" color="$black">
-                  {total !== null ? total : '–'}{' '}
+                  {total !== null ? `${participants.length}${hasMore ? '+' : ''}` : '–'}{' '}
                 </Text>
                 {t('lc.sessionsSupport.assignParticipantsModal.eligibleParticipants', 'eligible participants')}
               </Text>
@@ -328,6 +389,8 @@ export default function AssignParticipantsModal({
               return null;
             }}
           />
+          </>
+          )}
         </VStack>
       </Modal>
 

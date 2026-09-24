@@ -486,10 +486,18 @@ export const sessionsSupportStyles = {
     elevation: 1,
     sx: {
       _hover: {
-        borderColor: '$primary500 !important',
+        shadowColor: '$black',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        elevation: 3,
       },
       _focus: {
-        borderColor: '$primary500 !important',
+        shadowColor: '$black',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.08,
+        shadowRadius: 10,
+        elevation: 3,
       },
     },
   },

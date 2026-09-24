@@ -34,12 +34,23 @@ export function valueMapping(
         recommended_for = 'user';
       }
     }
+
+    const rawProvinces = formValues?.provinces;
+    const provinceVal = Array.isArray(rawProvinces) ? rawProvinces[0] : rawProvinces;
+
+    const rawSites = formValues?.sites;
+    const sitesVal: string[] = Array.isArray(rawSites)
+      ? rawSites.filter(Boolean)
+      : (rawSites ? [String(rawSites)] : []);
+
+    const rawCategories = formValues?.categories;
+    const categoryVal = Array.isArray(rawCategories) ? rawCategories[0] : rawCategories;
+
     return {
-      // ...formValues,
       title: formValues?.title,
-      provinces: formValues?.provinces,
-      sites: formValues?.sites,
-      categories: formValues.categories?.[0],
+      provinces: provinceVal || '',
+      sites: sitesVal,
+      categories: categoryVal || '',
       idp_training_task: formValues.idp_training_task,
       sessionTypeOther: formValues.idp_training_task === "custom" ? formValues?.title : "",
       description: formValues?.description,
@@ -50,11 +61,6 @@ export function valueMapping(
       can_be_copied: `${formValues.can_be_copied}`,
       max_capacity: formValues.seats_limit,
       resources: formValues?.resources,
-      // delivery_mode: formValues.delivery_mode?.value || formValues.delivery_mode,
-      // meeting_link: formValues.meeting_info?.meeting_link,
-      // location: formValues.meeting_info?.location,
-      // start_date: moment(formValues.start_date).format('DD-MM-YYYY HH:mm'),
-      // end_date: moment(formValues.end_date).format('DD-MM-YYYY HH:mm'),
     };
   }
 
@@ -89,7 +95,7 @@ export function valueMapping(
     categories: [formValues.categories],
     delivery_mode: formValues.delivery_mode || 'offline',
     provinces: [formValues.provinces],
-    sites: [formValues.sites],
+    sites: formValues.sites,
     recommended_for: recommendedForPayload,
     start_date: startDate,
     end_date: endDate,

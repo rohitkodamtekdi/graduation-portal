@@ -388,6 +388,23 @@ export default {
     numberOfLines: 2,
     ellipsizeMode: 'tail',
   } as const,
+  trainingMetaRowHStack: {
+    width: '100%' as const,
+    flexWrap: 'wrap' as const,
+    alignItems: 'center' as const,
+    columnGap: 24 as const,
+    rowGap: 8 as const,
+  } as const,
+  trainingParticipantsRowHStack: {
+    width: '100%' as const,
+    alignItems: 'center' as const,
+  } as const,
+  trainingDescriptionText: {
+    fontSize: '$sm' as const,
+    color: '$textSecondary' as const,
+    lineHeight: '$md' as const,
+    width: '100%' as const,
+  } as const,
   cardTitleText: {
     fontSize: '$md' as const,
     fontWeight: '$bold' as const,

@@ -50,7 +50,7 @@ export interface SupportRequestsFilterParams {
 
 export interface AcceptAndSchedulePayload {
   requestId: string | number;
-  support_offering_type?: 'session' | 'asset' | 'additional_service';
+  support_offering_type?: 'training' | 'session' | 'additional_service' | 'asset';
   province?: string;
   sites?: string[];
   category?: string;
@@ -134,7 +134,7 @@ const mapRequestSessionItem = (
     title,
     coach: item.user_details?.name || item.user?.name || item.requester_name || item.mentee_name || session.mentor_name || '-',
     hub: provinceName,
-    location: meta.meeting_info?.location || session.meeting_info?.location || session.location || item.location || '-',
+    location: siteNames || '-',
     province: provinceName || provinceId,
     site: siteNames || undefined,
     participants: participantsCount,
@@ -398,7 +398,7 @@ export const acceptAndScheduleSupportRequest = async (
     type: 'public',
     support_offering_type: isAsset
       ? SUPPORT_OFFERING_TYPE_VALUES.ASSET
-      : SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
+      : (payload.support_offering_type === 'session' ? SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION : (payload.support_offering_type || SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION)),
     title: payload.title || '',
     start_date: startDate,
     end_date: endDate,
@@ -414,7 +414,7 @@ export const acceptAndScheduleSupportRequest = async (
     body.provinces = [payload.province];
   }
 
-  if (isAsset && payload.sites && payload.sites.length) {
+  if (payload.sites?.length) {
     body.sites = payload.sites;
   }
 

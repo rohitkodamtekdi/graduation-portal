@@ -21,8 +21,8 @@ import {
 import { TabButton } from '@components/Tabs';
 import FilterButton from '@components/Filter';
 import TrainingCard from '../ServiceProvider/SupportOfferings/components/Cards/TrainingCard';
-import AdditionalServicesCard from '../ServiceProvider/SupportOfferings/components/Cards/AdditionalServicesCard';
 import AssetsCard from './AssetsCard';
+import AdditionalServiceCard from './AdditionalServiceCard';
 import { getProvincesList, getSitesByProvince } from '../../services/usersService';
 import { getTrainingSessions, getAdditionalServices, getAssets, mapToAssetItem } from '../../services/SupportOfferingsServices/supportOfferingsService';
 import { getRequestSessionsList, requestorAssignMenteesToSession, getMyRequestsList } from '../../services/SessionSupportServices/sessionRequestorService';
@@ -39,10 +39,12 @@ import { RequestFooter } from './RequestorFooter';
 import AssignParticipantsModal from './modals/AssignParticipantsModal';
 import LcMySessionTab from './MyTraining&Sessions/LcMySessionTab';
 
+// Fallback filter if the backend doesn't apply `support_offering_type`; normalizes both string
+// and `{ value, label }` shapes across APIs (missing type = assume it belongs).
 const matchesOfferingType = (item: any, expectedType: string): boolean => {
   const rawType = item?.support_offering_type || item?.type || item?.session?.support_offering_type;
   const itemType = rawType && typeof rawType === 'object' ? rawType.value : rawType;
-  return !itemType || itemType === expectedType;
+  return !itemType || itemType === expectedType || (expectedType === SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION && itemType === 'training_session');
 };
 
 const SessionsSupportScreen: React.FC = () => {
@@ -709,7 +711,7 @@ const SessionsSupportScreen: React.FC = () => {
                   isLoadingMore={_loading && page > 1}
                   _card={{
                     footer: (item: any) => (
-                      <RequestFooter item={item} onAssignSession={handleAssignSessionClick} />
+                      <RequestFooter item={item} onAssignSession={handleAssignSessionClick} provinces={provincesList} />
                     ),
                     provinces: provincesList,
                     sites: allSiteOptions
@@ -718,16 +720,13 @@ const SessionsSupportScreen: React.FC = () => {
               )}
 
               {activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES && (
-                <AdditionalServicesCard
+                <AdditionalServiceCard
                   items={items}
                   isShowLoadMore={isShowLoadMore}
                   onLoadMoreItems={onLoadMoreItems}
                   isLoadingMore={_loading && page > 1}
-                  _card={{
-                    footer: (item: any) => <RequestFooter item={item} />,
-                    provinces: provincesList,
-                    sites: allSiteOptions
-                  }}
+                  provinces={provincesList}
+                  sites={allSiteOptions}
                 />
               )}
 

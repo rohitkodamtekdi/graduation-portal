@@ -142,7 +142,7 @@ export const MyRequests: React.FC<MyRequestsProps> = ({
                 }}
               >
                 <ButtonText {...(styles.viewDetailsButtonText as any)}>
-                  {t('supportProvider.supportOfferings.cards.viewDetails', 'View Details')}
+                  {t('supportProvider.supportOfferings.cards.viewDetails')}
                 </ButtonText>
               </Button>
             </HStack>
