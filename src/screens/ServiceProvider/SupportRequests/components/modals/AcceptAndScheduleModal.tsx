@@ -6,7 +6,7 @@ import modalStyles from '../../styles';
 import { useLanguage } from '@contexts/LanguageContext';
 import SchemaFormRenderer, { validateSchema } from '@components/SchemaFormRenderer';
 import { ACCEPT_AND_SCHEDULE_FORM_SCHEMA, DURATION_OPTIONS } from '@constants/ACCEPT_AND_SCHEDULE_FORM_SCHEMA';
-import { getProvincesList } from '../../../../../services/usersService';
+import { getProvincesList, getSitesByProvince } from '../../../../../services/usersService';
 import { getSessionCategories, getDeliveryModes } from '../../../../../services/mentoringService';
 import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
@@ -19,6 +19,7 @@ export interface AcceptAndScheduleModalProps {
   onSubmit?: (data: {
     requestId: string | number;
     province: string;
+    sites: string[];
     category: string;
     title: string;
     description: string;
@@ -44,6 +45,7 @@ export default function AcceptAndScheduleModal({
   const navigation = useNavigation();
 
   const [provinces, setProvinces] = useState<any[]>([]);
+  const [sites, setSites] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [deliveryModes, setDeliveryModes] = useState<any[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -51,8 +53,9 @@ export default function AcceptAndScheduleModal({
   const coachName = item?.coach || '';
   const hubName = item?.hub && item.hub !== '-' ? ` (${item.hub} Hub)` : '';
 
-  const [values, setValues] = useState<Record<string, string>>({
+  const [values, setValues] = useState<Record<string, any>>({
     province: '',
+    sites: [] as string[],
     category: '',
     title: '',
     description: '',
@@ -87,6 +90,33 @@ export default function AcceptAndScheduleModal({
     fetchOptions();
   }, []);
 
+  // Fetch sites whenever the selected province changes - mirrors the Training/Additional
+  // Service request forms' province -> site cascading pattern.
+  useEffect(() => {
+    let isCurrent = true;
+
+    const fetchSites = async () => {
+      if (!values.province) {
+        setSites([]);
+        return;
+      }
+      try {
+        const res = await getSitesByProvince({ provinceId: values.province });
+        if (!isCurrent) return;
+        setSites(res?.result?.data || []);
+      } catch (error) {
+        console.error('[AcceptAndScheduleModal] Error fetching sites:', error);
+        if (isCurrent) setSites([]);
+      }
+    };
+
+    fetchSites();
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [values.province]);
+
   useEffect(() => {
     if (!item) return;
 
@@ -119,8 +149,15 @@ export default function AcceptAndScheduleModal({
       }
     }
 
+    // The original LC request can carry multiple sites (multiselect on the request form) -
+    // pre-fill all of them here rather than dropping down to just one.
+    const requestedSites: string[] = Array.isArray(item.raw?.meta?.sites)
+      ? item.raw.meta.sites
+      : (item.raw?.meta?.site ? [item.raw.meta.site] : []);
+
     setValues({
       province: item.raw?.meta?.provinces?.[0] || item.raw?.meta?.province || '',
+      sites: requestedSites,
       category: item.raw?.categories?.[0] || item.raw?.category || '',
       title: item.title || '',
       description: item.raw?.description || item.justification || '',
@@ -141,8 +178,15 @@ export default function AcceptAndScheduleModal({
     setErrors({});
   }, [item, t]);
 
-  const handleFieldChange = useCallback((name: string, value: string) => {
-    setValues(prev => ({ ...prev, [name]: value }));
+  const handleFieldChange = useCallback((name: string, value: any) => {
+    setValues(prev => {
+      const next = { ...prev, [name]: value };
+      // Site options depend on province - clear the stale selection when province changes.
+      if (name === 'province') {
+        next.sites = [];
+      }
+      return next;
+    });
 
     setErrors(prev => {
       if (!prev[name]) return prev;
@@ -159,6 +203,10 @@ export default function AcceptAndScheduleModal({
         value: p._id || p.id || p.value,
         label: p.name || p.title || p.label,
       })),
+      sites: sites.map(s => ({
+        value: s._id || s.id || s.value,
+        label: s.name || s.title || s.label,
+      })),
       pillars: categories.map(c => ({
         value: c.value || c._id || c.id,
         label: c.label || c.name || c.title,
@@ -172,7 +220,7 @@ export default function AcceptAndScheduleModal({
         label: t(opt.label) || opt.value,
       })),
     }),
-    [provinces, categories, deliveryModes, t]
+    [provinces, sites, categories, deliveryModes, t]
   );
 
   function handleConfirmAndSchedule() {
@@ -187,9 +235,18 @@ export default function AcceptAndScheduleModal({
     onClose();
   }
 
+  // The full wizard is a different screen per offering type - route there based on which
+  // Support Requests tab this request actually belongs to, not always Training.
+  const FULL_WIZARD_ROUTE: Record<string, string> = {
+    sessions: 'form-training-session',
+    additional_services: 'create-additional-service',
+    assets: 'create-asset',
+  };
+
   function handleOpenFullWizard() {
     onClose();
-    (navigation as any).navigate('form-training-session', { type: 'create' });
+    const routeName = FULL_WIZARD_ROUTE[item?.type] || 'form-training-session';
+    (navigation as any).navigate(routeName, { type: 'create' });
   }
 
   if (!isOpen) return <></>;

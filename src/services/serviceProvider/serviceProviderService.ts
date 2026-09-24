@@ -50,7 +50,9 @@ export interface SupportRequestsFilterParams {
 
 export interface AcceptAndSchedulePayload {
   requestId: string | number;
+  support_offering_type?: 'training' | 'additional_service' | 'asset';
   province?: string;
+  sites?: string[];
   category?: string;
   title?: string;
   description?: string;
@@ -132,7 +134,7 @@ const mapRequestSessionItem = (
     title,
     coach: item.user_details?.name || item.user?.name || item.requester_name || item.mentee_name || session.mentor_name || '-',
     hub: provinceName,
-    location: meta.meeting_info?.location || session.meeting_info?.location || session.location || item.location || '-',
+    location: siteNames || '-',
     province: provinceName || provinceId,
     site: siteNames || undefined,
     participants: participantsCount,
@@ -392,7 +394,7 @@ export const acceptAndScheduleSupportRequest = async (
   const body: Record<string, any> = {
     request_session_id: String(payload.requestId),
     type: 'public',
-    support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
+    support_offering_type: payload.support_offering_type || SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
     title: payload.title || '',
     description: payload.description || '',
     start_date: startDate,
@@ -405,6 +407,10 @@ export const acceptAndScheduleSupportRequest = async (
 
   if (payload.province) {
     body.provinces = [payload.province];
+  }
+
+  if (payload.sites?.length) {
+    body.sites = payload.sites;
   }
 
   if (payload.category) {

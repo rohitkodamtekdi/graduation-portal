@@ -64,14 +64,23 @@ const SessionDetailsScreen: React.FC = () => {
               : null;
 
             const diffMinutes = startMoment && endMoment ? endMoment.diff(startMoment, 'minutes') : 0;
-            const durationHours = Math.floor(diffMinutes / 60);
+            const durationDays = Math.floor(diffMinutes / 1440);
+            const durationHours = Math.floor((diffMinutes % 1440) / 60);
             const durationMins = diffMinutes % 60;
             const durationText = diffMinutes > 0
-              ? (durationHours > 0 && durationMins > 0
-                ? t('lc.sessionsSupport.sessionDetails.durationValueHoursMinutes', { hours: durationHours, minutes: durationMins })
-                : durationHours > 0
-                  ? t('lc.sessionsSupport.sessionDetails.durationValueHours', { count: durationHours })
-                  : t('lc.sessionsSupport.sessionDetails.durationValueMinutes', { count: durationMins }))
+              ? (durationDays > 0
+                ? (durationHours > 0 && durationMins > 0
+                  ? t('lc.sessionsSupport.sessionDetails.durationValueDaysHoursMinutes', { days: durationDays, hours: durationHours, minutes: durationMins })
+                  : durationHours > 0
+                    ? t('lc.sessionsSupport.sessionDetails.durationValueDaysHours', { days: durationDays, hours: durationHours })
+                    : durationMins > 0
+                      ? t('lc.sessionsSupport.sessionDetails.durationValueDaysMinutes', { days: durationDays, minutes: durationMins })
+                      : t('lc.sessionsSupport.sessionDetails.durationValueDays', { count: durationDays }))
+                : (durationHours > 0 && durationMins > 0
+                  ? t('lc.sessionsSupport.sessionDetails.durationValueHoursMinutes', { hours: durationHours, minutes: durationMins })
+                  : durationHours > 0
+                    ? t('lc.sessionsSupport.sessionDetails.durationValueHours', { count: durationHours })
+                    : t('lc.sessionsSupport.sessionDetails.durationValueMinutes', { count: durationMins })))
               : '';
 
             const rawDeliveryMode = (
@@ -87,15 +96,6 @@ const SessionDetailsScreen: React.FC = () => {
             const totalSeats = sessionObj.seats_limit || sessionObj.capacity || 0;
             const remainingSeats = sessionObj.seats_remaining !== undefined ? sessionObj.seats_remaining : totalSeats;
             const enrolledSeats = Math.max(0, totalSeats - remainingSeats);
-
-            const sessionTags = Array.from(
-              new Set([
-                ...(Array.isArray(sessionObj.categories) ? sessionObj.categories : []).map((c: any) => (typeof c === 'object' ? c.label || c.name || c.value : c)),
-                ...(Array.isArray(sessionObj.tags) ? sessionObj.tags : []).map((tg: any) => (typeof tg === 'object' ? tg.label || tg.name || tg.value : tg)),
-                ...(Array.isArray(sessionObj.pathways) ? sessionObj.pathways : []).map((p: any) => (typeof p === 'object' ? p.label || p.name || p.value : p)),
-                'Participants',
-              ])
-            ).filter(Boolean);
 
             const rawObjectives = sessionObj.learning_objectives || sessionObj.meta?.learning_objectives || sessionObj.learningObjectives;
             const learningObjectives = Array.isArray(rawObjectives)
@@ -117,7 +117,6 @@ const SessionDetailsScreen: React.FC = () => {
               deliveryMode,
               formatLabel,
               formatIconName,
-              sessionTags,
               learningObjectives,
             });
           } else {
@@ -371,17 +370,6 @@ const SessionDetailsScreen: React.FC = () => {
                     </Text>
                   </VStack>
                 </HStack>
-              ) : null}
-
-              {/* Tags */}
-              {session.sessionTags && session.sessionTags.length > 0 ? (
-                <Box {...styles.detailsTagsWrapper}>
-                  {session.sessionTags.map((tag: string, idx: number) => (
-                    <Box key={idx} {...styles.detailsTagBadge}>
-                      <Text {...styles.detailsTagBadgeText}>{tag}</Text>
-                    </Box>
-                  ))}
-                </Box>
               ) : null}
             </VStack>
           </VStack>

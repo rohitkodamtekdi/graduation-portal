@@ -61,11 +61,18 @@ export default function SupportRequestsModals({
     }
   };
 
+  const SUPPORT_OFFERING_TYPE_BY_TAB: Record<string, 'training' | 'additional_service' | 'asset'> = {
+    sessions: 'training',
+    additional_services: 'additional_service',
+    assets: 'asset',
+  };
+
   const handleAcceptScheduleSubmit = async (data: any) => {
     try {
       if (selectedItem?.id) {
         await acceptAndScheduleSupportRequest({
           requestId: selectedItem.id,
+          support_offering_type: SUPPORT_OFFERING_TYPE_BY_TAB[selectedItem?.type],
           ...data,
         });
         onClose();

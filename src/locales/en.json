@@ -2087,7 +2087,20 @@
     },
     "tabs": {
       "interventionPlan": "Intervention Plan",
-      "assessmentSurveys": "Assessment Surveys"
+      "assessmentSurveys": "Assessment Surveys",
+      "attendedSessions": "Attended Sessions"
+    },
+    "attendedSessions": {
+      "title": "Sessions",
+      "sectionTitle": "Attended Sessions",
+      "attended": "Attended",
+      "missed": "Missed",
+      "serviceProvider": "Service Provider",
+      "noSessionsTitle": "No Sessions Found",
+      "noMissedSessionsTitle": "No Missed Sessions",
+      "noSessionsDescription": "Sessions this participant has attended will appear here.",
+      "noAttended": "This participant has not attended any sessions yet.",
+      "noMissed": "No missed sessions recorded for this participant."
     },
     "interventionPlan": {
       "noPlanAssigned": "No Intervention Plan Assigned",
@@ -2336,6 +2349,7 @@
     "menu": {
       "home": "Home",
       "dashboard": "Dashboard",
+      "myParticipants": "My Participants",
       "sessionsSupport": "Sessions & Support",
       "myProfile": "My Profile",
       "serviceProviders": "Service Providers"
@@ -2388,7 +2402,11 @@
         "enrolled": "enrolled",
         "durationValueHours": "{{count}} hours",
         "durationValueMinutes": "{{count}} minutes",
-        "durationValueHoursMinutes": "{{hours}} hours {{minutes}} minutes"
+        "durationValueHoursMinutes": "{{hours}} hours {{minutes}} minutes",
+        "durationValueDays": "{{count}} days",
+        "durationValueDaysHours": "{{days}} days {{hours}} hours",
+        "durationValueDaysMinutes": "{{days}} days {{minutes}} minutes",
+        "durationValueDaysHoursMinutes": "{{days}} days {{hours}} hours {{minutes}} minutes"
       },
       "requestDetails": {
         "title": "Request Details",
@@ -2685,6 +2703,8 @@
       "cards": {
         "hideDetails": "Hide Details",
         "viewDetails": "View Details",
+        "providedBy": "Provided by:",
+        "bothAudience": "Both",
         "requestedBy": "Requested by: {{name}}",
         "requestedByPrefix": "Requested by: ",
         "requestsCount": "{{count}} requests / spots",

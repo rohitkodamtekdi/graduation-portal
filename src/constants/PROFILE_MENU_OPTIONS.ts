@@ -1,4 +1,3 @@
-import { theme } from '@config/theme';
 import { MenuItemData } from '@components/ui/Menu';
 import {
   LC_USER_GUIDE_MENU_ITEM,
@@ -43,7 +42,7 @@ export const LC_MENU_OPTIONS: MenuItemData[] = [
     textValue: 'home',
     iconName: 'Home', // LucideIcon name
     iconSizeValue: 16,
-    iconColor: theme.tokens.colors.textForegroundColor,
+    iconColor: '$textForegroundColor',
     showDividerAfter: true, // Divider after Home (separates navigation from profile actions)
     route: 'welcome', // Navigation route for home menu item
   },
@@ -53,28 +52,38 @@ export const LC_MENU_OPTIONS: MenuItemData[] = [
     textValue: 'dashboard',
     iconName: 'LayoutDashboard',
     iconSizeValue: 16,
-    iconColor: theme.tokens.colors.textForegroundColor,
+    iconColor: '$textForegroundColor',
     showDividerAfter: false,
     route: 'dashboard', // Navigation route for dashboard menu item
     isComingSoon: true,
   },
-  // {
-  //   key: 'sessions-support',
-  //   label: 'lc.menu.sessionsSupport',
-  //   textValue: 'sessions-support',
-  //   iconName: 'LifeBuoy',
-  //   iconSizeValue: 16,
-  //   iconColor: theme.tokens.colors.textForegroundColor,
-  //   showDividerAfter: false,
-  //   route: 'sessions-support',
-  // },
+  {
+    key: 'myParticipants',
+    label: 'lc.menu.myParticipants',
+    textValue: 'myParticipants',
+    iconName: 'Users',
+    iconSizeValue: 16,
+    iconColor: '$textForegroundColor',
+    showDividerAfter: false,
+    route: 'participants',
+  },
+  {
+    key: 'sessions-support',
+    label: 'lc.menu.sessionsSupport',
+    textValue: 'sessions-support',
+    iconName: 'LifeBuoy',
+    iconSizeValue: 16,
+    iconColor: '$textForegroundColor',
+    showDividerAfter: false,
+    route: 'sessions-support',
+  },
   {
     key: 'myProfile',
     label: 'lc.menu.myProfile',
     textValue: 'myProfile',
     iconName: 'User',
     iconSizeValue: 16,
-    iconColor: theme.tokens.colors.textForegroundColor,
+    iconColor: '$textForegroundColor',
     showDividerAfter: false,
     // route: 'myProfile', // Add route when myProfile screen is implemented
   },
@@ -84,7 +93,7 @@ export const LC_MENU_OPTIONS: MenuItemData[] = [
     textValue: LC_USER_GUIDE_MENU_ITEM.key,
     iconName: LC_USER_GUIDE_MENU_ITEM.icon,
     iconSizeValue: 16,
-    iconColor: theme.tokens.colors.textForegroundColor,
+    iconColor: '$textForegroundColor',
     showDividerAfter: false,
     href: LC_USER_GUIDE_MENU_ITEM.href,
   },
@@ -94,7 +103,7 @@ export const LC_MENU_OPTIONS: MenuItemData[] = [
     textValue: REPORT_FEEDBACK_MENU_ITEM.key,
     iconName: REPORT_FEEDBACK_MENU_ITEM.icon,
     iconSizeValue: 16,
-    iconColor: theme.tokens.colors.textForegroundColor,
+    iconColor: '$textForegroundColor',
     showDividerAfter: true,
     href: REPORT_FEEDBACK_MENU_ITEM.href,
   },
@@ -115,7 +124,7 @@ export const LC_MENU_OPTIONS: MenuItemData[] = [
     textValue: 'logout',
     iconName: 'LogOut',
     iconSizeValue: 16,
-    iconColor: theme.tokens.colors.error600, // Error color indicates destructive action
+    iconColor: '$error600', // Error color indicates destructive action
     showDividerAfter: false,
     // No route for logout - handled by logout function
   },

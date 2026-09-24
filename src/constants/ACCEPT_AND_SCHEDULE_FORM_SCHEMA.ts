@@ -48,6 +48,40 @@ export const ACCEPT_AND_SCHEDULE_FORM_SCHEMA: FormSection[] = [
             ],
           },
           {
+            name: 'sites',
+            type: 'multiselect',
+            required: true,
+            label: {
+              key: 'supportProvider.supportRequests.labels.site',
+              fallback: 'Site(s)',
+            },
+            placeholder: {
+              key: 'supportProvider.supportRequests.placeholders.site',
+              fallback: 'Select site(s)',
+            },
+            placeholderWhenReady: {
+              key: 'supportProvider.supportRequests.placeholders.siteReady',
+              fallback: 'Select site(s)',
+            },
+            optionsSource: 'sites',
+            dependsOn: 'province',
+            disabledWhen: { field: 'province', empty: true },
+            validation: [
+              {
+                rule: 'required',
+                message: {
+                  key: 'supportProvider.supportRequests.errors.siteRequired',
+                  fallback: 'At least one site is required',
+                },
+              },
+            ],
+          }
+          
+        ],
+      },
+      {
+        fields: [
+          {
             name: 'category',
             type: 'select',
             required: true,

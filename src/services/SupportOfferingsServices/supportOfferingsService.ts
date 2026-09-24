@@ -186,6 +186,30 @@ export const getAssets = async (params?: any): Promise<any> => {
 };
 
 /**
+ * Fetches the mentees actually enrolled in a session, for the "Confirm Attendance" /
+ * "Complete Session" modal. Without this the modal has nothing real to show and falls back to
+ * fabricated placeholder participants that can never be marked complete against the real API.
+ * Endpoint: GET /mentoring/v1/sessions/enrolledMentees/:sessionId
+ */
+export const getSessionEnrolledParticipants = async (
+  sessionId: string | number
+): Promise<{ id: string; name: string; lcName: string; isPresent: boolean }[]> => {
+  try {
+    const response = await api.get(API_ENDPOINTS.SESSION_ENROLLED_MENTEES(sessionId));
+    const list = response?.data?.result || [];
+    return (Array.isArray(list) ? list : []).map((mentee: any) => ({
+      id: String(mentee?.id ?? mentee?.user_id ?? ''),
+      name: mentee?.name || 'Unknown Participant',
+      lcName: mentee?.type ? `${mentee.type === 'INVITED' ? 'Assigned by' : 'Enrolled'}` : '',
+      isPresent: false,
+    })).filter((p) => p.id);
+  } catch (error) {
+    console.error('Error fetching enrolled participants:', error);
+    return [];
+  }
+};
+
+/**
  * Complete Training Session API
  */
 export const completeTrainingSession = async (

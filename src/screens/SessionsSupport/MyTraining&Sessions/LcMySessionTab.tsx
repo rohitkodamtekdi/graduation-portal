@@ -82,21 +82,30 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
     return startFormatted;
   })();
 
-  // Duration display
+  // Duration display (e.g. "2 hours", or "2 days 2 hours" when >= 24 hours)
   const displayDuration = (() => {
     if (item.start_date && item.end_date) {
-      const startMs =
-        typeof item.start_date === 'number' || !isNaN(Number(item.start_date))
-          ? Number(item.start_date) * 1000
-          : new Date(item.start_date).getTime();
-      const endMs =
-        typeof item.end_date === 'number' || !isNaN(Number(item.end_date))
-          ? Number(item.end_date) * 1000
-          : new Date(item.end_date).getTime();
-      const diffMins = (endMs - startMs) / 60000;
+      const startNum = Number(item.start_date);
+      const startMs = !isNaN(startNum)
+        ? (startNum < 10000000000 ? startNum * 1000 : startNum)
+        : new Date(item.start_date).getTime();
+      const endNum = Number(item.end_date);
+      const endMs = !isNaN(endNum)
+        ? (endNum < 10000000000 ? endNum * 1000 : endNum)
+        : new Date(item.end_date).getTime();
+      const diffMins = Math.round((endMs - startMs) / 60000);
       if (diffMins <= 0) return null;
-      if (diffMins % 60 === 0) return `${diffMins / 60} hour${diffMins / 60 > 1 ? 's' : ''}`;
-      return `${(diffMins / 60).toFixed(1)} hours`;
+
+      const days = Math.floor(diffMins / 1440);
+      const hours = Math.floor((diffMins % 1440) / 60);
+      const mins = diffMins % 60;
+
+      const parts: string[] = [];
+      if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+      if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+      if (mins > 0) parts.push(`${mins} min${mins > 1 ? 's' : ''}`);
+
+      return parts.join(' ');
     }
     if (item.duration) {
       return `${item.duration}`;
@@ -108,6 +117,9 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
   const maxParticipants = item.seats_limit || item.max_participants || 0;
   const seatsRemaining = item.seats_remaining ?? maxParticipants;
   const assignedCount = maxParticipants - seatsRemaining;
+
+  // Editing is only allowed for upcoming sessions that have no participants assigned yet.
+  const canEditSession = statusLabel === 'Upcoming' && assignedCount <= 0;
 
   // Delivery mode display
   const rawMode = ((typeof item.delivery_mode === 'object' ? (item.delivery_mode as any)?.value : item.delivery_mode) || '').toLowerCase();
@@ -182,16 +194,18 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
               </ButtonText>
             </Button>
 
-            <Button {...styles.mySessionCardManageBtn} variant="solid" onPress={() => {
-              const sessionId = item.id || item._id;
-              if (sessionId) {
-                onEditSession?.(sessionId);
-              }
-            }}>
-              <ButtonText {...styles.mySessionCardManageBtnText}>
-                {t('lc.sessionsSupport.mySessionCard.editSession')}
-              </ButtonText>
-            </Button>
+            {canEditSession && (
+              <Button {...styles.mySessionCardManageBtn} variant="solid" onPress={() => {
+                const sessionId = item.id || item._id;
+                if (sessionId) {
+                  onEditSession?.(sessionId);
+                }
+              }}>
+                <ButtonText {...styles.mySessionCardManageBtnText}>
+                  {t('lc.sessionsSupport.mySessionCard.editSession')}
+                </ButtonText>
+              </Button>
+            )}
           </HStack>
         </VStack>
       </Box>

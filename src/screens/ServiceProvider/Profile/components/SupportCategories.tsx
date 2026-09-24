@@ -110,11 +110,12 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
     };
   }, []);
 
-  // Fetch sub-category options lazily - only when the matching category is actually selected,
-  // and only once per group (cached in optionsState afterwards).
+  // Fetch sub-options lazily if a category is selected or present in saved items
   useEffect(() => {
-    if (!selectedCategory) return;
     let isMounted = true;
+
+    const hasCategory = (isCategoryMatch: (cat?: string) => boolean) =>
+      isCategoryMatch(selectedCategory) || value.some(item => isCategoryMatch(item.categoryName));
 
     const fetchTrainingOptions = async () => {
       if (fetchedGroupsRef.current.training) return;
@@ -171,18 +172,20 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
       }
     };
 
-    if (isTrainingCategory(selectedCategory)) {
+    if (hasCategory(isTrainingCategory)) {
       fetchTrainingOptions();
-    } else if (isLinkageCategory(selectedCategory)) {
+    }
+    if (hasCategory(isLinkageCategory)) {
       fetchLinkageOptions();
-    } else if (isAssetCategory(selectedCategory)) {
+    }
+    if (hasCategory(isAssetCategory)) {
       fetchAssetOptions();
     }
 
     return () => {
       isMounted = false;
     };
-  }, [selectedCategory]);
+  }, [selectedCategory, value]);
 
   const categoryOptions = useMemo(() => {
     return optionsState?.categoryOpts?.filter(opt => {
