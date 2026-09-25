@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   VStack,
@@ -26,6 +26,7 @@ import {
   type SidebarMenuItem,
 } from '@constants/ADMIN_SIDEBAR_MENU';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useIsTenantAdmin } from '@contexts/AuthContext';
 import openExternalLink from '@utils/openExternalLink';
 
 interface AdminSidebarProps {
@@ -48,6 +49,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const [expandedUserStory, setExpandedUserStory] = useState(true);
   const [activeRoute, setActiveRoute] = useState<string>('');
   const { t } = useLanguage();
+  const isTenantAdmin = useIsTenantAdmin();
+
+  // 'review-requests' is only visible to users holding the granular
+  // 'tenant_admin' role title; hide it from other Supervisor-bucket users.
+  const visibleMainMenuItems = useMemo(
+    () => MAIN_MENU_ITEMS.filter(item => item.key !== 'review-requests' || isTenantAdmin),
+    [isTenantAdmin],
+  );
 
   // Sync activeRoute with the current route from navigation
   useEffect(() => {
@@ -220,7 +229,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         <Box {...sidebarStyles.mainSection}>
           <Text {...sidebarStyles.sectionTitle}>{t('admin.menu.main')}</Text>
           <VStack space="xs">
-            {MAIN_MENU_ITEMS.map(item => renderSidebarItem(item))}
+            {visibleMainMenuItems.map(item => renderSidebarItem(item))}
           </VStack>
         </Box>
 
@@ -328,7 +337,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         contentContainerStyle={sidebarStyles.collapsedScrollContentContainer as any}
       >
         <VStack space="md" alignItems="center">
-          {MAIN_MENU_ITEMS.map(item => renderCollapsedItem(item))}
+          {visibleMainMenuItems.map(item => renderCollapsedItem(item))}
         </VStack>
 
         <Divider my="$4" />

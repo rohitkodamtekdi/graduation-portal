@@ -21,6 +21,8 @@
     "logout": "Logout",
     "userGuide": "User Guide",
     "reportFeedback": "Report / Feedback",
+    "downloadApk": "Download APK",
+    "install": "Install",
     "loading": "Loading...",
     "save": "Save",
     "saving": "Saving...",
@@ -195,7 +197,8 @@
     "unableToLoadObservation": "Could not load observation details.",
     "SingleUploadMessage": "Selecting a new file replaces the existing one.",
     "allowedFileTypes": "Allowed file types :",
-    "remainingUploads": "Remaining uploads :"
+    "remainingUploads": "Remaining uploads :",
+    "IdpUpdateSentForApproval": "Your request to update the intervention plan for {{name}} has been sent for approval."
   },
   "navigation": {
     "menu": "Menu",
@@ -236,7 +239,8 @@
       "observation": "Observation",
       "template": "Develop Intervention Plan",
       "participants": "Participants",
-      "project": "Project"
+      "project": "Project",
+      "review-requests": "Review Requests"
     },
     "home": "Home",
     "dashboard": "Dashboards",
@@ -1234,6 +1238,7 @@
     "menu": {
       "userManagement": "User Management",
       "assignUsers": "Assign Users",
+      "reviewRequests": "Review Requests",
       "templateManagement": "Template Management",
       "auditLog": "Audit Log",
       "uploadUsers": "Upload Users",
@@ -1251,6 +1256,7 @@
     },
     "userManagementDescription": "Manage all users across your organization with unified controls and bulk operations.",
     "assignUsersDescription": "Assign Coaches to Supervisors and Participants to Coaches",
+    "reviewRequestsDescription": "Review and decide on pathway switch and dropout requests submitted for your organization",
     "actions": {
       "bulkUploadCSV": "Bulk Upload (CSV)",
       "createUser": "Create User",
@@ -1655,6 +1661,43 @@
         "assigned": "Assigned",
         "unassigned": "Unassigned"
       }
+    },
+    "reviewRequests": {
+      "tabs": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "declined": "Declined"
+      },
+      "filters": {
+        "type": "Request Type",
+        "pathwaySwitch": "Pathway Switch",
+        "dropoutRequest": "Dropout Request"
+      },
+      "table": {
+        "participant": "Participant",
+        "type": "Type",
+        "change": "Change",
+        "province": "Province",
+        "site": "Site",
+        "requestor": "Requestor",
+        "submitted": "Submitted",
+        "status": "Status",
+        "actions": "Actions",
+        "noRequests": "No requests found"
+      },
+      "status": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject"
+      },
+      "approveSuccess": "Request approved successfully.",
+      "rejectSuccess": "Request rejected successfully.",
+      "decisionError": "Could not update the request. Try again.",
+      "accessDenied": "You do not have permission to view this page."
     },
     "bulkOperations": {
       "title": "Bulk Operations & CSV Templates",
@@ -2061,7 +2104,8 @@
       "proceed": "Proceed",
       "notEligible": "Not Eligible",
       "confirmNotEligible": "Participant Not Eligible",
-      "confirmNotEligibleSubtitle": "Are you sure that this participant does not meet the Targeting Criteria and is not Eligible for onboarding?"
+      "confirmNotEligibleSubtitle": "Are you sure that this participant does not meet the Targeting Criteria and is not Eligible for onboarding?",
+      "dropoutUnderReview": "Dropout Request Under Review"
     },
     "profileModal": {
       "title": "Participant Profile",
@@ -2224,6 +2268,7 @@
     },
     "dropoutHint": "This will change the participant's status to \"Dropped Out\" and log the action in their history.",
     "dropoutSuccess": "Participant marked as dropout.",
+    "dropoutSentForApproval": "Your request to mark {{name}} as dropout has been sent for approval.",
     "dropoutError": "Could not mark participant as dropout. Try again.",
     "offlineDataFoundTitle": "Offline Data Found",
     "offlineDataFoundMessage": "This participant has offline downloaded data.",
@@ -2343,7 +2388,8 @@
       "participants": "Participants",
       "sessions-support": "Support & Interventions",
       "project": "Project",
-      "home": "Home"
+      "home": "Home",
+      "download-apk": "Download APK"
     },
     "menu": {
       "home": "Home",
@@ -2380,7 +2426,8 @@
         "clear": "Clear",
         "assignSession": "Assign Session",
         "cancel": "Cancel",
-        "noResultsFound": "No results found"
+        "noResultsFound": "No results found",
+        "assignButtonText": "Assign ({{count}})"
       },
       "alerts": {
         "assignSuccess": "{{count}} participant(s) assigned to session successfully."
@@ -2436,10 +2483,6 @@
         "no": "No",
         "participant": "Participant",
         "dateTimeFormat": "{{date}} at {{time}}"
-      },
-      "assignParticipantsModal": {
-        "assignButtonText": "Assign ({{count}})",
-        "cancel": "Cancel"
       },
       "confirmAssignment": {
         "title": "Confirm Assignment",
@@ -2707,7 +2750,6 @@
         "requestedBy": "Requested by: {{name}}",
         "requestedByPrefix": "Requested by: ",
         "requestsCount": "{{count}} requests / spots",
-        "providedBy": "Provided by:",
         "copySession": "Copy Session",
         "copyOffering": "Copy Offering",
         "copyIntervention": "Copy Intervention",
@@ -2976,5 +3018,37 @@
         "successMsg": "Resource deleted successfully!"
       }
     }
+  },
+  "downloadApk": {
+    "appName": "Download APK Application",
+    "description": "Download the GBL Coach mobile application to log field visits, manage cases, and track progress on Android.",
+    "downloadButton": "Download APK",
+    "defaultDownloadButton": "Download APK",
+    "readyStatus": "100% Ready",
+    "scanWithPhone": "Scan with Phone",
+    "hideQr": "Hide QR",
+    "copyDirectLink": "Copy Direct Link",
+    "linkCopied": "Direct link copied to clipboard",
+    "pointCamera": "Point camera to download directly",
+    "installationGuide": "Installation Guide for Android",
+    "step1Title": "1. Download:",
+    "step1Desc": "Download the APK file to your device.",
+    "step2Title": "2. Open File:",
+    "step2Desc": "Open the downloaded APK file.",
+    "step3Title": "3. Allow Permission:",
+    "step3Desc": "If prompted, allow installation from this source in Settings.",
+    "step4Title": "4. Install & Launch:",
+    "step4Desc": "Install the application and open it.",
+    "setupRequired": "Setup Required",
+    "unconfiguredTitle": "Mobile App Setup in Progress",
+    "unconfiguredDescription": "The download URL has not been configured yet. Please contact your administrator or continue in web browser.",
+    "noticeTitle": "Notice:",
+    "noticeMessage": "Download URL is not configured. Please contact your administrator.",
+    "continueInBrowser": "Continue in Web Browser",
+    "demoLabel": "DEMO:",
+    "demoReady": "Ready",
+    "demoUnconfigured": "Unconfigured",
+    "close": "Close",
+    "urlNotConfigured": "Download URL is not configured. Please contact your administrator."
   }
 }

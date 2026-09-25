@@ -23,11 +23,14 @@ export const API_ENDPOINTS = {
   GET_ENTITY_DETAILS: (id: string) =>
     `${prefix}/entity-management/v1/entities/details/${id}`,
   UPDATE_ENTITY_DETAILS: `${prefix}/project/v1/programUsers/createOrUpdate`,
+  REQUEST_CHANGE: `${prefix}/project/v1/changeRequests/requestChange`,
+  CHANGE_REQUESTS_LIST: `${prefix}/project/v1/changeRequests/list`,
+  CHANGE_REQUESTS_DECISION: `${prefix}/project/v1/changeRequests/decision`,
   USER_ROLES_LIST: `${prefix}/user/v1/user-role/list`,  // Fetch available user roles for dynamic filter
   ENTITY_TYPES_LIST: `${prefix}/entity-management/v1/entityTypes/list`,  // Fetch entity types (province, district, etc.)
   ENTITIES_BY_TYPE: `${prefix}/entity-management/v1/entities/listByEntityType`,  // Fetch entities by type (e.g., provinces)
   USERS_LIST: `${prefix}/user/v1/account/search`,  // Search users for user management
-  DEACTIVATE_USER: `user/v1/admin/deactivateUser`,
+  DEACTIVATE_USER: `${prefix}/user/v1/admin/deactivateUser`,
   ORG_ADMIN_UPDATE_USER: `${prefix}/user/v1/org-admin/updateUser`,
   UPDATE_USER: `${prefix}/user/v1/user/update`,
   CREATE_USER: `${prefix}/user/v1/tenant/accountCreate`,

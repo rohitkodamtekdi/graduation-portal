@@ -397,6 +397,31 @@ export const useIsSupervisor = (): boolean => {
   }, [user, currentUserRole]);
 };
 
+/**
+ * Custom hook to check if the current logged-in user specifically holds the
+ * granular 'tenant_admin' role title (not just the coarse 'Supervisor'
+ * bucket, which also includes plain 'supervisor').
+ *
+ * @returns {boolean} - true if the user has a 'tenant_admin' role title, false otherwise
+ */
+export const useIsTenantAdmin = (): boolean => {
+  const { user } = useAuth();
+
+  return useMemo(() => {
+    if (user && (user as any).organizations) {
+      const organizations = (user as any).organizations;
+      return organizations.some((org: any) => {
+        if (!org?.roles || !Array.isArray(org.roles)) {
+          return false;
+        }
+        return org.roles.some((role: any) => role?.title?.toLowerCase() === 'tenant_admin');
+      });
+    }
+
+    return false;
+  }, [user]);
+};
+
 export const useIsdminPanalAccess = (): boolean => {
   const { user } = useAuth();
   const currentUserRole = user?.role;

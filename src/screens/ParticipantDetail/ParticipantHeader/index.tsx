@@ -304,6 +304,16 @@ const ParticipantHeader: React.FC<ParticipantHeaderProps> = ({
   }, [effectiveProgress, participantProp?.idpProjectId, status, solutions?.length]);
 
   const renderStatusBadge = () => {
+    if (participantProp?.pendingChangeRequest?.some(req => req.status === "PENDING" && req.action === "PROGRAM_USER_DROPPING_OUT")) { 
+        return (
+        <Box {...participantHeaderStyles.statusBadge}>
+          <Text {...participantHeaderStyles.statusBadgeText}>
+            { t('participantDetail.header.dropoutUnderReview')}
+          </Text>
+        </Box>
+      );
+    }
+
     if (status === STATUS.NOT_ELIGIBLE || status === STATUS.DROPOUT || participantProp?.accountUserStatus === USER_STATUS.INACTIVE) {
       return (
         <Box {...participantHeaderStyles.statusBadge}>
@@ -314,6 +324,66 @@ const ParticipantHeader: React.FC<ParticipantHeaderProps> = ({
       );
     }
     return null;
+  };
+
+  /**
+   * Render IDP Change Request Message
+   * Shows when participant has a pending pathway/IDP change request
+   */
+  const renderIDPChangeRequestMessage = () => {
+    const idpChangeRequest = participantProp?.pendingChangeRequest?.find(
+      (request: any) => request.action === 'USER_PROJECT_TEMPLATE_CHANGE' && request.status === 'PENDING'
+    );
+
+    if (!idpChangeRequest) return null;
+
+    const changeSummary = idpChangeRequest?.changeSummary;
+    if (!changeSummary) return null;
+
+    return (
+      <VStack space="sm" mt="$3" p="$3" bg="$info50" borderRadius="$lg" borderWidth={1} borderColor="$info300">
+        <Text {...TYPOGRAPHY.bodySmall} color="$textPrimary" fontWeight="$semibold">
+          {t('participantDetail.idpChangeUnderReview', 'IDP changes are under review')}
+        </Text>
+        
+        <VStack space="xs">
+          <HStack space="xs" alignItems="flex-start">
+            <Text {...TYPOGRAPHY.bodySmall} color="$textMutedForeground" flex={0.3}>
+              {t('admin.reviewRequests.table.change.from', 'From')}:
+            </Text>
+            <VStack space="xs" flex={1}>
+              <Text {...TYPOGRAPHY.bodySmall} color="$textSecondary">
+                {changeSummary.fromChange?.oldRootCat}
+                {changeSummary.fromChange?.oldLivelihoodCat && `, ${changeSummary.fromChange.oldLivelihoodCat}`}
+              </Text>
+            </VStack>
+          </HStack>
+
+          <HStack space="xs" alignItems="flex-start">
+            <Text {...TYPOGRAPHY.bodySmall} color="$textMutedForeground" flex={0.3}>
+              {t('admin.reviewRequests.table.change.to', 'To')}:
+            </Text>
+            <VStack space="xs" flex={1}>
+              <Text {...TYPOGRAPHY.bodySmall} color="$textSecondary">
+                {changeSummary.toChange?.newRootCat}
+                {changeSummary.toChange?.newLivelihoodCat && `, ${changeSummary.toChange.newLivelihoodCat}`}
+              </Text>
+            </VStack>
+          </HStack>
+
+          {changeSummary.keywords && changeSummary.keywords.length > 0 && (
+            <HStack space="xs" alignItems="flex-start">
+              <Text {...TYPOGRAPHY.bodySmall} color="$textMutedForeground" flex={0.3}>
+                {t('admin.reviewRequests.table.change.withSubcat', 'with subcategory')}:
+              </Text>
+              <Text {...TYPOGRAPHY.bodySmall} color="$textSecondary" flex={1}>
+                {changeSummary.keywords.join(', ')}
+              </Text>
+            </HStack>
+          )}
+        </VStack>
+      </VStack>
+    );
   };
 
   /**
@@ -598,6 +668,8 @@ const ParticipantHeader: React.FC<ParticipantHeaderProps> = ({
                 )
               )}
             </HStack>
+
+
           </VStack>
 
           {/* Right: Action Buttons */}
@@ -605,6 +677,13 @@ const ParticipantHeader: React.FC<ParticipantHeaderProps> = ({
             {renderActionButtons()}
           </Box>
         </HStack>
+
+        {/* IDP Change Request Message */}
+        <Box>
+          <Container pb="$4">
+            {renderIDPChangeRequestMessage()}
+          </Container>
+        </Box>
       </PageHeader>
 
       {/* Participant Status Card/Warning (after PageHeader) */}

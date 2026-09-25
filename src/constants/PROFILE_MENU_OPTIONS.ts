@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+import { theme } from '@config/theme';
 import { MenuItemData } from '@components/ui/Menu';
 import {
   LC_USER_GUIDE_MENU_ITEM,
@@ -19,7 +21,6 @@ export const ADMIN_MENU_OPTIONS: MenuItemData[] = [
     key: 'profile',
     label: 'common.profile',
     textValue: 'profile',
-    isComingSoon: true,
   },
   {
     key: 'settings',
@@ -103,10 +104,24 @@ export const LC_MENU_OPTIONS: MenuItemData[] = [
     textValue: REPORT_FEEDBACK_MENU_ITEM.key,
     iconName: REPORT_FEEDBACK_MENU_ITEM.icon,
     iconSizeValue: 16,
-    iconColor: '$textForegroundColor',
-    showDividerAfter: true,
+    iconColor: theme.tokens.colors.textForegroundColor,
+    showDividerAfter: false,
     href: REPORT_FEEDBACK_MENU_ITEM.href,
   },
+  ...(Platform.OS === 'web'
+    ? [
+        {
+          key: 'download-apk',
+          label: 'common.install',
+          textValue: 'install',
+          iconName: 'Download',
+          iconSizeValue: 16,
+          iconColor: theme.tokens.colors.textForegroundColor,
+          showDividerAfter: true,
+          route: 'download-apk',
+        },
+      ]
+    : []),
   // {
   //   key: 'serviceProviders',
   //   label: 'lc.menu.serviceProviders',

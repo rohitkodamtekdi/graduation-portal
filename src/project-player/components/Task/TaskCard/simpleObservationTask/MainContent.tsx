@@ -174,7 +174,7 @@ const MainContent = memo<MainContentProps>(({
       ? ([taskCardStyles.webTextWrap, onboardingDescStyle] as any)
       : onboardingDescStyle;
 
-    const uploadProviewButton = task.attachments && task.attachments.length > 0 ? <Button variant={'outlineghost' as any} px="$2" height="$6" onPress={handleOpenPreviewModal}>
+    const uploadProviewButton = task.attachments && task.attachments.length > 0 ? <Button variant={'outlineghost' as any} px="$2" height="$6" alignSelf="flex-start" onPress={handleOpenPreviewModal}>
       <ButtonIcon as={LucideIcon} name="Paperclip" size={taskCardStyles.fileCountIcon.size} />
       <ButtonText {...taskCardStyles.fileCountText}>
         {task.attachments.length}{' '}

@@ -13,15 +13,14 @@ interface CreateUserFormProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  isMobile: boolean;
+  isMobile?: boolean;
   t: any;
 }
 
-export const CreateUserForm: React.FC<CreateUserFormProps> = ({
+export const CreateUserForm = React.memo<CreateUserFormProps>(({
   isOpen,
   onClose,
   onSuccess,
-  isMobile,
   t,
 }) => {
   const { showAlert } = useAlert();
@@ -53,7 +52,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
       setFormSites([]);
       return;
     }
-    getSitesByProvince({ provinceId: values.provinceId, page: 1, limit: 100 })
+    getSitesByProvince({ provinceId: values.provinceId})
       .then(res => setFormSites(res.result?.data || []))
       .catch(() => setFormSites([]));
   }, [values.provinceId]);
@@ -100,7 +99,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
     });
   }, [roles]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     const validationErrs = validateSchema(CREATE_USER_FORM_SCHEMA, values, optionsMap);
     if (Object.keys(validationErrs).length > 0) {
       setErrors(validationErrs);
@@ -134,7 +133,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [values, optionsMap, roles, showAlert, t, onSuccess]);
   //console.log(errors, "errorssagar")
   const firstNameRef = useRef<any>(null);
 
@@ -187,7 +186,7 @@ export const CreateUserForm: React.FC<CreateUserFormProps> = ({
       </VStack>
     </Modal>
   );
-};
+});
 
 interface ProfileModalHeaderProps {
   selectedUserBase: AdminUserManagementData | null;
@@ -370,7 +369,11 @@ export const mapFormValuesToPayload = (
     if (values.countryCode) {
       payload.phone_code = values.countryCode.replace('+', '');
     }
+  } else {
+      payload.phone = null;
+      payload.phone_code = null;
   }
+
   if (values.alternativePhone && values.alternativePhone.trim()) {
     payload.alternative_phone = values.alternativePhone.trim();
     if (values.alternativePhoneCode) {
@@ -378,7 +381,9 @@ export const mapFormValuesToPayload = (
     }
   }
   if (values.location && values.location.trim()) {
-    payload.location = values.location;
+    payload.location = values.location.trim();
+  } else {
+    payload.location = null;
   }
   if (values.nationalId && values.nationalId.trim()) {
     payload.national_id = Number(values.nationalId);
@@ -386,7 +391,7 @@ export const mapFormValuesToPayload = (
 
   if (isSupervisorOrLC) {
     if (values.organisationId && values.organisationId.trim()) {
-      payload.organisation = values.organisationId;
+      payload.organization = values.organisationId;
     }
     if (values.positionId && values.positionId.trim()) {
       payload.position = values.positionId;
