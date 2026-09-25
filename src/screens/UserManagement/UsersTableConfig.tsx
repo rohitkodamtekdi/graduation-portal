@@ -60,7 +60,7 @@ export const RoleBadge: React.FC<{ role: string }> = ({ role }) => {
         {...(isParticipant ? styles.roleBadgeParticipantColor : styles.roleBadgeText)}
 
       >
-        {role}
+        {String(role ?? '-')}
       </Text>
     </HStack>
   );
@@ -306,7 +306,7 @@ export const getUsersColumns = (handlers?: {
       flex: 1.5,
       render: (user) => (
         <Text {...TYPOGRAPHY.paragraph} {...styles.nameText}>
-          {user.id}
+          {String(user.id ?? '-')}
         </Text>
       ),
       mobileConfig: {
@@ -320,7 +320,7 @@ export const getUsersColumns = (handlers?: {
       flex: 1.5,
       render: (user) => (
         <Text {...TYPOGRAPHY.paragraph} {...styles.nameText}>
-          {user.name}
+          {String(user.name ?? '-')}
         </Text>
       ),
       mobileConfig: {
@@ -334,7 +334,7 @@ export const getUsersColumns = (handlers?: {
       flex: 2.5,
       render: (user) => (
         <Text {...TYPOGRAPHY.paragraph} {...styles.emailText} width={"100%"}>
-          {user.email}
+          {String(user.email ?? '-')}
         </Text>
       ),
       mobileConfig: {
@@ -353,8 +353,8 @@ export const getUsersColumns = (handlers?: {
 
         return (
           <HStack space="xs" flexWrap="wrap">
-            {roles.map((roleLabel: string, index: number) => (
-              <RoleBadge key={`${roleLabel}-${index}`} role={roleLabel} />
+            {roles.map((roleLabel: any, index: number) => (
+              <RoleBadge key={`${String(roleLabel)}-${index}`} role={String(roleLabel ?? '-')} />
             ))}
           </HStack>
         );
@@ -380,7 +380,7 @@ export const getUsersColumns = (handlers?: {
       flex: 1.2,
       render: (user: any) => (
         <Text {...TYPOGRAPHY.paragraph} {...styles.provinceText}>
-          {user?.province?.label || '-'}
+          {String((user?.province && (user?.province?.label ?? user?.province)) ?? '-')}
         </Text>
       ),
       mobileConfig: {
@@ -394,7 +394,7 @@ export const getUsersColumns = (handlers?: {
       flex: 1.2,
       render: (user: any) => (
         <Text {...TYPOGRAPHY.paragraph} {...styles.districtText}>
-          {user?.site?.label || user?.site || '-'}
+          {String((user?.site && (user?.site?.label ?? user?.site)) ?? '-')}
         </Text>
       ),
       mobileConfig: {
