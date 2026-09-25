@@ -178,6 +178,7 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
       {
         fields: [
           {
+<<<<<<< HEAD
             type: 'group',
             name: 'phoneNumber',
             required: false,
@@ -288,6 +289,8 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
       {
         fields: [
           {
+=======
+>>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
             name: 'gender',
             type: 'select',
             required: true,
@@ -322,6 +325,7 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
           },
         ],
       },
+<<<<<<< HEAD
 
       // {
       //   visibleWhen: { flag: 'isSupervisorOrLC' },
@@ -356,29 +360,76 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
       //     },
       //   ],
       // },
+=======
+>>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
       {
-        visibleWhen: { flag: 'isSupervisorOrLC' },
         fields: [
           {
-            name: 'organisationId',
-            type: 'select',
-            required: true,
-            label: { key: 'organisation', fallback: 'Organisation' },
-            placeholder: { key: 'organisationPlaceholder', fallback: 'Select organisation' },
-            optionsSource: 'organisations',
-            validation: [
-              { rule: 'required', message: { key: 'errors.organisationRequired', fallback: 'Organisation is required' } },
+            type: 'group',
+            name: 'phoneNumber',
+            required: false,
+            label: { key: 'phoneNumber', fallback: 'Phone Number' },
+            _input: INPUT_STYLE,
+            fields: [
+              {
+                name: 'countryCode',
+                type: 'select',
+                required: false,
+                label: { key: 'countryCode', fallback: 'Country Code' },
+                defaultValue: '+27',
+                optionsSource: 'countryCodes',
+                searchable: true,
+              },
+              {
+                name: 'phoneNumber',
+                type: 'tel',
+                required: false,
+                label: { key: 'phoneNumber', fallback: 'Phone Number' },
+                placeholder: { key: 'phoneNumberPlaceholder', fallback: '000 000 0000' },
+                inputProps: { keyboardType: 'phone-pad', maxLength: 9 },
+                validation: [
+                  {
+                    rule: 'pattern',
+                    value: '^[0-9]{9}$',
+                    message: { key: 'errors.phoneInvalid', fallback: 'Phone number must be 9 digits' },
+                  },
+                ],
+              },
             ],
           },
           {
-            name: 'positionId',
-            type: 'select',
-            required: true,
-            label: { key: 'position', fallback: 'Position' },
-            placeholder: { key: 'positionPlaceholder', fallback: 'Select position' },
-            optionsSource: 'positions',
-            validation: [
-              { rule: 'required', message: { key: 'errors.positionRequired', fallback: 'Position is required' } },
+            type: 'group',
+            name: 'alternativePhone',
+            required: false,
+            label: { key: 'alternativePhone', fallback: 'Alt Phone Number' },
+            _input: INPUT_STYLE,
+            fields: [
+              {
+                name: 'alternativePhoneCode',
+                type: 'select',
+                required: false,
+                label: { key: 'alternativeCountryCode', fallback: 'Alt Country Code' },
+                _input: INPUT_STYLE,
+                defaultValue: '+27',
+                optionsSource: 'countryCodes',
+                searchable: true,
+              },
+              {
+                name: 'alternativePhone',
+                type: 'tel',
+                required: false,
+                label: { key: 'alternativePhone', fallback: 'Alternative Phone' },
+                placeholder: { key: 'alternativePhonePlaceholder', fallback: '000 000 0000' },
+                _input: INPUT_STYLE,
+                inputProps: { keyboardType: 'phone-pad', maxLength: 9 },
+                validation: [
+                  {
+                    rule: 'pattern',
+                    value: '^[0-9]{9}$',
+                    message: { key: 'errors.altPhoneInvalid', fallback: 'Alt phone number must be 9 digits' },
+                  },
+                ],
+              },
             ],
           },
         ],
@@ -388,42 +439,81 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
 
   {
     type: "section",
+<<<<<<< HEAD
+=======
+    id: 'roleAndPermissions',
+    icon: 'Shield',
+    title: { key: 'roleAndPermissions', fallback: 'Role & Permissions' },
+    _title: TITLE_STYLE,
+    _container: CONTAINER_STYLE,
+    rows: [
+      {
+        fields: [
+          {
+            name: 'roleId',
+            type: 'select',
+            required: true,
+            zIndex: 1000,
+            label: { key: 'role', fallback: 'Role' },
+            placeholder: { key: 'rolePlaceholder', fallback: 'Select user role' },
+            optionsSource: 'roles',
+            validation: [
+              { rule: 'required', message: { key: 'errors.roleRequired', fallback: 'Role is required' } },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    type: "section",
+>>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
     id: 'geographicAssignment',
     icon: 'MapPin',
     title: { key: 'geographicAssignment', fallback: 'Geographic Assignment' },
     _title: TITLE_STYLE,
     _container: CONTAINER_STYLE,
+<<<<<<< HEAD
     hint: {
       type: 'info', icon: "Lock",
       _icon: { color: "$danger500" },
       _title: { color: "$text200" },
       title: { fallback: 'A temporary password will be generated for the account. The user must reset this password before they can log in for the first time.' }
     },
+=======
+>>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
     rows: [
       {
         fields: [
           {
             name: 'provinceId',
             type: 'select',
-            required: false,
+            required: true,
             label: { key: 'province', fallback: 'Province' },
             placeholder: { key: 'provincePlaceholder', fallback: 'Select province' },
             optionsSource: 'provinces',
+<<<<<<< HEAD
             visibleIf: [
               { name: 'isParticipant', operator: '!=', value: 'true' }
             ],
             validation: [],
+=======
+            validation: [
+              { rule: 'required', message: { key: 'errors.provinceRequired', fallback: 'Province is required' } },
+            ],
+>>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
           },
           {
             name: 'siteId',
             type: 'select',
-            required: false,
+            required: true,
             dependsOn: 'provinceId',
             disabledWhen: { field: 'provinceId', empty: true },
             label: { key: 'site', fallback: 'Site' },
             placeholder: { key: 'sitePlaceholder', fallback: 'Select province first' },
             placeholderWhenReady: { key: 'sitePlaceholderReady', fallback: 'Select site' },
             optionsSource: 'sites',
+<<<<<<< HEAD
             visibleIf: [
               { name: 'isParticipant', operator: '!=', value: 'true' }
             ],
@@ -456,6 +546,8 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
             visibleIf: [
               { name: 'isParticipant', operator: '===', value: 'true' }
             ],
+=======
+>>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
             validation: [
               { rule: 'required', message: { key: 'errors.siteRequired', fallback: 'Site is required' } },
             ],
@@ -491,4 +583,41 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
       },
     ],
   },
+  {
+    type: "section",
+    id: 'additionalInformation',
+    icon: 'FileText',
+    title: { key: 'additionalInformation', fallback: 'Additional Information' },
+    _title: TITLE_STYLE,
+    _container: CONTAINER_STYLE,
+    hint: {
+      type: 'info', icon: "Lock",
+      _icon: { color: "$danger500" },
+      _title: { color: "$text200" },
+      title: { fallback: 'A temporary password will be generated for the account. The user must reset this password before they can log in for the first time.' }
+    },
+    rows: [
+      {
+        visibleWhen: { flag: 'isSupervisorOrLC' },
+        fields: [
+          {
+            name: 'organisationId',
+            type: 'select',
+            required: false,
+            label: { key: 'organization', fallback: 'Organization' },
+            placeholder: { key: 'organizationPlaceholder', fallback: 'Select organization' },
+            optionsSource: 'organisations',
+          },
+          {
+            name: 'positionId',
+            type: 'select',
+            required: false,
+            label: { key: 'position', fallback: 'Position' },
+            placeholder: { key: 'positionPlaceholder', fallback: 'Select position' },
+            optionsSource: 'positions',
+          },
+        ],
+      },
+    ],
+  }
 ];

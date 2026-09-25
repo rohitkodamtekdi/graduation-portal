@@ -7,7 +7,7 @@
  *
  * Usage:
  *   <SchemaFormRenderer
- *     schema={CREATE_USER_FORM_SCHEMA}
+ *     schema={FORM_SCHEMA}
  *     values={values}
  *     errors={errors}
  *     onFieldChange={handleChange}
@@ -19,7 +19,7 @@
  *   />
  */
 
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import {
   VStack,
   HStack,
@@ -609,7 +609,11 @@ function applyRule(
 export function validateSchema(
   schema: FormSection[],
   values: Record<string, string>,
+<<<<<<< HEAD
   optionsMap?: OptionsMap,
+=======
+  optionsMap: OptionsMap,
+>>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   validateNodes(schema, values, optionsMap, errors);
@@ -1549,6 +1553,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
   if (field.type === FORM_FIELD_TYPES.DATE || field.type === FORM_FIELD_TYPES.Time || field.type === FORM_FIELD_TYPES.DateTime) {
     // Internal display value: stored as YYYY-MM-DD, displayed as YYYY-MM-DD
     const displayValue = value ? value : '';
+    const [type, format] = field?.displayFormat?.split("@") || []
 
     return (
       <Box zIndex={field.zIndex ?? 999}>
@@ -1559,6 +1564,8 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
             borderWidth: 1,
             borderColor: '$red500',
           })}
+          valueFormat={field?.valueFormat || null}
+          displayFormat={type === "dateFormat" ? format : null}
           mode={field.type}
           placeholder={placeholder || 'YYYY-MM-DD'}
           value={displayValue}
@@ -1943,7 +1950,7 @@ const SectionNode: React.FC<{ node: FormSection; ctx: NodeRenderContext }> = mem
 // Engages only when the ENTIRE root schema is made of 2+ `tab` nodes (a genuine
 // step wizard). Mixed/single-tab/no-tab schemas fall through to the plain
 // recursive rendering above, unchanged — this keeps every existing screen
-// (CREATE_USER_FORM_SCHEMA, etc.) byte-for-byte backward compatible.
+// (FORM_SCHEMA, etc.) byte-for-byte backward compatible.
 
 /**
  * Step indicator built on the same `@gluestack-ui/themed` Tabs primitives as the
@@ -2353,7 +2360,7 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
   // focuses, and temporarily highlights it. Other invalid fields stay quiet —
   // Task 2 explicitly asks that the popup, not a wall of inline errors, be the
   // first thing the user sees after a failed validation.
-  const revealAndFocusField = (name: string, message: string) => {
+  const revealAndFocusField = useCallback((name: string, message: string) => {
     setInternalErrors(prev => ({ ...prev, [name]: message }));
 
     setHighlightedField(name);
@@ -2365,11 +2372,24 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
 
     setTimeout(() => {
       const node = fieldRefsRef.current[name];
-      if (node?.scrollIntoView)
-        node.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      if (node?.focus) node.focus();
+      if (node) {
+        if (node.scrollIntoView) {
+          node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        const focusable = node.querySelector
+          ? node.querySelector('input, textarea, select, button, [tabindex]')
+          : null;
+        if (focusable && focusable.focus) {
+          focusable.focus();
+        } else if (node.focus) {
+          if (!node.hasAttribute || !node.hasAttribute('tabindex')) {
+            node.setAttribute?.('tabindex', '-1');
+          }
+          node.focus();
+        }
+      }
     }, 50);
-  };
+  }, []);
 
   // Applies a fresh validation pass without auto-revealing newly-invalid fields:
   // a field only ever gets an inline message once the user has opened it from the
@@ -2389,6 +2409,24 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
       return next;
     });
   };
+
+  const prevErrorsRef = useRef<Record<string, string>>(errors);
+
+  // Automatically scroll to and focus the first field with a validation error when validation is triggered
+  useEffect(() => {
+    const currentKeys = Object.keys(errors).filter(key => Boolean(errors[key]));
+    if (currentKeys.length > 0 && errors !== prevErrorsRef.current) {
+      const prevKeys = Object.keys(prevErrorsRef.current).filter(key => Boolean(prevErrorsRef.current[key]));
+      const isNewValidation = prevKeys.length === 0 || currentKeys.some(k => !prevErrorsRef.current[k]);
+
+      if (isNewValidation) {
+        const firstField = currentKeys[0];
+        const message = errors[firstField];
+        revealAndFocusField(firstField, message);
+      }
+    }
+    prevErrorsRef.current = errors;
+  }, [errors, revealAndFocusField]);
 
   useEffect(() => {
     return () => {
@@ -2662,7 +2700,7 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
 
   return (
     <VStack space="md" width="100%">
-      <RenderNodes nodes={schema} ctx={baseCtx} />
+      <RenderNodes nodes={schema} ctx={stepCtx} />
     </VStack>
   );
 };

@@ -48,6 +48,7 @@ const CsvImportTemplates = lazyScreen(() => import('../screens/CsvImportTemplate
 const PasswordPolicy = lazyScreen(() => import('../screens/PasswordPolicy'));
 const AuditLogScreen = lazyScreen(() => import('../screens/AuditLog'));
 const AssignUsersScreen = lazyScreen(() => import('../screens/AssignUsers'));
+const ReviewRequestsScreen = lazyScreen(() => import('../screens/ReviewRequests'));
 const AdminDashboard = lazyScreen(() => import('../screens/AdminDashboard'));
 const ProfilePermissions = lazyScreen(() => import('../screens/ProfilePermissions'));
 const ForgotPasswordScreen = lazyScreen(() => import('../screens/Auth/ForgotPasswordScreen'));
@@ -161,6 +162,11 @@ const getAccessPages = (
           name: 'assign-users',
           path: '/assign-users',
           component: AssignUsersScreen,
+        },
+        {
+          name: 'review-requests',
+          path: '/review-requests',
+          component: ReviewRequestsScreen,
         },
         {
           name: 'csv-templates',

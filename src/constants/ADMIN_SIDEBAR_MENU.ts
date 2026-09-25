@@ -43,6 +43,12 @@ export const MAIN_MENU_ITEMS: SidebarMenuItem[] = [
     icon: 'UserCheck', // Lucide icon name - distinct from Users icon
     route: 'assign-users',
   },
+  {
+    key: 'review-requests',
+    label: 'admin.menu.reviewRequests',
+    icon: 'ClipboardCheck', // Lucide icon name
+    route: 'review-requests',
+  },
   // {
   //   key: 'template-management',
   //   label: 'admin.menu.templateManagement',
