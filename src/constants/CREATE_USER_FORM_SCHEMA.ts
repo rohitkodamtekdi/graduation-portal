@@ -178,119 +178,6 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
       {
         fields: [
           {
-<<<<<<< HEAD
-            type: 'group',
-            name: 'phoneNumber',
-            required: false,
-            label: { key: 'phoneNumber', fallback: 'Phone Number' },
-            _input: INPUT_STYLE,
-            fields: [
-              {
-                name: 'countryCode',
-                type: 'select',
-                required: false,
-                label: { key: 'countryCode', fallback: 'Country Code' },
-                defaultValue: '+27',
-                optionsSource: 'countryCodes',
-                searchable: true,
-              },
-              {
-                name: 'phoneNumber',
-                type: 'tel',
-                required: false,
-                label: { key: 'phoneNumber', fallback: 'Phone Number' },
-                placeholder: { key: 'phoneNumberPlaceholder', fallback: '000 000 0000' },
-                inputProps: { keyboardType: 'phone-pad', maxLength: 10 },
-                validation: [
-                  {
-                    rule: 'pattern',
-                    value: '^[0-9]{9,10}$',
-                    message: { key: 'errors.phoneInvalid', fallback: 'Phone number must be 9 or 10 digits' },
-                  },
-                ],
-              },
-            ],
-          },
-          {
-            type: 'group',
-            name: 'alternativePhone',
-            required: false,
-            label: { key: 'alternativePhone', fallback: 'Alt Phone Number' },
-            _input: INPUT_STYLE,
-            fields: [
-              {
-                name: 'alternativePhoneCode',
-                type: 'select',
-                required: false,
-                label: { key: 'alternativeCountryCode', fallback: 'Alt Country Code' },
-                _input: INPUT_STYLE,
-                defaultValue: '+27',
-                optionsSource: 'countryCodes',
-                searchable: true,
-              },
-              {
-                name: 'alternativePhone',
-                type: 'tel',
-                required: false,
-                label: { key: 'alternativePhone', fallback: 'Alternative Phone' },
-                placeholder: { key: 'alternativePhonePlaceholder', fallback: '000 000 0000' },
-                _input: INPUT_STYLE,
-                inputProps: { keyboardType: 'phone-pad', maxLength: 10 },
-                validation: [
-                  {
-                    rule: 'pattern',
-                    value: '^[0-9]{9,10}$',
-                    message: { key: 'errors.altPhoneInvalid', fallback: 'Alt phone number must be 9 or 10 digits' },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-
-  {
-    type: "section",
-    id: 'roleAndPermissions',
-    icon: 'Shield',
-    title: { key: 'roleAndPermissions', fallback: 'Role & Permissions' },
-    _title: TITLE_STYLE,
-    _container: CONTAINER_STYLE,
-    rows: [
-      {
-        fields: [
-          {
-            name: 'roleId',
-            type: 'select',
-            required: true,
-            zIndex: 1000,
-            label: { key: 'role', fallback: 'Role' },
-            placeholder: { key: 'rolePlaceholder', fallback: 'Select user role' },
-            optionsSource: 'roles',
-            validation: [
-              { rule: 'required', message: { key: 'errors.roleRequired', fallback: 'Role is required' } },
-            ],
-          },
-        ],
-      },
-    ],
-  },
-
-  {
-    type: "section",
-    id: 'additionalInformation',
-    icon: 'FileText',
-    title: { key: 'additionalInformation', fallback: 'Additional Information' },
-    _title: TITLE_STYLE,
-    _container: CONTAINER_STYLE,
-    rows: [
-      {
-        fields: [
-          {
-=======
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
             name: 'gender',
             type: 'select',
             required: true,
@@ -325,43 +212,6 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
           },
         ],
       },
-<<<<<<< HEAD
-
-      // {
-      //   visibleWhen: { flag: 'isSupervisorOrLC' },
-      //   fields: [
-      //     {
-      //       name: 'employee_id',
-      //       type: 'text',
-      //       required: true,
-      //       visibleWhen: { flag: 'isSupervisorOrLC' },
-      //       label: { key: 'employeeId', fallback: 'Employee ID' },
-      //       placeholder: {
-      //         key: 'employeeIdPlaceholder',
-      //         fallback: 'Enter Employee ID',
-      //       },
-      //       validation: [
-      //         {
-      //           rule: 'required',
-      //           message: {
-      //             key: 'errors.employeeIdRequired',
-      //             fallback: 'Employee ID is required',
-      //           },
-      //         },
-      //         {
-      //           rule: 'pattern',
-      //           value: '^[A-Z]{3}[0-9]{5}$',
-      //           message: {
-      //             key: 'errors.employeeIdInvalid',
-      //             fallback: 'Enter a valid Employee ID (e.g. ADM00001)',
-      //           },
-      //         },
-      //       ],
-      //     },
-      //   ],
-      // },
-=======
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
       {
         fields: [
           {
@@ -439,8 +289,6 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
 
   {
     type: "section",
-<<<<<<< HEAD
-=======
     id: 'roleAndPermissions',
     icon: 'Shield',
     title: { key: 'roleAndPermissions', fallback: 'Role & Permissions' },
@@ -467,21 +315,11 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
   },
   {
     type: "section",
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
     id: 'geographicAssignment',
     icon: 'MapPin',
     title: { key: 'geographicAssignment', fallback: 'Geographic Assignment' },
     _title: TITLE_STYLE,
     _container: CONTAINER_STYLE,
-<<<<<<< HEAD
-    hint: {
-      type: 'info', icon: "Lock",
-      _icon: { color: "$danger500" },
-      _title: { color: "$text200" },
-      title: { fallback: 'A temporary password will be generated for the account. The user must reset this password before they can log in for the first time.' }
-    },
-=======
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
     rows: [
       {
         fields: [
@@ -492,43 +330,6 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
             label: { key: 'province', fallback: 'Province' },
             placeholder: { key: 'provincePlaceholder', fallback: 'Select province' },
             optionsSource: 'provinces',
-<<<<<<< HEAD
-            visibleIf: [
-              { name: 'isParticipant', operator: '!=', value: 'true' }
-            ],
-            validation: [],
-=======
-            validation: [
-              { rule: 'required', message: { key: 'errors.provinceRequired', fallback: 'Province is required' } },
-            ],
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
-          },
-          {
-            name: 'siteId',
-            type: 'select',
-            required: true,
-            dependsOn: 'provinceId',
-            disabledWhen: { field: 'provinceId', empty: true },
-            label: { key: 'site', fallback: 'Site' },
-            placeholder: { key: 'sitePlaceholder', fallback: 'Select province first' },
-            placeholderWhenReady: { key: 'sitePlaceholderReady', fallback: 'Select site' },
-            optionsSource: 'sites',
-<<<<<<< HEAD
-            visibleIf: [
-              { name: 'isParticipant', operator: '!=', value: 'true' }
-            ],
-            validation: [],
-          },
-          {
-            name: 'provinceId',
-            type: 'select',
-            required: true,
-            label: { key: 'province', fallback: 'Province' },
-            placeholder: { key: 'provincePlaceholder', fallback: 'Select province' },
-            optionsSource: 'provinces',
-            visibleIf: [
-              { name: 'isParticipant', operator: '===', value: 'true' }
-            ],
             validation: [
               { rule: 'required', message: { key: 'errors.provinceRequired', fallback: 'Province is required' } },
             ],
@@ -543,11 +344,6 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
             placeholder: { key: 'sitePlaceholder', fallback: 'Select province first' },
             placeholderWhenReady: { key: 'sitePlaceholderReady', fallback: 'Select site' },
             optionsSource: 'sites',
-            visibleIf: [
-              { name: 'isParticipant', operator: '===', value: 'true' }
-            ],
-=======
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
             validation: [
               { rule: 'required', message: { key: 'errors.siteRequired', fallback: 'Site is required' } },
             ],

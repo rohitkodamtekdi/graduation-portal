@@ -609,11 +609,7 @@ function applyRule(
 export function validateSchema(
   schema: FormSection[],
   values: Record<string, string>,
-<<<<<<< HEAD
   optionsMap?: OptionsMap,
-=======
-  optionsMap: OptionsMap,
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
 ): Record<string, string> {
   const errors: Record<string, string> = {};
   validateNodes(schema, values, optionsMap, errors);

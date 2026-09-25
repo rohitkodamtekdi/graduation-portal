@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-=======
 import { Platform } from 'react-native';
 import { theme } from '@config/theme';
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
 import { MenuItemData } from '@components/ui/Menu';
 import {
   LC_USER_GUIDE_MENU_ITEM,
@@ -107,13 +104,8 @@ export const LC_MENU_OPTIONS: MenuItemData[] = [
     textValue: REPORT_FEEDBACK_MENU_ITEM.key,
     iconName: REPORT_FEEDBACK_MENU_ITEM.icon,
     iconSizeValue: 16,
-<<<<<<< HEAD
-    iconColor: '$textForegroundColor',
-    showDividerAfter: true,
-=======
     iconColor: theme.tokens.colors.textForegroundColor,
     showDividerAfter: false,
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
     href: REPORT_FEEDBACK_MENU_ITEM.href,
   },
   ...(Platform.OS === 'web'

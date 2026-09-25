@@ -2502,13 +2502,10 @@
     "requestSession": {
       "title": "Request a Session",
       "badge": "Training Session"
-<<<<<<< HEAD
     },
     "requestAdditionalService": {
       "title": "Request Additional Service",
       "badge": "Service"
-=======
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
     }
   },
   "template": {
@@ -2785,12 +2782,8 @@
           "downloading": "Downloading {{name}}...",
           "navigatingRequests": "Navigating to support requests...",
           "offeringCopied": "Offering copied successfully!",
-<<<<<<< HEAD
           "offeringCompleted": "Offering marked as complete!",
           "offeringCancelled": "Intervention cancelled successfully!"
-=======
-          "offeringCompleted": "Offering marked as complete!"
->>>>>>> 9c02d555b81208c212a5ee5302dda931e0e9fc3d
         }
       },
       "modal": {
