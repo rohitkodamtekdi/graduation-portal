@@ -20,6 +20,7 @@ import { FORM_MODE, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CAR
 import { useSessionStatus, useRequesterInfo } from '@hooks/useSessionStatus';
 import { cancelSession } from '../../../../../services/mentoringService';
 import CancelInterventionModal from '../modals/CancelInterventionModal';
+import AdditionalServiceCompletionModal from '../modals/AdditionalServiceCompletionModal';
 import styles from '../../styles';
 
 // ---------- Card ----------
@@ -28,9 +29,10 @@ interface CardProps {
   item: ServiceItem;
   provinces?: any[];
   sites?: any[];
+  footer?: (item: any) => React.ReactNode;
 }
 
-const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
+const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
   const navigation = useNavigation();
@@ -38,6 +40,7 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
   const [statusOverride, setStatusOverride] = useState<string | null>(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isRequestsModalOpen, setIsRequestsModalOpen] = useState(false);
 
   const getStatusColors = (status: string) => {
     switch (status) {
@@ -150,6 +153,9 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
         </HStack>
 
         {/* ROW 4 - ACTIONS */}
+        {footer ? (
+          footer(item)
+        ) : (
         <HStack {...styles.requestedByRowHStack}>
           {requesterName ? (
             <Text {...styles.cardRequestedByText}>
@@ -195,13 +201,7 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
             {/* ALL STATUSES: View Requests */}
             <Button
               variant="solid" {...styles.detailsBtn}
-              onPress={() => {
-                try {
-                  (navigation as any).navigate('requests');
-                } catch (e) {
-                  showAlert('info', t('supportProvider.supportOfferings.cards.alerts.navigatingRequests'));
-                }
-              }}
+              onPress={() => setIsRequestsModalOpen(true)}
             >
               {/* @ts-ignore */}
               <ButtonText {...styles.detailsBtnText}>
@@ -210,6 +210,7 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
             </Button>
           </HStack>
         </HStack>
+        )}
       </VStack>
 
       <CancelInterventionModal
@@ -226,6 +227,12 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites }) => {
         location={provinceName || item.location}
         isSubmitting={isCancelling}
         onConfirmCancel={handleConfirmCancel}
+      />
+
+      <AdditionalServiceCompletionModal
+        isOpen={isRequestsModalOpen}
+        onClose={() => setIsRequestsModalOpen(false)}
+        service={item}
       />
     </Box>
   );

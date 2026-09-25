@@ -15,6 +15,8 @@ import {
   CheckIcon,
   ScrollView,
   Spinner,
+  Badge,
+  BadgeText,
 } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
 import type { ParticipantAttendanceItem } from '../../../../../types/supportOfferingsTypes';
@@ -28,6 +30,13 @@ interface SessionCompleteModalProps {
   initialParticipants?: ParticipantAttendanceItem[];
   isLoadingParticipants?: boolean;
   onConfirmComplete: (selectedParticipantIds: string[]) => void;
+  title?: string;
+  headerDescription?: React.ReactNode;
+  headerBadge?: React.ReactNode;
+  showParticipantStatusBadge?: boolean;
+  cancelButtonText?: string;
+  confirmButtonText?: string;
+  onCancel?: () => void;
 }
 
 // Stable reference so an omitted `initialParticipants` prop doesn't create a new
@@ -42,6 +51,13 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
   initialParticipants = EMPTY_PARTICIPANTS,
   isLoadingParticipants = false,
   onConfirmComplete,
+  title,
+  headerDescription,
+  headerBadge,
+  showParticipantStatusBadge = false,
+  cancelButtonText,
+  confirmButtonText,
+  onCancel,
 }) => {
   const { t } = useLanguage();
   const [participants, setParticipants] = useState<ParticipantAttendanceItem[]>(initialParticipants);
@@ -84,7 +100,11 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
   const handleSkip = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    onConfirmComplete([]);
+    if (onCancel) {
+      onCancel();
+    } else {
+      onConfirmComplete([]);
+    }
     onClose();
   };
 
@@ -95,7 +115,7 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
         onPress={handleSkip}
       >
         <ButtonText {...styles.modalFooterSkipButtonText}>
-          {t('supportProvider.supportOfferings.modal.skipAndMarkComplete')}
+          {cancelButtonText || t('supportProvider.supportOfferings.modal.skipAndMarkComplete')}
         </ButtonText>
       </Button>
 
@@ -105,7 +125,7 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
       >
         <ButtonIcon as={LucideIcon} name="Check" {...styles.modalButtonIconProps} />
         <ButtonText {...styles.modalFooterConfirmButtonText}>
-          {t('supportProvider.supportOfferings.modal.confirmAndComplete')}
+          {confirmButtonText || t('supportProvider.supportOfferings.modal.confirmAndComplete')}
         </ButtonText>
       </Button>
     </HStack>
@@ -116,8 +136,25 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
       isOpen={isOpen}
       onClose={onClose}
       size="lg"
-      headerTitle={t('supportProvider.supportOfferings.modal.headerTitle')}
-      headerDescription={sessionTitle}
+      headerContent={
+        headerBadge ? (
+          <VStack space="xs" flex={1}>
+            {headerBadge}
+            <Text fontSize="$lg" fontWeight="$bold" color="$textPrimary">
+              {title || t('supportProvider.supportOfferings.modal.headerTitle')}
+            </Text>
+            {typeof (headerDescription ?? sessionTitle) === 'string' ? (
+              <Text fontSize="$sm" color="$textSecondary">
+                {headerDescription ?? sessionTitle}
+              </Text>
+            ) : (
+              headerDescription
+            )}
+          </VStack>
+        ) : undefined
+      }
+      headerTitle={headerBadge ? undefined : (title || t('supportProvider.supportOfferings.modal.headerTitle'))}
+      headerDescription={headerBadge ? undefined : (headerDescription ?? sessionTitle)}
       showCloseButton={true}
       footerContent={footerContent}
     >
@@ -166,30 +203,47 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
                   onPress={() => handleToggleParticipant(p.id)}
                   {...styles.modalParticipantCard}
                 >
-                  <HStack {...styles.modalParticipantInnerHStack}>
-                    <Checkbox
-                      size="md"
-                      value={p.id}
-                      isChecked={p.isPresent}
-                      onChange={() => handleToggleParticipant(p.id)}
-                    >
-                      <CheckboxIndicator {...styles.modalCheckboxIndicator(p.isPresent)}>
-                        <CheckboxIcon as={CheckIcon} color="$white" />
-                      </CheckboxIndicator>
-                    </Checkbox>
+                  <HStack {...styles.modalParticipantInnerHStack} justifyContent="space-between">
+                    <HStack space="md" alignItems="center" flex={1}>
+                      <Checkbox
+                        size="md"
+                        value={p.id}
+                        isChecked={p.isPresent}
+                        onChange={() => handleToggleParticipant(p.id)}
+                      >
+                        <CheckboxIndicator {...styles.modalCheckboxIndicator(p.isPresent)}>
+                          <CheckboxIcon as={CheckIcon} color="$white" />
+                        </CheckboxIndicator>
+                      </Checkbox>
 
-                    <Text {...styles.modalParticipantNumberText}>
-                      {String(idx + 1).padStart(2, '0')}
-                    </Text>
+                      <Text {...styles.modalParticipantNumberText}>
+                        {String(idx + 1).padStart(2, '0')}
+                      </Text>
 
-                    <VStack {...styles.fileTextVStack}>
-                      <Text {...styles.modalParticipantNameText}>
-                        {p.name}
-                      </Text>
-                      <Text {...styles.modalParticipantLcText}>
-                        {p.lcName}
-                      </Text>
-                    </VStack>
+                      <VStack {...styles.fileTextVStack}>
+                        <Text {...styles.modalParticipantNameText}>
+                          {p.name}
+                        </Text>
+                        <Text {...styles.modalParticipantLcText}>
+                          {p.lcName}
+                        </Text>
+                      </VStack>
+                    </HStack>
+
+                    {showParticipantStatusBadge ? (
+                      <Badge
+                        bg={p.isPresent ? '$success50' : '$backgroundLight100'}
+                        borderRadius="$full"
+                        px="$2.5"
+                        py="$0.5"
+                      >
+                        <BadgeText fontSize="$xs" color={p.isPresent ? '$success600' : '$textMuted'}>
+                          {p.isPresent
+                            ? t('supportProvider.supportOfferings.modal.completed', 'Completed')
+                            : t('supportProvider.supportOfferings.modal.pending', 'Pending')}
+                        </BadgeText>
+                      </Badge>
+                    ) : null}
                   </HStack>
                 </Pressable>
               ))}

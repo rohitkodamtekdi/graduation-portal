@@ -391,18 +391,23 @@ export const acceptAndScheduleSupportRequest = async (
   const durationHours = DURATION_HOURS[payload.duration] ?? 2;
   const endDate = startDate + Math.round(durationHours * 3600);
 
+  const isAsset = payload.support_offering_type === 'asset';
+
   const body: Record<string, any> = {
     request_session_id: String(payload.requestId),
     type: 'public',
-    support_offering_type: payload.support_offering_type || SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
+    support_offering_type: isAsset
+      ? SUPPORT_OFFERING_TYPE_VALUES.ASSET
+      : (payload.support_offering_type || SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION),
     title: payload.title || '',
-    description: payload.description || '',
     start_date: startDate,
     end_date: endDate,
-    delivery_mode: payload.delivery_mode || 'online',
+    delivery_mode: payload.delivery_mode || (isAsset ? 'offline' : 'online'),
     can_be_copied: false,
     certificate_provided: false,
-    meeting_info: { link: payload.meetingLink || '' },
+    ...(isAsset
+      ? { agenda: payload.description || payload.title || '', meeting_info: { link: '', location: payload.location || '' } }
+      : { description: payload.description || '', meeting_info: { link: payload.meetingLink || '' } }),
   };
 
   if (payload.province) {
@@ -417,12 +422,18 @@ export const acceptAndScheduleSupportRequest = async (
     body.categories = [payload.category];
   }
 
-  if (payload.targetAudience) {
-    body.learning_objectives = payload.targetAudience;
-  }
+  if (isAsset) {
+    if (payload.capacity) {
+      body.meta = { quantity: Number(payload.capacity) };
+    }
+  } else {
+    if (payload.targetAudience) {
+      body.learning_objectives = payload.targetAudience;
+    }
 
-  if (payload.capacity) {
-    body.seats = Number(payload.capacity);
+    if (payload.capacity) {
+      body.seats = Number(payload.capacity);
+    }
   }
 
   const response = await api.post(API_ENDPOINTS.REQUEST_SESSIONS_ACCEPT, body);
@@ -457,6 +468,23 @@ export const requestMoreInfoForSupportRequest = async (
     message: data?.message || 'Request for additional information sent to Coach successfully.',
     result: data?.result,
   };
+};
+
+/**
+ * Fetch the raw detail record for a single request-session (best-effort - the exact response
+ * shape, and whether it embeds per-requestee names, is unconfirmed against a real backend
+ * response; callers should parse defensively and fall back gracefully).
+ */
+export const getRequestSessionDetails = async (requestId: string | number): Promise<any> => {
+  try {
+    const response = await api.get(API_ENDPOINTS.REQUEST_SESSIONS_GET_DETAILS, {
+      params: { request_session_id: String(requestId) },
+    });
+    return response.data?.result ?? null;
+  } catch (error) {
+    console.warn('[getRequestSessionDetails] Failed to fetch request details:', error);
+    return null;
+  }
 };
 
 /**

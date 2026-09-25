@@ -1191,6 +1191,74 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
   }
   // ── Note ────────────────────────────────────────────────────────────────────
   if (field.type === FORM_FIELD_TYPES.NOTE) {
+    if (field.variant === 'success') {
+      const subTitleText = field.subTitle
+        ? t(`admin.users.createUser.${field.subTitle.key}`, field.subTitle.fallback)
+        : undefined;
+      const badgeLabelText = field.badge?.label
+        ? t(`admin.users.createUser.${field.badge.label.key}`, field.badge.label.fallback)
+        : undefined;
+      const badgeValueText = field.badge?.value
+        ? t(`admin.users.createUser.${field.badge.value.key}`, field.badge.value.fallback)
+        : undefined;
+
+      return (
+        <HStack
+          space="sm"
+          alignItems="center"
+          justifyContent="space-between"
+          bg="$success50"
+          p="$3"
+          borderRadius="$xl"
+          borderWidth={1}
+          borderColor="$success300"
+          width="100%"
+          flexWrap="wrap"
+        >
+          <HStack space="sm" alignItems="flex-start" flex={1}>
+            <Box mt={2}>
+              <LucideIcon name="CheckCircle" size={16} color="$success700" />
+            </Box>
+            <VStack space="xs" flex={1}>
+              <Text {...TYPOGRAPHY.bodySmall} color="$success700" fontWeight="$medium">
+                {t(`admin.users.createUser.${field.label.key}`, field.label.fallback)}
+              </Text>
+              {!!subTitleText && (
+                <Text {...TYPOGRAPHY.caption} color="$success700">
+                  {subTitleText}
+                </Text>
+              )}
+            </VStack>
+          </HStack>
+          {!!badgeValueText && (
+            <VStack
+              alignItems="flex-end"
+              bg="$white"
+              borderRadius="$md"
+              borderWidth={1}
+              borderColor="$success300"
+              px="$3"
+              py="$2"
+            >
+              {!!badgeLabelText && (
+                <Text
+                  {...TYPOGRAPHY.caption}
+                  color="$success700"
+                  fontWeight="$medium"
+                  textTransform="uppercase"
+                >
+                  { }
+                </Text>
+              )}
+              <Text {...TYPOGRAPHY.bodyLarge} color="$success700" fontWeight="$bold">
+                {badgeValueText}
+              </Text>
+            </VStack>
+          )}
+        </HStack>
+      );
+    }
+
     return (
       <HStack
         space="sm"

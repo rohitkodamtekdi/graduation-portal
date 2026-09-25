@@ -1463,7 +1463,6 @@
         "availableQuantityPlaceholder": "e.g. 50",
         "quantity": "Quantity (optional)",
         "quantityPlaceholder": "e.g. 10",
-        "totalFundBreakdown": "",
         "trainingDetails": "Training Session Details",
         "trainingDetailsSubTitle": "Fields marked * are required",
         "pillar": "Pillar",
@@ -2708,6 +2707,7 @@
         "requestedBy": "Requested by: {{name}}",
         "requestedByPrefix": "Requested by: ",
         "requestsCount": "{{count}} requests / spots",
+        "providedBy": "Provided by:",
         "copySession": "Copy Session",
         "copyOffering": "Copy Offering",
         "copyIntervention": "Copy Intervention",
@@ -2755,6 +2755,15 @@
       "buttonTexts": {
         "publishSupport": "Publish support",
         "loadMoreSessions": "Load More Sessions"
+      },
+      "additionalServiceCompletionModal": {
+        "title": "Service Completion & Attendance",
+        "badge": "Additional Service",
+        "requestedBy": "Requested by {{name}}{{org}}",
+        "confirmButton": "Confirm & Save Completion",
+        "fetchFailed": "Failed to load participants. Please try again.",
+        "saved": "Completion status saved.",
+        "completeFailed": "Failed to save completion. Please try again."
       }
     },
     "dashboard": {

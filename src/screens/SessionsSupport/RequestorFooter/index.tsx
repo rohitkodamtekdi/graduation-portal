@@ -31,9 +31,6 @@ export const RequestFooter: React.FC<RequestFooterProps> = ({ item, onAssignSess
         <Text {...styles.requestorFooterOrgText}>
           {mentorName}
         </Text>
-        {provinceName ? (
-          <Text {...styles.requestorFooterProvinceText}>{` • ${provinceName}`}</Text>
-        ) : null}
       </Text>
 
       <HStack {...styles.requestorFooterActions}>
