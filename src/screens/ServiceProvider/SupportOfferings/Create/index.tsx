@@ -6,11 +6,12 @@ import { useNavigation } from '@react-navigation/native';
 import { useLanguage } from '@contexts/LanguageContext';
 import { SUPPORT_PROVIDER_CARDS } from '@constants/SUPPORT_PROVIDER_CARDS';
 import SupportCard from './components/SupportCard';
+import { useProfileCompletion } from '@hooks';
 
 const App = (): React.JSX.Element => {
   const navigation = useNavigation();
   const { t } = useLanguage();
-  
+  const { isCardAllowed } = useProfileCompletion();
   const handleBackPress = () => {
     if (navigation.canGoBack && navigation.canGoBack()) {
       navigation.goBack();
@@ -40,6 +41,7 @@ const App = (): React.JSX.Element => {
             <SupportCard
               key={index}
               card={card}
+              isAllowed={isCardAllowed(card.id)}
             />
           ))}
         </HStack>
