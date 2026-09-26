@@ -18,7 +18,6 @@ export const CONTACT_PERSON_SCHEMA: FormSection[] = [
             disabled: true,
             label: { key: 'contactPerson.name', fallback: 'Contact Person (Focal Person)' },
             placeholder: { key: 'contactPerson.namePlaceholder', fallback: 'Enter Contact Person Name' },
-            _input: styles.input,
             validation: [
               { rule: 'required', message: { key: 'errors.contactNameRequired', fallback: 'Contact Person Name is required' } }
             ]
@@ -35,7 +34,6 @@ export const CONTACT_PERSON_SCHEMA: FormSection[] = [
             label: { key: 'contactPerson.email', fallback: 'Email' },
             placeholder: { key: 'contactPerson.emailPlaceholder', fallback: 'example@org.com' },
             icon: 'Mail',
-            _input: styles.input,
             validation: [
               { rule: 'required', message: { key: 'errors.emailRequired', fallback: 'Email is required' } },
               { rule: 'email', message: { key: 'errors.emailInvalid', fallback: 'Invalid email address' } }
@@ -44,15 +42,10 @@ export const CONTACT_PERSON_SCHEMA: FormSection[] = [
           {
             name: 'contactPhone',
             type: 'tel',
-            required: true,
             disabled: true,
             label: { key: 'contactPerson.phone', fallback: 'Phone' },
             placeholder: { key: 'contactPerson.phonePlaceholder', fallback: 'Enter Phone Number' },
             icon: 'Phone',
-            _input: styles.input,
-            validation: [
-              { rule: 'required', message: { key: 'errors.phoneRequired', fallback: 'Phone number is required' } }
-            ]
           }
         ]
       }

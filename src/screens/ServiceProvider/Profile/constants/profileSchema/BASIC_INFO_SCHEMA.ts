@@ -17,7 +17,6 @@ export const BASIC_INFO_SCHEMA: FormSection[] = [
             required: true,
             label: { key: 'basicInfo.name', fallback: 'Support Provider Name' },
             placeholder: { key: 'basicInfo.namePlaceholder', fallback: 'Enter Support Provider Name' },
-            _input: styles.input,
             validation: [
               { rule: 'required', message: { key: 'errors.orgNameRequired', fallback: 'Support Provider Name is required' } }
             ]
