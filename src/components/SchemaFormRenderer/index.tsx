@@ -2983,6 +2983,17 @@ function formatFieldValueForDisplay(
     return newValue.join(" ")
   }
 
+  if (field?.type === FORM_FIELD_TYPES.FILE) {
+    const names = toFilePreviewItems(rawValue).map(item => {
+      try {
+        return decodeURIComponent(item.name);
+      } catch {
+        return item.name;
+      }
+    });
+    return names.length ? names.join(', ') : '-';
+  }
+
   if (Array.isArray(rawValue)) {
     if (rawValue.length === 0) return '-';
     return rawValue.map(v => (v && typeof v === 'object' ? v.name ?? String(v) : resolveLabel(v))).join(', ');

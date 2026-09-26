@@ -120,7 +120,7 @@ const OrganizationProfile = (): React.JSX.Element => {
           return val;
         };
 
-        let orgType = getField('organizationType', []);
+        let orgType = getField('provider_type', []);
 
         if (typeof orgType === 'string') {
           try {
@@ -133,6 +133,8 @@ const OrganizationProfile = (): React.JSX.Element => {
         if (!Array.isArray(orgType)) {
           orgType = [];
         }
+
+        orgType = orgType.map((type: any) => (typeof type === 'object' ? type?.value : type)).filter(Boolean);
 
         const mapped = {
           name: getField('about') || getField('name') || user?.name || '',
