@@ -142,26 +142,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     [mode],
   );
 
-  const editSchema = useMemo(
-    () =>
-      CREATE_USER_FORM_SCHEMA.map(section => {
-        const { hint, ...sectionWithoutHint } = section;
-        return {
-          ...sectionWithoutHint,
-          ...(mode === 'edit' && { hint }),
-          rows: section.rows.map(row => ({
-            ...row,
-            fields: row.fields.map(field =>
-              field.name === 'roleId'
-                ? { ...field, disabled: mode === 'edit' }
-                : field
-            ),
-          })),
-        };
-      }),
-    [mode],
-  );
-
   const getEntityId = (value: any): string => {
     if (!value) return '';
 

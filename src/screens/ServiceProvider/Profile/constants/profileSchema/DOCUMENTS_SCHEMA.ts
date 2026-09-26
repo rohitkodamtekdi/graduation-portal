@@ -22,7 +22,12 @@ export const DOCUMENTS_SCHEMA: FormSection[] = [
              validation: [
               {
                 rule: 'fileType',
-                value: ['pdf', 'doc', 'docx', 'jpg', 'jpeg'],
+                value: [
+                  'application/pdf',
+                  'application/msword',
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  'image/jpeg'
+                ],
                 message: {
                   key: 'errors.fileType',
                   fallback: 'Upload a PDF, DOC or JPG file'
@@ -53,7 +58,12 @@ export const DOCUMENTS_SCHEMA: FormSection[] = [
              validation: [
               {
                 rule: 'fileType',
-                value: ['pdf', 'doc', 'docx', 'jpg', 'jpeg'],
+                value: [
+                  'application/pdf',
+                  'application/msword',
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                  'image/jpeg'
+                ],
                 message: {
                   key: 'errors.fileType',
                   fallback: 'Upload a PDF, DOC or JPG file'
