@@ -5,7 +5,6 @@ import { useLanguage } from '@contexts/LanguageContext';
 import { FeatureCardProps } from '@app-types/components';
 import styles from '../../styles';
 import { FORM_MODE } from '@constants/SUPPORT_PROVIDER_CARDS';
-import { useProfileCompletion } from '@hooks';
 
 const getIconBgColor = (color: string): string => {
   switch (color) {
@@ -20,13 +19,11 @@ const getIconBgColor = (color: string): string => {
   }
 };
 
-export const SupportCard: React.FC<FeatureCardProps> = ({ card }) => {
+export const SupportCard: React.FC<FeatureCardProps & { isAllowed: boolean }> = ({ card, isAllowed }) => {
   const navigation = useNavigation();
   const { t } = useLanguage();
   const { showAlert } = useAlert();
-  const { id, title, description, icon, color, navigationUrl } = card;
-  const { isCardAllowed } = useProfileCompletion();
-  const isAllowed = isCardAllowed(id);
+  const { title, description, icon, color, navigationUrl } = card;
 
   const handlePress = () => {
     if (!isAllowed) {
