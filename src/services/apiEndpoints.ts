@@ -60,5 +60,7 @@ export const API_ENDPOINTS = {
   REQUEST_SESSIONS_GET_DETAILS: `${prefix}/mentoring/v1/requestSessions/getDetails`,
   REQUESTOR_ASSIGN_MENTEES: (sessionId: string | number) => `${prefix}/mentoring/v1/sessions/addMentees/${sessionId}`,
   RESOURCES_LIST: `${prefix}/mentoring/v1/resources/list`,
+  RESOURCE_DELETE: (resourceId: string | number, sessionId: string | number) =>
+    `${prefix}/mentoring/v1/resources/delete/${resourceId}?sessionId=${sessionId}`,
   SESSION_ENROLLED_MENTEES: (sessionId: string | number) => `${prefix}/mentoring/v1/sessions/enrolledMentees/${sessionId}`
 };
