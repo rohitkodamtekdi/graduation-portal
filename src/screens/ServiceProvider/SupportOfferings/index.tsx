@@ -193,6 +193,38 @@ const App = (): React.JSX.Element => {
     setPage(1);
   }, [activeTab, filters.search, filters.status, filters.province, filters.site]);
 
+  // Fetch counts for all tabs so badges show correct counts immediately
+  const fetchCounts = useCallback(async () => {
+    try {
+      const baseParams = {
+        search: filters.search,
+        status: filters.status,
+        provinces: filters.province,
+        sites: filters.site,
+        page: 1,
+        limit: 1,
+      };
+
+      const [sessionsRes, servicesRes, assetsRes] = await Promise.all([
+        getTrainingSessions(baseParams).catch(() => null),
+        getAdditionalServices(baseParams).catch(() => null),
+        getAssets(baseParams).catch(() => null),
+      ]);
+
+      const sessionsCount = sessionsRes?.result?.count ?? sessionsRes?.total ?? sessionsRes?.count ?? 0;
+      const servicesCount = (servicesRes as any)?.result?.count ?? (servicesRes as any)?.total ?? (servicesRes as any)?.count ?? 0;
+      const assetsCount = (assetsRes as any)?.result?.count ?? (assetsRes as any)?.total ?? (assetsRes as any)?.count ?? 0;
+
+      setCounts({
+        sessions: sessionsCount,
+        additional_services: servicesCount,
+        assets: assetsCount,
+      });
+    } catch (err) {
+      logger.error('Error fetching tab counts:', err);
+    }
+  }, [filters.search, filters.status, filters.province, filters.site]);
+
   // Fetch listing data
   const fetchData = useCallback(async () => {
     try {
@@ -244,11 +276,12 @@ const App = (): React.JSX.Element => {
 
   useFocusEffect(
     useCallback(() => {
+      fetchCounts();
       fetchData();
       return () => {
         setLoading(true);
       };
-    }, [fetchData])
+    }, [fetchCounts, fetchData])
   );
 
   const handleGetDetails = async (item: any) => {

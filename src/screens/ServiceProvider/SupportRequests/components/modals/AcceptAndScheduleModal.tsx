@@ -8,7 +8,7 @@ import SchemaFormRenderer, { validateSchema } from '@components/SchemaFormRender
 import { ACCEPT_AND_SCHEDULE_FORM_SCHEMA, DURATION_OPTIONS } from '@constants/ACCEPT_AND_SCHEDULE_FORM_SCHEMA';
 import { getProvincesList, getSitesByProvince } from '../../../../../services/usersService';
 import { getSessionCategories, getDeliveryModes } from '../../../../../services/mentoringService';
-import { useNavigation } from '@react-navigation/native';
+// import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
 
 const BASE_PATH = 'supportProvider.supportRequests';
@@ -42,7 +42,7 @@ export default function AcceptAndScheduleModal({
   onSubmit,
 }: AcceptAndScheduleModalProps): React.JSX.Element {
   const { t } = useLanguage();
-  const navigation = useNavigation();
+  // const navigation = useNavigation();
 
   const [provinces, setProvinces] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
@@ -237,17 +237,17 @@ export default function AcceptAndScheduleModal({
 
   // The full wizard is a different screen per offering type - route there based on which
   // Support Requests tab this request actually belongs to, not always Training.
-  const FULL_WIZARD_ROUTE: Record<string, string> = {
-    sessions: 'form-training-session',
-    additional_services: 'create-additional-service',
-    assets: 'create-asset',
-  };
+  // const FULL_WIZARD_ROUTE: Record<string, string> = {
+  //   sessions: 'form-training-session',
+  //   additional_services: 'create-additional-service',
+  //   assets: 'create-asset',
+  // };
 
-  function handleOpenFullWizard() {
-    onClose();
-    const routeName = FULL_WIZARD_ROUTE[item?.type] || 'form-training-session';
-    (navigation as any).navigate(routeName, { type: 'create' });
-  }
+  // function handleOpenFullWizard() {
+  //   onClose();
+  //   const routeName = FULL_WIZARD_ROUTE[item?.type] || 'form-training-session';
+  //   (navigation as any).navigate(routeName, { type: 'create' });
+  // }
 
   if (!isOpen) return <></>;
 
@@ -311,9 +311,9 @@ export default function AcceptAndScheduleModal({
               )}
             </HStack>
 
-            <Button variant="outline" action="primary" {...modalStyles.openWizardBtn} onPress={handleOpenFullWizard}>
+            {/* <Button variant="outline" action="primary" {...modalStyles.openWizardBtn} onPress={handleOpenFullWizard}>
               <ButtonText {...modalStyles.openWizardBtnText}>{t(`${BASE_PATH}.buttonTexts.openFullWizard`, 'Open Full Wizard')}</ButtonText>
-            </Button>
+            </Button> */}
           </Box>
         </VStack>
       }
