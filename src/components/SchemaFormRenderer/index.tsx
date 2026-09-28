@@ -370,6 +370,19 @@ function collectFieldsByName(
   return acc;
 }
 
+type TranslateFn = (key: string, fallback?: string) => string;
+
+/**
+ * Resolves a rule's error message from its translation `key` (under the same
+ * `admin.users.createUser.` prefix as labels), using `fallback` only as the default.
+ * Without `t`, falls back to the raw key so a key-only rule still fails validation.
+ */
+function ruleMessage(rule: ValidationRule, t?: TranslateFn): string | undefined {
+  const { key, fallback } = rule.message;
+  if (!key) return fallback;
+  return t ? t(`admin.users.createUser.${key}`, fallback) : fallback || key;
+}
+
 /**
  * Returns the first validation-rule error message for a field's current value,
  * or undefined when it currently passes (or has no rules). Does not consider
@@ -378,6 +391,7 @@ function collectFieldsByName(
 function getFieldError(
   field: FormField,
   values: Record<string, any>,
+  t?: TranslateFn,
 ): string | undefined {
   if (!field.name || !field.validation?.length) return undefined;
 
@@ -390,7 +404,7 @@ function getFieldError(
   if (Array.isArray(rawValue) || (rawValue && typeof rawValue === 'object')) {
     const files = Array.isArray(rawValue) ? rawValue : [rawValue];
     for (const rule of field.validation) {
-      const msg = rule.message.fallback;
+      const msg = ruleMessage(rule, t);
       if (rule.rule === 'required' && files.length === 0) return msg;
       if (rule.rule === 'minLength' && files.length < Number(rule.value)) return msg;
       if (rule.rule === 'maxLength' && files.length > Number(rule.value)) return msg;
@@ -416,7 +430,7 @@ function getFieldError(
   const val = String(rawValue ?? '').trim();
 
   for (const rule of field.validation) {
-    const err = applyRule(rule, val, values, field.type);
+    const err = applyRule(rule, val, values, field.type, t);
     if (err) return err;
   }
 
@@ -498,8 +512,9 @@ function applyRule(
   val: string,
   allValues: Record<string, string>,
   fieldType?: FormField['type'],
+  t?: TranslateFn,
 ): string | undefined {
-  const msg = rule.message.fallback;
+  const msg = ruleMessage(rule, t);
 
   switch (rule.rule) {
     case 'required':
@@ -827,7 +842,7 @@ function collectFieldIssues(
 
   visited.add(field.name);
 
-  const err = getFieldError(field, values);
+  const err = getFieldError(field, values, t);
   if (!err) return;
 
   errors[field.name] = err;

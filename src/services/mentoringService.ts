@@ -94,6 +94,54 @@ export const createSession = async (payload: any): Promise<any> => {
 };
 
 /**
+ * Update an existing Mentoring Session
+ * Endpoint: POST /mentoring/v1/sessions/update/:sessionId
+ */
+export const updateSession = async (sessionId: string | number, payload: any): Promise<any> => {
+  try {
+    const response = await api.post(API_ENDPOINTS.MENTORING_UPDATE_SESSION(sessionId), payload);
+    return response.data;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+/**
+ * Delete a resource attached to a session
+ * Endpoint: GET /mentoring/v1/resources/delete/:resourceId?sessionId=:sessionId
+ * (the interface-service gateway registers this route as GET, not DELETE)
+ */
+export const deleteSessionResource = async (
+  resourceId: string | number,
+  sessionId: string | number
+): Promise<any> => {
+  const response = await api.get(API_ENDPOINTS.RESOURCE_DELETE(resourceId, sessionId));
+  return response.data;
+};
+
+/**
+ * Updates a session and syncs its resources. The update API inserts every resource it
+ * receives as a new row and never removes any, so only newly uploaded resources (no `id`)
+ * are sent with the update, and resources removed in the form are deleted separately.
+ */
+export const updateSessionWithResources = async (
+  sessionId: string | number,
+  payload: any,
+  originalResources: any[] = []
+): Promise<any> => {
+  const current: any[] = Array.isArray(payload?.resources) ? payload.resources : [];
+  const currentIds = new Set(current.filter((r) => r?.id).map((r) => String(r.id)));
+  const newResources = current.filter((r) => r && !r.id);
+  const removedResources = originalResources.filter((r) => r?.id && !currentIds.has(String(r.id)));
+
+  const { resources, ...rest } = payload || {};
+  const result = await updateSession(sessionId, newResources.length > 0 ? { ...rest, resources: newResources } : rest);
+
+  await Promise.all(removedResources.map((r) => deleteSessionResource(r.id, sessionId)));
+  return result;
+};
+
+/**
  * Create Mentoring Request Session
  * Endpoint: POST /mentoring/v1/requestSessions/create
  *

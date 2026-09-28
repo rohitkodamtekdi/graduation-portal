@@ -18,6 +18,7 @@ const toId = (entry: any): string => (entry && typeof entry === 'object' ? entry
 
 export const useProfileCompletion = () => {
   const { user } = useAuth();
+  const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
   const [allowedCategories, setAllowedCategories] = useState<string[]>([]);
   const [allowedSubOptions, setAllowedSubOptions] = useState<Record<string, string[]>>({});
   const [allowedProvinces, setAllowedProvinces] = useState<string[]>([]);
@@ -83,9 +84,14 @@ export const useProfileCompletion = () => {
           setAllowedProvinces([]);
           setAllowedSites([]);
         }
+      } finally {
+        if (isMounted) {
+          setIsProfileLoading(false);
+        }
       }
     };
 
+    setIsProfileLoading(true);
     checkCompletion();
     return () => {
       isMounted = false;
@@ -103,6 +109,7 @@ export const useProfileCompletion = () => {
   };
 
   return {
+    isProfileLoading,
     allowedCategories,
     isCardAllowed,
     allowedSubOptions,

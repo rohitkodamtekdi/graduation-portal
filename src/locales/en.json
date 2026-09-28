@@ -1460,7 +1460,7 @@
         "livelihoodCategoryPlaceholder": "Select livelihood category",
         "assetTitle": "Asset Title",
         "assetTitlePlaceholder": "Name of this asset...",
-        "assetDescription": "Asset Description (optional)",
+        "assetDescription": "Asset Description",
         "assetDescriptionPlaceholder": "Describe this asset, its purpose, and how it benefits the recipient...",
         "estimatedValue": "Estimated Asset Value per Participant (Rands)",
         "estimatedValuePlaceholder": "R 0.00",
@@ -1604,7 +1604,17 @@
           "passwordComplexity": "Password must contain at least one uppercase, one lowercase, one number and one special character."
         },
         "success": "User created successfully.",
-        "error": "Failed to create user."
+        "error": "Failed to create user.",
+        "errors": {
+          "provinceRequired": "Province is required",
+          "siteRequired": "Site is required",
+          "assetTypeRequired": "Asset type is required",
+          "livelihoodCategoryRequired": "Livelihood category is required",
+          "assetTitleRequired": "Asset title is required",
+          "assetDescriptionRequired": "Asset description is required",
+          "estimatedValueRequired": "Estimated asset value is required",
+          "availableQuantityRequired": "Available quantity is required"
+        }
       }
     },
     "stats": {

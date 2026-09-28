@@ -125,11 +125,19 @@ export const ASSET_SCHEMA = (hideFileds: string[] = []): FormSection[] => {
                 ...(hideFileds.includes('assetDescription') ? [] : [{
                   name: 'assetDescription',
                   type: 'textarea',
-                  required: false,
+                  required: true,
                   label: { key: 'assetDescription' },
                   placeholder: {
                     key: 'assetDescriptionPlaceholder',
                   },
+                  validation: [
+                    {
+                      rule: 'required',
+                      message: {
+                        key: 'errors.assetDescriptionRequired',
+                      },
+                    },
+                  ],
                 }]),
               ] as FormField[],
             },

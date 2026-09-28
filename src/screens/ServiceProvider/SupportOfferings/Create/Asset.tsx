@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Card, Container, VStack, useAlert } from '@ui';
+import { Card, Container, VStack, useAlert, Loader } from '@ui';
 import styles from '../styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
 import { useNavigation } from '@react-navigation/native';
@@ -48,7 +48,7 @@ const App = (): React.JSX.Element => {
     ...(isLc ? REQUEST_ASSET_HIDE_FIELDS : []),
   ];
 
-  const { isCardAllowed, allowedProvinces, allowedSites } = useProfileCompletion();
+  const { isCardAllowed, allowedProvinces, allowedSites, isProfileLoading } = useProfileCompletion();
   const isAllowed = isLc || Boolean(isCardAllowed(SUPPORT_CATEGORIES.ASSET));
   
   const [provinces, setProvinces] = useState<any[]>([]);
@@ -234,6 +234,10 @@ const App = (): React.JSX.Element => {
       // @ts-ignore
       navigation.navigate(ROUTES.CREATE_OPPORTUNITY);
     }
+  }
+
+  if (isProfileLoading) {
+    return <Loader fullScreen message="Loading..." />;
   }
 
   if (!isAllowed) {
