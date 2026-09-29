@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { Box, Card, Container, HStack, Text, VStack, useAlert } from '@ui';
+import React, { useCallback, useRef, useState } from 'react';
+import { Box, Card, Container, HStack, Text, VStack, useAlert,Loader } from '@ui';
 import styles from '../styles';
 import lcStyles from '../../../SessionsSupport/styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
@@ -15,6 +15,7 @@ import {
   getSessionDetails,
   MentoringOption,
   createSession,
+  updateSessionWithResources,
   requestSession,
 } from '../../../../services/mentoringService';
 import logger from '@utils/logger';
@@ -42,13 +43,17 @@ const App = (): React.JSX.Element => {
   const { showAlert } = useAlert();
   const { user } = useAuth() || {};
   const isLc = user?.role === ROLE_NAMES.LC;
-  const { isCardAllowed, allowedSubOptions, allowedProvinces, allowedSites } = useProfileCompletion();
+  const { isCardAllowed, allowedSubOptions, allowedProvinces, allowedSites, isProfileLoading } = useProfileCompletion();
   const isAllowed = Boolean(isCardAllowed(SUPPORT_CATEGORIES.ADDITIONAL_SERVICE));
 
   const [provinces, setProvinces] = useState<any[]>([]);
   const [pillers, setPillers] = useState<MentoringOption[]>([]);
 
   const [values, setValues] = useState<any>({});
+
+  // Resources as loaded in edit mode - needed to work out which ones the user removed
+
+  const originalResourcesRef = useRef<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lodingButton, setLodingButton] = useState<false | typeof BUTTON_LOADING_STATE[keyof typeof BUTTON_LOADING_STATE]>(false);
 
@@ -72,8 +77,14 @@ const App = (): React.JSX.Element => {
       if (sessionId && (modeType === FORM_MODE.COPY || modeType === FORM_MODE.EDIT)) {
         const rawResponse = await getSessionDetails(sessionId);
         const rawData = rawResponse?.result;
+        originalResourcesRef.current = Array.isArray(rawData?.resources) ? rawData.resources : [];
         if (rawData) {
           const formattedValues: any = valueMapping(rawData, true, {}, SUPPORT_CATEGORIES.ADDITIONAL_SERVICE); // Reverse mapping to form values
+          // A copy must be scheduled fresh - don't carry over the original session's date/time
+          if (modeType === FORM_MODE.COPY) {
+            formattedValues.start_date = '';
+            formattedValues.end_date = '';
+          }
           setValues(formattedValues);
         }
       }
@@ -145,7 +156,7 @@ const App = (): React.JSX.Element => {
         const payload: any = valueMapping({ ...formValues, isDraft }, false, optionsMap, SUPPORT_CATEGORIES.ADDITIONAL_SERVICE);
 
         if (modeType === FORM_MODE.EDIT) {
-          // update code api call
+          await updateSessionWithResources(sessionId, payload, originalResourcesRef.current);
         } else {
           await createSession(payload);
         }
@@ -171,6 +182,10 @@ const App = (): React.JSX.Element => {
       setLodingButton(false);
     }
   };
+
+  if (isLoading || isProfileLoading) {
+    return <Loader fullScreen message="Loading..." />;
+  }
 
   if (!isLc && modeType === FORM_MODE.CREATE && !isAllowed) {
     return (

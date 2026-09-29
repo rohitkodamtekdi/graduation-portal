@@ -8,6 +8,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
       id: 'serviceDetails',
       title: {
         key: 'supportProvider.additionalServicesForm.tabs.serviceDetails',
+        fallback: 'Service Details',
       },
       icon: 'FileText',
       children: [
@@ -16,9 +17,11 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
           id: 'additionalServiceDetails',
           title: {
             key: 'supportProvider.additionalServicesForm.step1.title',
+            fallback: 'Additional Service Details',
           },
           subTitle: {
             key: 'supportProvider.additionalServicesForm.step1.subTitle',
+            fallback: 'Fields marked * are required',
           },
           rows: [
             {
@@ -27,14 +30,15 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   name: 'provinces',
                   type: 'select',
                   required: true,
-                  label: { key: 'province' },
-                  placeholder: { key: 'provincePlaceholder' },
+                  label: { key: 'province', fallback: 'Province' },
+                  placeholder: { key: 'provincePlaceholder', fallback: 'Select province' },
                   optionsSource: 'provinces',
                   validation: [
                     {
                       rule: 'required',
                       message: {
                         key: 'errors.provinceRequired',
+                        fallback: 'Province is required',
                       },
                     },
                   ],
@@ -43,10 +47,11 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   name: 'sites',
                   type: 'multiselect',
                   required: true,
-                  label: { key: 'site' },
-                  placeholder: { key: 'sitePlaceholder' },
+                  label: { key: 'site', fallback: 'Site' },
+                  placeholder: { key: 'sitePlaceholder', fallback: 'Select province first' },
                   placeholderWhenReady: {
                     key: 'sitePlaceholderReady',
+                    fallback: 'Select site',
                   },
                   optionsSource: 'sites',
                   dependsOn: 'provinces',
@@ -56,6 +61,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       rule: 'required',
                       message: {
                         key: 'errors.siteRequired',
+                        fallback: 'Site is required',
                       },
                     },
                   ],
@@ -68,13 +74,14 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   name: 'categories',
                   type: 'pillselect',
                   required: true,
-                  label: { key: 'servicesCategory' },
+                  label: { key: 'servicesCategory', fallback: 'Services Category' },
                   optionsSource: 'pillars',
                   validation: [
                     {
                       rule: 'required',
                       message: {
                         key: 'errors.servicesCategoryRequired',
+                        fallback: 'Services category is required',
                       },
                     },
                   ],
@@ -86,7 +93,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                 ...(hideFileds.includes('idp_additional_services_tasks') ? [] : [{
                   name: 'idp_additional_services_tasks',
                   type: 'pillmultiselect',
-                  label: { key: 'servicesCategory' },
+                  label: { key: 'servicesCategory', fallback: 'Tags' },
                   optionsSource: 'sessionTypes',
                   dependsOn: 'categories',
                   visibleIf: [
@@ -101,13 +108,14 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   name: 'title',
                   type: 'text',
                   required: true,
-                  label: { key: 'servicesTitle' },
-                  placeholder: { key: 'servicesTitlePlaceholder' },
+                  label: { key: 'servicesTitle', fallback: 'Services Title' },
+                  placeholder: { key: 'servicesTitlePlaceholder', fallback: 'Name of this service...' },
                   validation: [
                     {
                       rule: 'required',
                       message: {
                         key: 'errors.servicesTitleRequired',
+                        fallback: 'Services title is required',
                       },
                     },
                   ],
@@ -120,15 +128,17 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   name: 'description',
                   type: 'textarea',
                   required: true,
-                  label: { key: 'servicesDescription' },
+                  label: { key: 'servicesDescription', fallback: 'Services Description' },
                   placeholder: {
                     key: 'servicesDescriptionPlaceholder',
+                    fallback: 'Describe what this service provides and who it benefits...',
                   },
                   validation: [
                     {
                       rule: 'required',
                       message: {
                         key: 'errors.servicesDescriptionRequired',
+                        fallback: 'Services description is required',
                       },
                     },
                   ],
@@ -142,6 +152,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
           id: 'serviceAvailability',
           title: {
             key: 'supportProvider.additionalServicesForm.step1.availabilityTitle',
+            fallback: 'Service Availability',
           },
           rows: [
             {
@@ -150,13 +161,14 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   name: 'start_date',
                   type: 'datetime',
                   required: false,
-                  label: { key: 'startDate' },
-                  placeholder: { key: 'start_datePlaceholder' },
+                  label: { key: 'startDate', fallback: 'Start Date' },
+                  placeholder: { key: 'start_datePlaceholder', fallback: 'DD/MM/YYYY HH:MM' },
                   validation: [
                     {
                       rule: 'dateNotInPast',
                       message: {
                         key: 'errors.dateNotInPast',
+                        fallback: 'Past dates are not allowed.',
                       },
                     },
                     {
@@ -167,6 +179,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       },
                       message: {
                         key: "errors.dateCompare",
+                        fallback: "Start Date must be before or equal to End Date."
                       }
                     }
                   ],
@@ -179,13 +192,14 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   name: 'end_date',
                   type: 'datetime',
                   required: false,
-                  label: { key: 'endDate' },
-                  placeholder: { key: 'end_datePlaceholder' },
+                  label: { key: 'endDate', fallback: 'End Date' },
+                  placeholder: { key: 'end_datePlaceholder', fallback: 'DD/MM/YYYY HH:MM' },
                   validation: [
                     {
                       rule: 'dateNotInPast',
                       message: {
                         key: 'errors.dateNotInPast',
+                        fallback: 'Past dates are not allowed.',
                       },
                     },
                     {
@@ -196,6 +210,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       },
                       message: {
                         key: "errors.dateCompareStartDate",
+                        fallback: "End Date must be after or equal to Start Date."
                       }
                     }
                   ],
@@ -208,8 +223,8 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   name: 'location',
                   type: 'text',
                   required: false,
-                  label: { key: 'serviceLocation' },
-                  placeholder: { key: 'serviceLocationPlaceholder' },
+                  label: { key: 'serviceLocation', fallback: 'Location where service is provided' },
+                  placeholder: { key: 'serviceLocationPlaceholder', fallback: "Address or indicate 'Online / Remote'..." },
                 },
               ] as FormField[],
             }]),
@@ -219,8 +234,8 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   name: 'learning_objectives',
                   type: 'textarea',
                   required: false,
-                  label: { key: 'eligibilityCriteria' },
-                  placeholder: { key: 'eligibilityCriteriaPlaceholder' },
+                  label: { key: 'eligibilityCriteria', fallback: 'Eligibility Criteria' },
+                  placeholder: { key: 'eligibilityCriteriaPlaceholder', fallback: 'Who can access this service? Any specific requirements?' },
                 },
               ] as FormField[],
             }]),
@@ -234,12 +249,15 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                   showOptionalTag: true,
                   label: {
                     key: 'supportProvider.additionalServicesForm.step1.resourceContent',
+                    fallback: 'Resource Content / Documents',
                   },
                   subTitle: {
                     key: 'supportProvider.additionalServicesForm.step1.resourceUploadSub',
+                    fallback: 'Upload PDF or Word service materials or guidelines (Max 10 MB per file)',
                   },
                   placeholder: {
                     key: 'supportProvider.additionalServicesForm.step1.uploadPrompt',
+                    fallback: 'Click to browse or upload PDF / Word documents',
                   },
                   validation: [
                     {
@@ -251,6 +269,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       ],
                       message: {
                         key: 'errors.fileType',
+                        fallback: 'Only PDF and DOC files are allowed.',
                       },
                     },
                     {
@@ -258,6 +277,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       value: 10,
                       message: {
                         key: 'errors.fileSize10',
+                        fallback: 'Maximum file size is 10 MB.',
                       },
                     },
                   ],
@@ -275,6 +295,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
       id: 'review',
       title: {
         key: 'supportProvider.additionalServicesForm.tabs.review',
+        fallback: 'Review & Publish',
       },
       icon: 'Check',
       children: [
@@ -283,20 +304,25 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
           id: 'reviewPublishSection',
           title: {
             key: 'supportProvider.additionalServicesForm.step2.title',
+            fallback: 'Review & Publish',
           },
           hint: {
             title: {
               key: 'supportProvider.additionalServicesForm.step2.infoTitle',
+              fallback: 'Before you publish:',
             },
             bullets: [
               {
                 key: 'supportProvider.additionalServicesForm.step2.infoBullet1',
+                fallback: 'This support will be visible to all Coaches in the GBL network',
               },
               {
                 key: 'supportProvider.additionalServicesForm.step2.infoBullet2',
+                fallback: 'Coaches can submit requests on behalf of participants',
               },
               {
                 key: 'supportProvider.additionalServicesForm.step2.infoBullet3',
+                fallback: "You'll receive notifications when requests are submitted",
               },
             ],
           },
@@ -306,6 +332,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
               id: 'reviewServiceDetails',
               title: {
                 key: 'supportProvider.additionalServicesForm.step2.serviceDetailsTitle',
+                fallback: 'Service Details',
               },
               rows: [
                 ...(hideFileds.includes('provinces') ? [] : [{
@@ -316,6 +343,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       optionsSource: 'provinces',
                       label: {
                         key: 'province',
+                        fallback: 'Province',
                       },
                     },
                   ] as FormField[],
@@ -328,6 +356,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       optionsSource: 'sites',
                       label: {
                         key: 'site',
+                        fallback: 'Site',
                       },
                     },
                   ] as FormField[],
@@ -340,6 +369,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       optionsSource: 'pillars',
                       label: {
                         key: 'servicesCategory',
+                        fallback: 'Category',
                       },
                     },
                   ] as FormField[],
@@ -352,6 +382,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       optionsSource: 'sessionTypes',
                       label: {
                         key: 'servicesCategory',
+                        fallback: 'Tags',
                       },
                     },
                   ] as FormField[],
@@ -361,7 +392,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                     {
                       name: 'title',
                       type: 'view',
-                      label: { key: 'servicesTitle' },
+                      label: { key: 'servicesTitle', fallback: 'Title' },
                     },
                   ] as FormField[],
                 }]),
@@ -371,7 +402,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       name: 'start_date',
                       type: 'view',
                       displayFormat: "dateFormat@DD-MM-YYYY hh:mm A",
-                      label: { key: 'startDate' },
+                      label: { key: 'startDate', fallback: 'Start Date' },
                     },
                   ] as FormField[],
                 }]),
@@ -381,7 +412,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                       name: 'end_date',
                       type: 'view',
                       displayFormat: "dateFormat@DD-MM-YYYY hh:mm A",
-                      label: { key: 'endDate' },
+                      label: { key: 'endDate', fallback: 'End Date' },
                     },
                   ] as FormField[],
                 }]),
@@ -390,7 +421,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
                     {
                       name: 'location',
                       type: 'view',
-                      label: { key: 'serviceLocation' },
+                      label: { key: 'serviceLocation', fallback: 'Location' },
                     },
                   ] as FormField[],
                 }]),

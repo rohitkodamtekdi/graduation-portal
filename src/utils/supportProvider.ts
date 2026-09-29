@@ -46,6 +46,16 @@ export function valueMapping(
     const rawCategories = formValues?.categories;
     const categoryVal = Array.isArray(rawCategories) ? rawCategories[0] : rawCategories;
 
+    // API returns unix seconds; the datetime field expects 'YYYY-MM-DDTHH:mm:ss'
+    const toDateTimeValue = (val: any) => {
+      if (!val) return '';
+      const num = Number(val);
+      const m = Number.isNaN(num) ? moment(val) : moment(num > 1e12 ? num : num * 1000);
+      return m.isValid() ? m.format('YYYY-MM-DDTHH:mm:ss') : '';
+    };
+    const rawDeliveryMode = formValues?.delivery_mode;
+    const deliveryModeVal = typeof rawDeliveryMode === 'object' ? rawDeliveryMode?.value : rawDeliveryMode;
+
     return {
       title: formValues?.title,
       provinces: provinceVal || '',
@@ -61,6 +71,11 @@ export function valueMapping(
       can_be_copied: `${formValues.can_be_copied}`,
       max_capacity: formValues.seats_limit,
       resources: formValues?.resources,
+      start_date: toDateTimeValue(formValues?.start_date),
+      end_date: toDateTimeValue(formValues?.end_date),
+      delivery_mode: deliveryModeVal || '',
+      location: formValues?.meeting_info?.location ?? formValues?.location ?? '',
+      meeting_link: formValues?.meeting_info?.link ?? formValues?.meeting_link ?? '',
     };
   }
 

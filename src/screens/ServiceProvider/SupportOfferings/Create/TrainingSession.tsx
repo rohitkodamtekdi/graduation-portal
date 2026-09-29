@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Button, ButtonIcon, ButtonText, Card, Container, Loader, VStack, useAlert, Modal, HStack, Text } from '@ui';
 import styles from '../styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
@@ -14,6 +14,7 @@ import {
   getRecommendedFor,
   getDeliveryModes,
   createSession,
+  updateSessionWithResources,
   getSessionDetails,
   deleteSession,
   MentoringOption,
@@ -44,10 +45,12 @@ const App = (): React.JSX.Element => {
   const [targetAudience, setTargetAudience] = useState<MentoringOption[]>([]);
   const [deliveryModes, setDeliveryModes] = useState<MentoringOption[]>([]);
   const [values, setValues] = useState<any>({});
+  // Resources as loaded in edit mode - needed to work out which ones the user removed
+  const originalResourcesRef = useRef<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lodingButton, setLodingButton] = useState<false | "saveDraft" | "submit">(false);
   const { showAlert } = useAlert();
-  const { isCardAllowed, allowedSubOptions, allowedProvinces, allowedSites } = useProfileCompletion();
+  const { isCardAllowed, allowedSubOptions, allowedProvinces, allowedSites, isProfileLoading } = useProfileCompletion();
   const isAllowed = isLc || Boolean(isCardAllowed(SUPPORT_CATEGORIES.TRAINING));
   const [showDiscardModal, setShowDiscardModal] = useState(false);
 
@@ -92,8 +95,14 @@ const App = (): React.JSX.Element => {
       if (sessionId && (modeType === FORM_MODE.COPY || modeType === FORM_MODE.EDIT)) {
         const rawResponse = await getSessionDetails(sessionId);
         const rawData = rawResponse?.result;
+        originalResourcesRef.current = Array.isArray(rawData?.resources) ? rawData.resources : [];
         if (rawData) {
           const formattedValues: any = valueMapping(rawData, true, {}, 'training'); // Reverse mapping to form values
+          // A copy must be scheduled fresh - don't carry over the original session's date/time
+          if (modeType === FORM_MODE.COPY) {
+            formattedValues.start_date = '';
+            formattedValues.end_date = '';
+          }
           setValues(formattedValues);
         }
       }
@@ -139,8 +148,8 @@ const App = (): React.JSX.Element => {
       setLodingButton(isDraft ? "saveDraft" : "submit")
       const payload: any = valueMapping({ ...formValues, isDraft }, false, optionsMap);
 
-      if (modeType === 'edit') {
-        // update code api call
+      if (modeType === FORM_MODE.EDIT) {
+        await updateSessionWithResources(sessionId, payload, originalResourcesRef.current);
       }
       else {
         await createSession(payload);
@@ -194,6 +203,10 @@ const App = (): React.JSX.Element => {
     }
   }
 
+  if (isLoading || isProfileLoading) {
+    return <Loader fullScreen message="Loading..." />;
+  }
+
   if (modeType === FORM_MODE.CREATE && !isAllowed) {
     return (
       <NotFound
@@ -202,10 +215,6 @@ const App = (): React.JSX.Element => {
         )}
       />
     );
-  }
-
-  if (isLoading) {
-    return <Loader fullScreen message="Loading..." />;
   }
 
   if ((modeType === FORM_MODE.CREATE && sessionId) || ((modeType === FORM_MODE.COPY || modeType === FORM_MODE.EDIT) && !sessionId)) {
