@@ -82,33 +82,6 @@ export const ACCEPT_AND_SCHEDULE_FORM_SCHEMA: FormSection[] = [
       {
         fields: [
           {
-            name: 'category',
-            type: 'select',
-            required: true,
-            label: {
-              key: 'supportProvider.supportRequests.labels.sessionPillarCategory',
-              fallback: 'Session Pillar / Category',
-            },
-            placeholder: {
-              key: 'supportProvider.supportRequests.placeholders.category',
-              fallback: 'Select category',
-            },
-            optionsSource: 'pillars',
-            validation: [
-              {
-                rule: 'required',
-                message: {
-                  key: 'supportProvider.supportRequests.errors.categoryRequired',
-                  fallback: 'Category is required',
-                },
-              },
-            ],
-          },
-        ],
-      },
-      {
-        fields: [
-          {
             name: 'title',
             type: 'text',
             required: true,
@@ -350,23 +323,6 @@ export const ACCEPT_AND_SCHEDULE_FORM_SCHEMA: FormSection[] = [
                 },
               },
             ],
-          },
-        ],
-      },
-      {
-        fields: [
-          {
-            name: 'notes',
-            type: 'textarea',
-            required: false,
-            label: {
-              key: 'supportProvider.supportRequests.labels.notesForCoach',
-              fallback: 'Notes for Coach',
-            },
-            placeholder: {
-              key: 'supportProvider.supportRequests.placeholders.notes',
-              fallback: 'Add any special instructions or details...',
-            },
           },
         ],
       },

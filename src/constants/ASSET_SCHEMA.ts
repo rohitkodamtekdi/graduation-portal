@@ -502,6 +502,6 @@ export const ASSET_SCHEMA = (hideFileds: string[] = []): FormSection[] => {
   return allTabs;
 };
 
-export const REQUEST_ASSET_HIDE_FIELDS: string[] = [  ];
+export const REQUEST_ASSET_HIDE_FIELDS: string[] = [ 'assetDocuments' ];
 
 export const ASSET_FORM_SCHEMA = ASSET_SCHEMA;
