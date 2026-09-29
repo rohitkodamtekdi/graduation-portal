@@ -57,16 +57,11 @@ const App = (): React.JSX.Element => {
   const [limit] = useState<number>(5);
   const [total, setTotal] = useState<number>(0);
   const [_loading, setLoading] = useState<boolean>(false);
-  const [counts, setCounts] = useState({
-    sessions: 0,
-    additional_services: 0,
-    assets: 0,
-  });
 
   const tabs = [
-    { key: 'sessions', label: t('supportProvider.supportOfferings.tabs.trainings', 'Trainings & Sessions'), count: counts.sessions, icon: 'GraduationCap' },
-    { key: 'additional_services', label: t('supportProvider.supportOfferings.tabs.additionalServices', 'Additional Services'), count: counts.additional_services, icon: 'Briefcase' },
-    { key: 'assets', label: t('supportProvider.supportOfferings.tabs.assets', 'Assets'), count: counts.assets, icon: 'Box' },
+    { key: 'sessions', label: t('supportProvider.supportOfferings.tabs.trainings', 'Trainings & Sessions'), icon: 'GraduationCap' },
+    { key: 'additional_services', label: t('supportProvider.supportOfferings.tabs.additionalServices', 'Additional Services'), icon: 'Briefcase' },
+    { key: 'assets', label: t('supportProvider.supportOfferings.tabs.assets', 'Assets'), icon: 'Box' },
   ];
 
   const handleTabChange = (key: string) => {
@@ -193,38 +188,6 @@ const App = (): React.JSX.Element => {
     setPage(1);
   }, [activeTab, filters.search, filters.status, filters.province, filters.site]);
 
-  // Fetch counts for all tabs so badges show correct counts immediately
-  const fetchCounts = useCallback(async () => {
-    try {
-      const baseParams = {
-        search: filters.search,
-        status: filters.status,
-        provinces: filters.province,
-        sites: filters.site,
-        page: 1,
-        limit: 1,
-      };
-
-      const [sessionsRes, servicesRes, assetsRes] = await Promise.all([
-        getTrainingSessions(baseParams).catch(() => null),
-        getAdditionalServices(baseParams).catch(() => null),
-        getAssets(baseParams).catch(() => null),
-      ]);
-
-      const sessionsCount = sessionsRes?.result?.count ?? sessionsRes?.total ?? sessionsRes?.count ?? 0;
-      const servicesCount = (servicesRes as any)?.result?.count ?? (servicesRes as any)?.total ?? (servicesRes as any)?.count ?? 0;
-      const assetsCount = (assetsRes as any)?.result?.count ?? (assetsRes as any)?.total ?? (assetsRes as any)?.count ?? 0;
-
-      setCounts({
-        sessions: sessionsCount,
-        additional_services: servicesCount,
-        assets: assetsCount,
-      });
-    } catch (err) {
-      logger.error('Error fetching tab counts:', err);
-    }
-  }, [filters.search, filters.status, filters.province, filters.site]);
-
   // Fetch listing data
   const fetchData = useCallback(async () => {
     try {
@@ -245,17 +208,14 @@ const App = (): React.JSX.Element => {
         const res = await getTrainingSessions(params);
         fetchedData = res?.result?.data || [];
         totalCount = res?.result?.count ?? res?.total ?? res?.count ?? (res?.result?.total ?? fetchedData.length);
-        setCounts((prev) => ({ ...prev, sessions: totalCount }));
       } else if (activeTab === 'additional_services') {
         const res = await getAdditionalServices(params);
         fetchedData = Array.isArray(res) ? res : (res as any)?.result?.data || [];
         totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
-        setCounts((prev) => ({ ...prev, additional_services: totalCount }));
       } else if (activeTab === 'assets') {
         const res = await getAssets(params);
         fetchedData = Array.isArray(res) ? res : (res as any)?.result?.data || [];
         totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
-        setCounts((prev) => ({ ...prev, assets: totalCount }));
       }
       if (page === 1) {
         setItems(fetchedData);
@@ -276,12 +236,11 @@ const App = (): React.JSX.Element => {
 
   useFocusEffect(
     useCallback(() => {
-      fetchCounts();
       fetchData();
       return () => {
         setLoading(true);
       };
-    }, [fetchCounts, fetchData])
+    }, [fetchData])
   );
 
   const handleGetDetails = async (item: any) => {

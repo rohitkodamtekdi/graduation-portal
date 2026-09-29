@@ -162,25 +162,21 @@ const App = (): React.JSX.Element => {
     {
       key: 'sessions',
       label: `${t(`${BASE_PATH}.tabs.sessions`)}`,
-      count: tabCounts.sessions ?? 0,
       icon: 'GraduationCap',
     },
     {
       key: 'additional_services',
       label: `${t(`${BASE_PATH}.tabs.additional_services`)}`,
-      count: tabCounts.additional_services ?? 0,
       icon: 'MessageSquare',
     },
     {
       key: 'assets',
       label: `${t(`${BASE_PATH}.tabs.assets`)}`,
-      count: tabCounts.assets ?? 0,
       icon: 'Package',
     },
     {
       key: 'declined',
       label: `${t(`${BASE_PATH}.tabs.declined`, 'Declined')}`,
-      count: tabCounts.declined ?? 0,
       icon: 'XCircle',
     },
   ];
