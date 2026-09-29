@@ -443,7 +443,7 @@ const SessionsSupportScreen: React.FC = () => {
         if (activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
           let result;
           if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS) {
-            result = await getRequestSessionsList(params);
+            result = await getRequestSessionsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION });
             fetchedData = result?.result?.data || [];
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
             setCounts((prev) => ({ ...prev, sessions: totalCount }));
@@ -466,7 +466,7 @@ const SessionsSupportScreen: React.FC = () => {
             });
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           } else {
-            result = await getRequestSessionsList(params);
+            result = await getRequestSessionsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION });
             fetchedData = result?.result?.data || [];
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           }
