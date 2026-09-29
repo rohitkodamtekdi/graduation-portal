@@ -1,4 +1,3 @@
-import mockMaterials from './mockData/materialsLibrary.json';
 import { getResourcesList } from '../../mentoringService';
 
 export interface MaterialItem {
@@ -32,8 +31,8 @@ export interface MaterialsLibraryResponse {
   };
 }
 
-// In-memory data store for mock state session
-let inMemoryMaterials: MaterialItem[] = [...(mockMaterials as unknown as MaterialItem[])];
+// In-memory data store for session state
+let inMemoryMaterials: MaterialItem[] = [];
 
 /**
  * Get materials with optional filters, search, and dynamic stats from backend API
@@ -68,12 +67,9 @@ export const getMaterialsList = async (
           fileUrl: resource.link || '',
         };
       });
-    } else {
-      items = [...inMemoryMaterials];
     }
   } catch (err) {
-    console.warn('[materialsLibraryService] Failed to fetch resources list, using fallback:', err);
-    items = [...inMemoryMaterials];
+    console.warn('[materialsLibraryService] Failed to fetch resources list:', err);
   }
 
   let filtered = [...items];

@@ -439,6 +439,7 @@ export const ADDITIONAL_SERVICES_SCHEMA = (hideFileds: string[] = []): FormSecti
 export const REQUEST_ADDITIONAL_SERVICE_HIDE_FIELDS: string[] = [
   'location',
   'learning_objectives',
+  'resources',
 ];
 
 export const ADDITIONAL_SERVICES_FORM_SCHEMA = ADDITIONAL_SERVICES_SCHEMA;

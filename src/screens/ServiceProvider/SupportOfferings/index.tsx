@@ -57,16 +57,11 @@ const App = (): React.JSX.Element => {
   const [limit] = useState<number>(5);
   const [total, setTotal] = useState<number>(0);
   const [_loading, setLoading] = useState<boolean>(false);
-  const [counts, setCounts] = useState({
-    sessions: 0,
-    additional_services: 0,
-    assets: 0,
-  });
 
   const tabs = [
-    { key: 'sessions', label: t('supportProvider.supportOfferings.tabs.trainings', 'Trainings & Sessions'), count: counts.sessions, icon: 'GraduationCap' },
-    { key: 'additional_services', label: t('supportProvider.supportOfferings.tabs.additionalServices', 'Additional Services'), count: counts.additional_services, icon: 'Briefcase' },
-    { key: 'assets', label: t('supportProvider.supportOfferings.tabs.assets', 'Assets'), count: counts.assets, icon: 'Box' },
+    { key: 'sessions', label: t('supportProvider.supportOfferings.tabs.trainings', 'Trainings & Sessions'), icon: 'GraduationCap' },
+    { key: 'additional_services', label: t('supportProvider.supportOfferings.tabs.additionalServices', 'Additional Services'), icon: 'Briefcase' },
+    { key: 'assets', label: t('supportProvider.supportOfferings.tabs.assets', 'Assets'), icon: 'Box' },
   ];
 
   const handleTabChange = (key: string) => {
@@ -213,17 +208,14 @@ const App = (): React.JSX.Element => {
         const res = await getTrainingSessions(params);
         fetchedData = res?.result?.data || [];
         totalCount = res?.result?.count ?? res?.total ?? res?.count ?? (res?.result?.total ?? fetchedData.length);
-        setCounts((prev) => ({ ...prev, sessions: totalCount }));
       } else if (activeTab === 'additional_services') {
         const res = await getAdditionalServices(params);
         fetchedData = Array.isArray(res) ? res : (res as any)?.result?.data || [];
         totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
-        setCounts((prev) => ({ ...prev, additional_services: totalCount }));
       } else if (activeTab === 'assets') {
         const res = await getAssets(params);
         fetchedData = Array.isArray(res) ? res : (res as any)?.result?.data || [];
         totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
-        setCounts((prev) => ({ ...prev, assets: totalCount }));
       }
       if (page === 1) {
         setItems(fetchedData);
