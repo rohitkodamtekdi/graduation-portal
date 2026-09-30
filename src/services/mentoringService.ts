@@ -200,7 +200,7 @@ export const deleteSession = async (sessionId: string | number): Promise<any> =>
 
 /**
  * Cancel a published Support Offering (Training/Additional Service/Asset).
- * Endpoint: POST /mentoring/v1/sessions/cancel/:sessionId
+ * Endpoint: POST /mentoring/v1/mentors/cancel/:sessionId
  */
 export const cancelSession = async (sessionId: string | number): Promise<any> => {
   try {
