@@ -144,7 +144,7 @@ export const getMaterialsList = async (
     const targetForm = format.toLowerCase().replace(/[\s-_]/g, '');
     filtered = filtered.filter((item) => {
       const itemForm = item.format.toLowerCase().replace(/[\s-_]/g, '');
-      return itemForm === targetForm || itemForm.includes(targetForm) || targetForm.includes(itemForm);
+      return itemForm === targetForm;
     });
   }
 
