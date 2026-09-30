@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Button, ButtonIcon, ButtonText, Container, HStack, LucideIcon, Pressable, Text, VStack, useAlert, Badge, BadgeText, Spinner } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -15,9 +15,11 @@ import {
   SUPPORT_OFFERING_SUB_TABS,
   SUPPORT_OFFERING_TYPE_VALUES,
   REQUEST_STATUS,
+  SESSION_STATUS_LABEL,
   OFFERING_FILTER_FIELDS as FILTER_FIELDS,
   OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL,
 } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { deriveStatusLabel } from '@hooks/useSessionStatus';
 import { TabButton } from '@components/Tabs';
 import FilterButton from '@components/Filter';
 import TrainingCard from '../ServiceProvider/SupportOfferings/components/Cards/TrainingCard';
@@ -41,6 +43,12 @@ import LcMySessionTab from './MyTraining&Sessions/LcMySessionTab';
 
 // Fallback filter if the backend doesn't apply `support_offering_type`; normalizes both string
 // and `{ value, label }` shapes across APIs (missing type = assume it belongs).
+
+const HISTORY_FETCH_LIMIT = 100;
+
+// Browse tabs only list offerings that can still be joined: Upcoming or In Progress (completed ones live in History)
+const BROWSE_VISIBLE_STATUSES: string[] = [SESSION_STATUS_LABEL.UPCOMING, SESSION_STATUS_LABEL.IN_PROGRESS];
+const isBrowsable = (item: any) => BROWSE_VISIBLE_STATUSES.includes(deriveStatusLabel(item));
 const matchesOfferingType = (item: any, expectedType: string): boolean => {
   const rawType = item?.support_offering_type || item?.type || item?.session?.support_offering_type;
   const itemType = rawType && typeof rawType === 'object' ? rawType.value : rawType;
@@ -169,6 +177,7 @@ const SessionsSupportScreen: React.FC = () => {
   const [page, setPage] = useState<number>(1);
   const [limit] = useState<number>(5);
   const [total, setTotal] = useState<number>(0);
+  const browseHiddenCountRef = useRef(0);
   const [_loading, setLoading] = useState<boolean>(false);
   const [counts, setCounts] = useState({
     sessions: 0,
@@ -409,7 +418,8 @@ const SessionsSupportScreen: React.FC = () => {
     if (
       activeSubTab !== SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS &&
       activeSubTab !== SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS &&
-      activeSubTab !== SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS
+      activeSubTab !== SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS &&
+      activeSubTab !== SUPPORT_OFFERING_SUB_TABS.HISTORY
     ) {
       return;
     }
@@ -438,14 +448,54 @@ const SessionsSupportScreen: React.FC = () => {
         }
 
         let fetchedData: any[] = [];
+        const isBrowseSubTab = activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS;
+        if (page === 1) browseHiddenCountRef.current = 0;
+        const keepBrowsable = (list: any[]) => {
+          if (!isBrowseSubTab) return list;
+          const visible = list.filter(isBrowsable);
+          browseHiddenCountRef.current += list.length - visible.length;
+          return visible;
+        };
         let totalCount = 0;
 
-        if (activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
+        if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY) {
+          const historyParams = { ...params, page: 1, limit: HISTORY_FETCH_LIMIT };
+          let rawList: any[] = [];
+          if (activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
+            const result = await getRequestSessionsList({ ...historyParams, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION });
+            rawList = result?.result?.data || [];
+          } else {
+            const offeringType = activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES
+              ? SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE
+              : SUPPORT_OFFERING_TYPE_VALUES.ASSET;
+            const res = await getMyRequestsList({ ...historyParams, support_offering_type: offeringType });
+            rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
+              .filter((item: any) => matchesOfferingType(item, offeringType))
+              .map((item: any) => {
+                const session = item.session || item.session_details || {};
+                return {
+                  ...item,
+                  title: item.title || session.title || 'Untitled Request',
+                  status: item.status || REQUEST_STATUS.REQUESTED,
+                  start_date: item.start_date || session.start_date,
+                  end_date: item.end_date || session.end_date,
+                  delivery_mode: item.delivery_mode || session.delivery_mode,
+                };
+              });
+          }
+          fetchedData = rawList.filter((item: any) => deriveStatusLabel(item) === SESSION_STATUS_LABEL.COMPLETED);
+          // Additional Services History reuses the My Requests card, whose badge reads `status`
+          if (activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES) {
+            fetchedData = fetchedData.map((item: any) => ({ ...item, status: SESSION_STATUS_LABEL.COMPLETED }));
+          }
+          totalCount = fetchedData.length;
+        } else if (activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
           let result;
           if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS) {
             result = await getRequestSessionsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION });
-            fetchedData = result?.result?.data || [];
-            totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
+            const rawSessions = result?.result?.data || [];
+            totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? rawSessions.length);
+            fetchedData = keepBrowsable(rawSessions);
             setCounts((prev) => ({ ...prev, sessions: totalCount }));
           } else if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS) {
             result = await getMyRequestsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION });
@@ -478,8 +528,10 @@ const SessionsSupportScreen: React.FC = () => {
           } else {
             res = await getRequestSessionsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE });
           }
-          const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
-            .filter((item: any) => matchesOfferingType(item, SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE));
+          const rawList = keepBrowsable(
+            (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
+              .filter((item: any) => matchesOfferingType(item, SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE)),
+          );
           fetchedData = rawList.map((item: any) => {
             const session = item.session || item.session_details || {};
             return {
@@ -501,8 +553,11 @@ const SessionsSupportScreen: React.FC = () => {
           } else {
             res = await getRequestSessionsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.ASSET });
           }
-          const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
-            .filter((item: any) => matchesOfferingType(item, SUPPORT_OFFERING_TYPE_VALUES.ASSET));
+          // Filter before mapToAssetItem, which drops the start/end dates the status is derived from
+          const rawList = keepBrowsable(
+            (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
+              .filter((item: any) => matchesOfferingType(item, SUPPORT_OFFERING_TYPE_VALUES.ASSET)),
+          );
           fetchedData = isBrowse
             ? rawList.map(mapToAssetItem)
             : rawList.map((item: any) => {
@@ -521,7 +576,7 @@ const SessionsSupportScreen: React.FC = () => {
         }
 
         if (isMounted) {
-          if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS) {
+          if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS || activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY) {
             if (page === 1) {
               setMySessions(fetchedData);
             } else {
@@ -533,7 +588,10 @@ const SessionsSupportScreen: React.FC = () => {
           } else {
             setItems((prev) => [...prev, ...fetchedData]);
           }
-          setTotal(totalCount);
+          setTotal(isBrowseSubTab ? Math.max(0, totalCount - browseHiddenCountRef.current) : totalCount);
+          if (isBrowseSubTab && fetchedData.length === 0 && page * limit < totalCount) {
+            setPage((prev) => prev + 1);
+          }
         }
       } catch (err) {
         console.error('Error fetching offerings list:', err);
@@ -761,6 +819,34 @@ const SessionsSupportScreen: React.FC = () => {
                   />
                 ))}
               </VStack>
+            ) : null
+          ) : activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY && activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES ? (
+            // Same card as My Requests (provider, requested date, notes, View Details -> request details page)
+            <MyRequests
+              items={items}
+              _loading={_loading}
+              isShowLoadMore={false}
+              onLoadMoreItems={onLoadMoreItems}
+            />
+          ) : activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY ? (
+            mySessions.length > 0 ? (
+              <VStack {...styles.mySessionsListVStack}>
+                {/* Read-only: no assign/edit actions on completed sessions */}
+                {mySessions.map((session, idx) => (
+                  <LcMySessionTab
+                    key={session.id || session._id || idx}
+                    item={session}
+                    isFirst={idx === 0}
+                    hideSchedule={activeTab === SUPPORT_OFFERING_TABS.ASSETS}
+                  />
+                ))}
+              </VStack>
+            ) : !_loading ? (
+              <Box alignItems="center" py="$10" width="100%">
+                <Text color="$textMuted">
+                  {t('lc.sessionsSupport.history.empty', 'No completed sessions yet.')}
+                </Text>
+              </Box>
             ) : null
           ) : activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_REQUESTS ? (
             <MyRequests

@@ -24,9 +24,10 @@ interface LcMySessionTabProps {
   isShowLoadMore?: boolean;
   onLoadMoreItems?: () => void;
   isLoadingMore?: boolean;
+  hideSchedule?: boolean;
 }
 
-const getStatusColors = (status: string) => {
+export const getStatusColors = (status: string) => {
   const s = (status || '').toUpperCase();
   if (s === 'UPCOMING') {
     return { bg: '$blue50', border: '$blue200', text: '$blue600', icon: 'Clock' };
@@ -54,6 +55,7 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
   isShowLoadMore,
   onLoadMoreItems,
   isLoadingMore = false,
+  hideSchedule = false,
 }) => {
   const { t } = useLanguage();
   const { statusTag: statusLabel } = useSessionStatus(item);
@@ -161,13 +163,15 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
           {/* ROW 2: Metadata */}
           <HStack {...styles.mySessionCardMetaRow}>
             {/* Date & Time */}
-            <HStack {...styles.mySessionCardMetaItem}>
-              <LucideIcon name="Calendar" size={12} color="$textSecondary" />
-              <Text {...styles.mySessionCardMetaText}>{displayDateTime}</Text>
-            </HStack>
+            {!hideSchedule && (
+              <HStack {...styles.mySessionCardMetaItem}>
+                <LucideIcon name="Calendar" size={12} color="$textSecondary" />
+                <Text {...styles.mySessionCardMetaText}>{displayDateTime}</Text>
+              </HStack>
+            )}
 
             {/* Duration */}
-            {displayDuration && (
+            {!hideSchedule && displayDuration && (
               <HStack {...styles.mySessionCardMetaItem}>
                 <LucideIcon name="Clock" size={12} color="$textSecondary" />
                 <Text {...styles.mySessionCardMetaText}>{displayDuration}</Text>
@@ -188,11 +192,14 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
 
           {/* FOOTER: Action Buttons */}
           <HStack {...styles.mySessionCardFooter}>
-            <Button variant="outlineghost" {...styles.mySessionCardAssignBtn} onPress={() => onAssignParticipants?.(item)}>
-              <ButtonText {...styles.mySessionCardAssignBtnText}>
-                {t('lc.sessionsSupport.mySessionCard.assignParticipants')}
-              </ButtonText>
-            </Button>
+            {/* Only shown when an assign handler is passed (History renders these cards read-only) */}
+            {onAssignParticipants && (
+              <Button variant="outlineghost" {...styles.mySessionCardAssignBtn} onPress={() => onAssignParticipants(item)}>
+                <ButtonText {...styles.mySessionCardAssignBtnText}>
+                  {t('lc.sessionsSupport.mySessionCard.assignParticipants')}
+                </ButtonText>
+              </Button>
+            )}
 
             {canEditSession && (
               <Button {...styles.mySessionCardManageBtn} variant="solid" onPress={() => {

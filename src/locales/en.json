@@ -2489,6 +2489,7 @@
         "statusAccepted": "Accepted",
         "statusDeclined": "Declined",
         "statusRequested": "Requested",
+        "statusCompleted": "Completed",
         "yes": "Yes",
         "no": "No",
         "participant": "Participant",
