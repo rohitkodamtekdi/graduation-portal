@@ -95,7 +95,8 @@ export const getMaterialsList = async (
         return {
           id: String(resource.id),
           title: fileName,
-          description: '',
+          // Resources have no description of their own; show the linked session's
+          description: session.description || '',
           category: categoryLabels.get(categoryValue) || categoryValue,
           categoryValue,
           format: getMaterialFormat(resource.type, fileName),

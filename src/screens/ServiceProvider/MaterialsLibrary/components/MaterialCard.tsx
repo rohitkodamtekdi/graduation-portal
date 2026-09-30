@@ -3,7 +3,7 @@ import { Box, HStack, VStack, Text, Pressable } from '@gluestack-ui/themed';
 import LucideIcon from '@components/ui/LucideIcon';
 import styles from '../styles';
 import { useLanguage } from '@contexts/LanguageContext';
-import { MaterialItem } from '../../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
+import { MaterialItem, MATERIAL_FORMATS } from '../../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
 
 export interface MaterialCardProps {
   item: MaterialItem;
@@ -20,35 +20,11 @@ export default function MaterialCard({
 }: MaterialCardProps): React.JSX.Element {
   const { t } = useLanguage();
 
-  const getCategoryBadgeProps = (category: string) => {
-    const normCat = category.toLowerCase().trim();
-
-    let icon = 'FileText';
-    let iconBg = '$error50'; // light red
-    let iconBorder = '$error200';
-    let iconColor = '$error600'; // dark red
-
-    if (normCat.includes('management') || normCat.includes('business')) {
-      icon = 'TrendingUp';
-      iconBg = '$success50'; // light green
-      iconBorder = '$success300';
-      iconColor = '$success700'; // dark green
-    } else if (normCat.includes('financial') || normCat.includes('literacy')) {
-      icon = 'BookOpen';
-      iconBg = '$primary100'; // light primary/reddish
-      iconBorder = '$primary300';
-      iconColor = '$primary500'; // dark primary
-    } else if (normCat.includes('asset') || normCat.includes('equipment')) {
-      icon = 'Package';
-      iconBg = '$blue50'; // light blue
-      iconBorder = '$blue200';
-      iconColor = '$blue600'; // dark blue
-    }
-
-    return { icon, iconBg, iconBorder, iconColor };
-  };
-
-  const badge = getCategoryBadgeProps(item.category);
+  // The icon shows the file format only: blue for Word documents, red for PDFs (and anything else)
+  const badge =
+    item.format === MATERIAL_FORMATS.WORD
+      ? { icon: 'FileText', iconBg: '$blue50', iconBorder: '$blue200', iconColor: '$blue600' }
+      : { icon: 'FileText', iconBg: '$error50', iconBorder: '$error200', iconColor: '$error600' };
 
   return (
     <Box {...styles.materialCard}>
@@ -79,9 +55,11 @@ export default function MaterialCard({
         </HStack>
 
         {/* Card Description */}
-        <Text {...styles.cardDescription} numberOfLines={3}>
-          {item.description}
-        </Text>
+        {item.description ? (
+          <Text {...styles.cardDescription} numberOfLines={3}>
+            {item.description}
+          </Text>
+        ) : null}
 
         {/* File Info Box */}
         <Box {...styles.fileInfoBox}>
