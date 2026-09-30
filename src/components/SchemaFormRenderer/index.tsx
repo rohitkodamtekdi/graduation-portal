@@ -1645,13 +1645,16 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
       <Textarea
         {...(styles.input as any)}
         {...resolvedInputProps}
+        // Grow with the inner input - the theme's fixed h:100 let the 100px-min input spill over the bottom border
+        h="auto"
         isInvalid={!!error}
         isDisabled={isFieldDisabled}
         isReadOnly={field.isReadOnly}
       >
         <FastTextareaInput
-          {...(styles.input as any)}
+          // Border and bg live on the outer Textarea; repeating the border here drew a second one inside
           {...resolvedInputProps}
+          borderWidth={0}
           ref={field.autoFocus ? autoFocusRef : undefined}
           placeholder={placeholder}
           value={value}

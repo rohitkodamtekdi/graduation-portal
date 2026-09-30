@@ -20,9 +20,8 @@ export default function MaterialCard({
 }: MaterialCardProps): React.JSX.Element {
   const { t } = useLanguage();
 
-  const getCategoryBadgeProps = (category: string, format: string) => {
+  const getCategoryBadgeProps = (category: string) => {
     const normCat = category.toLowerCase().trim();
-    const normForm = format.toLowerCase().trim();
 
     let icon = 'FileText';
     let iconBg = '$error50'; // light red
@@ -34,11 +33,6 @@ export default function MaterialCard({
       iconBg = '$success50'; // light green
       iconBorder = '$success300';
       iconColor = '$success700'; // dark green
-    } else if (normForm.includes('video')) {
-      icon = 'Video';
-      iconBg = '$purple50'; // light purple
-      iconBorder = '$purple300';
-      iconColor = '$purple600'; // dark purple
     } else if (normCat.includes('financial') || normCat.includes('literacy')) {
       icon = 'BookOpen';
       iconBg = '$primary100'; // light primary/reddish
@@ -54,7 +48,7 @@ export default function MaterialCard({
     return { icon, iconBg, iconBorder, iconColor };
   };
 
-  const badge = getCategoryBadgeProps(item.category, item.format);
+  const badge = getCategoryBadgeProps(item.category);
 
   return (
     <Box {...styles.materialCard}>
@@ -69,13 +63,15 @@ export default function MaterialCard({
             <LucideIcon name={badge.icon} size={styles.cardHeaderIconProps.size} color={badge.iconColor} />
           </Box>
           <VStack {...styles.cardHeaderTextCol}>
-            <Box {...styles.cardBadgeWrapper}>
-              <HStack {...styles.categoryBadgeCard}>
-                <Text {...styles.categoryBadgeTextCard}>
-                  {item.category}
-                </Text>
-              </HStack>
-            </Box>
+            {item.category ? (
+              <Box {...styles.cardBadgeWrapper}>
+                <HStack {...styles.categoryBadgeCard}>
+                  <Text {...styles.categoryBadgeTextCard}>
+                    {item.category}
+                  </Text>
+                </HStack>
+              </Box>
+            ) : null}
             <Text {...styles.cardTitle} numberOfLines={1}>
               {item.title}
             </Text>

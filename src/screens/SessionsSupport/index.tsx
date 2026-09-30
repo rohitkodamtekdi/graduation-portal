@@ -779,6 +779,7 @@ const SessionsSupportScreen: React.FC = () => {
         onClose={() => setIsAssignModalOpen(false)}
         session={selectedSession}
         onConfirm={handleConfirmAssignment}
+        maxSelectable={selectedSession?.seats_remaining}
       />
 
       <AssignParticipantsModal

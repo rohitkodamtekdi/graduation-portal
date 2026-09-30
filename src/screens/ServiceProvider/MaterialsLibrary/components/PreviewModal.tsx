@@ -4,7 +4,7 @@ import Modal from '@components/ui/Modal';
 import LucideIcon from '@components/ui/LucideIcon';
 import styles from '../styles';
 import { useLanguage } from '@contexts/LanguageContext';
-import { MaterialItem } from '../../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
+import { MaterialItem, MATERIAL_FORMATS } from '../../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
 
 export interface PreviewModalProps {
   isOpen: boolean;
@@ -27,9 +27,8 @@ export default function PreviewModal({
     if (fileName && fileName.includes('.')) {
       return fileName.split('.').pop()?.toUpperCase() || 'FILE';
     }
-    if (format === 'PDF Document') return 'PDF';
-    if (format === 'Templates & Decks') return 'TPL';
-    if (format === 'Video Guide') return 'VIDEO';
+    if (format === MATERIAL_FORMATS.PDF) return 'PDF';
+    if (format === MATERIAL_FORMATS.WORD) return 'DOCX';
     return 'FILE';
   };
 
