@@ -151,7 +151,7 @@ export default function PreviewModal({
           </HStack>
         ) : null}
 
-        {/* Properties Grid */}
+        {/* Properties Grid - File Name and Upload Date side by side (size/downloads aren't tracked) */}
         <Box {...styles.previewMetaGrid}>
           {/* File Name */}
           <Box {...styles.previewGridItem}>
@@ -163,16 +163,6 @@ export default function PreviewModal({
             </Text>
           </Box>
 
-          {/* File Size */}
-          <Box {...styles.previewGridItem}>
-            <Text {...styles.previewGridLabel}>
-              {t('supportProvider.materialsLibrary.previewModal.fileSize')}
-            </Text>
-            <Text {...styles.previewGridValue}>
-              {item.fileSize || 'N/A'}
-            </Text>
-          </Box>
-
           {/* Upload Date */}
           <Box {...styles.previewGridItem}>
             <Text {...styles.previewGridLabel}>
@@ -180,16 +170,6 @@ export default function PreviewModal({
             </Text>
             <Text {...styles.previewGridValue}>
               {item.uploadDate}
-            </Text>
-          </Box>
-
-          {/* Downloads */}
-          <Box {...styles.previewGridItem}>
-            <Text {...styles.previewGridLabel}>
-              {t('supportProvider.materialsLibrary.previewModal.downloads')}
-            </Text>
-            <Text {...styles.previewGridValue}>
-              {item.downloads}
             </Text>
           </Box>
         </Box>

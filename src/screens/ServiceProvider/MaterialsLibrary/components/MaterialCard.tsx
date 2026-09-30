@@ -91,9 +91,6 @@ export default function MaterialCard({
               {item.fileName || 'file'}
             </Text>
           </HStack>
-          <Text {...styles.fileSizeText}>
-            {item.fileSize}
-          </Text>
         </Box>
 
         {/* Associated offering if exists */}
@@ -108,17 +105,11 @@ export default function MaterialCard({
       </VStack>
 
       <VStack>
-        {/* Metadata Row: Upload Date and Downloads */}
+        {/* Metadata Row: Upload Date */}
         <Box {...styles.metaRow}>
           <Text {...styles.metaItemText}>
             {t('supportProvider.materialsLibrary.card.uploaded', { date: item.uploadDate })}
           </Text>
-          <HStack {...styles.downloadsBox}>
-            <LucideIcon name="Download" size={styles.downloadsIcon.size} color={styles.downloadsIcon.color} />
-            <Text {...styles.downloadsText}>
-              {t('supportProvider.materialsLibrary.card.downloads', { count: item.downloads })}
-            </Text>
-          </HStack>
         </Box>
 
         {/* Card Footer Actions */}
