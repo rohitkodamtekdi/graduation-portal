@@ -40,7 +40,6 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
   const [statusOverride, setStatusOverride] = useState<string | null>(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  const [isRemoved, setIsRemoved] = useState(false);
   const [isRequestsModalOpen, setIsRequestsModalOpen] = useState(false);
 
   const getStatusColors = (status: string) => {
@@ -86,13 +85,13 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
 
   const { requesterName, requesterOrgName } = useRequesterInfo(item as any);
 
-  // The cancel API (notifyAndCancelPrivateSessions) removes the session from lists, so drop the card
-  const handleConfirmCancel = async () => {
+  // The cancel API marks the session as CANCELLED (it is not deleted), so keep the card and show it as Cancelled
+  const handleConfirmCancel = async (reason: string) => {
     if (isCancelling) return;
     setIsCancelling(true);
     try {
-      await cancelSession(item.id);
-      setIsRemoved(true);
+      await cancelSession(item.id, reason);
+      setStatusOverride(SESSION_STATUS_LABEL.CANCELLED);
       setIsCancelModalOpen(false);
       showAlert('success', t('supportProvider.supportOfferings.cards.alerts.offeringCancelled', 'Intervention cancelled successfully!'));
     } catch (error) {
@@ -101,8 +100,6 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
       setIsCancelling(false);
     }
   };
-
-  if (isRemoved) return null;
 
   return (
     <Box {...styles.cardContainer}>
