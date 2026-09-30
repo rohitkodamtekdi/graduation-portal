@@ -18,7 +18,7 @@ import { useLanguage } from '@contexts/LanguageContext';
 import type { ServiceItem } from '../../../../../types/supportOfferingsTypes';
 import { FORM_MODE, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
 import { useSessionStatus, useRequesterInfo } from '@hooks/useSessionStatus';
-import { cancelSession } from '../../../../../services/mentoringService';
+import { deleteSession } from '../../../../../services/mentoringService';
 import CancelInterventionModal from '../modals/CancelInterventionModal';
 import AdditionalServiceCompletionModal from '../modals/AdditionalServiceCompletionModal';
 import styles from '../../styles';
@@ -40,6 +40,7 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
   const [statusOverride, setStatusOverride] = useState<string | null>(null);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isRemoved, setIsRemoved] = useState(false);
   const [isRequestsModalOpen, setIsRequestsModalOpen] = useState(false);
 
   const getStatusColors = (status: string) => {
@@ -85,12 +86,13 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
 
   const { requesterName, requesterOrgName } = useRequesterInfo(item as any);
 
+  // The backend has no CANCELLED status, so cancelling deletes the session and drops the card
   const handleConfirmCancel = async () => {
     if (isCancelling) return;
     setIsCancelling(true);
     try {
-      await cancelSession(item.id);
-      setStatusOverride(SESSION_STATUS_LABEL.CANCELLED);
+      await deleteSession(item.id);
+      setIsRemoved(true);
       setIsCancelModalOpen(false);
       showAlert('success', t('supportProvider.supportOfferings.cards.alerts.offeringCancelled', 'Intervention cancelled successfully!'));
     } catch (error) {
@@ -99,6 +101,8 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
       setIsCancelling(false);
     }
   };
+
+  if (isRemoved) return null;
 
   return (
     <Box {...styles.cardContainer}>

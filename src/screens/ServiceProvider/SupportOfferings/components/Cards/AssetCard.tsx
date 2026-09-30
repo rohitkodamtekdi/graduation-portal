@@ -16,7 +16,7 @@ import {
 import { useLanguage } from '@contexts/LanguageContext';
 import { useRequesterInfo } from '@hooks/useSessionStatus';
 import type { AssetItem } from '../../../../../types/supportOfferingsTypes';
-import { cancelSession } from '../../../../../services/mentoringService';
+import { deleteSession } from '../../../../../services/mentoringService';
 import CancelInterventionModal from '../modals/CancelInterventionModal';
 import AssetRequestsModal from '../modals/AssetRequestsModal';
 import styles from '../../styles';
@@ -41,6 +41,7 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onView
   const [item, setItem] = useState<AssetItem>(initialItem);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isRemoved, setIsRemoved] = useState(false);
   const [isRequestsModalOpen, setIsRequestsModalOpen] = useState(false);
 
   const getStatusColors = useCallback((status: string) => {
@@ -84,12 +85,13 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onView
   const claimed = getClaimedCount(item);
   const totalFund = getTotalFund(item);
 
+  // The backend has no CANCELLED status, so cancelling deletes the session and drops the card
   const handleConfirmCancel = async () => {
     if (isCancelling) return;
     setIsCancelling(true);
     try {
-      await cancelSession(item.id);
-      setItem((prev) => ({ ...prev, status: 'Cancelled' }));
+      await deleteSession(item.id);
+      setIsRemoved(true);
       setIsCancelModalOpen(false);
       showAlert('success', t('supportProvider.supportOfferings.cards.alerts.offeringCancelled', 'Intervention cancelled successfully!'));
     } catch (error) {
@@ -98,6 +100,8 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onView
       setIsCancelling(false);
     }
   };
+
+  if (isRemoved) return null;
 
   return (
     <Box {...styles.cardContainer}>
