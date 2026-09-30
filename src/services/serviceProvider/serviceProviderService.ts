@@ -406,7 +406,11 @@ export const acceptAndScheduleSupportRequest = async (
     can_be_copied: false,
     certificate_provided: false,
     ...(isAsset
-      ? { agenda: payload.description || payload.title || '', meeting_info: { link: '', location: payload.location || '' } }
+      ? {
+          agenda: payload.description || payload.title || '',
+          description: payload.description || payload.title || '',
+          meeting_info: { link: '', location: payload.location || '' },
+        }
       : { description: payload.description || '', meeting_info: { link: payload.meetingLink || '' } }),
   };
 
