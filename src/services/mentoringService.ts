@@ -199,15 +199,12 @@ export const deleteSession = async (sessionId: string | number): Promise<any> =>
 };
 
 /**
- * Cancel a published Support Offering (Training/Additional Service/Asset) by
- * setting its status to CANCELLED.
- * Endpoint: POST /mentoring/v1/sessions/update/:sessionId
+ * Cancel a published Support Offering (Training/Additional Service/Asset).
+ * Endpoint: POST /mentoring/v1/sessions/cancel/:sessionId
  */
 export const cancelSession = async (sessionId: string | number): Promise<any> => {
   try {
-    const response = await api.post(API_ENDPOINTS.MENTORING_UPDATE_SESSION(sessionId), {
-      status: 'CANCELLED',
-    });
+    const response = await api.post(API_ENDPOINTS.MENTORING_CANCEL_SESSION(sessionId));
     return response.data;
   } catch (error: any) {
     throw error;

@@ -16,7 +16,7 @@ import {
 import { useLanguage } from '@contexts/LanguageContext';
 import { useRequesterInfo } from '@hooks/useSessionStatus';
 import type { AssetItem } from '../../../../../types/supportOfferingsTypes';
-import { deleteSession } from '../../../../../services/mentoringService';
+import { cancelSession } from '../../../../../services/mentoringService';
 import CancelInterventionModal from '../modals/CancelInterventionModal';
 import AssetRequestsModal from '../modals/AssetRequestsModal';
 import styles from '../../styles';
@@ -85,12 +85,12 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onView
   const claimed = getClaimedCount(item);
   const totalFund = getTotalFund(item);
 
-  // The backend has no CANCELLED status, so cancelling deletes the session and drops the card
+  // The cancel API (notifyAndCancelPrivateSessions) removes the session from lists, so drop the card
   const handleConfirmCancel = async () => {
     if (isCancelling) return;
     setIsCancelling(true);
     try {
-      await deleteSession(item.id);
+      await cancelSession(item.id);
       setIsRemoved(true);
       setIsCancelModalOpen(false);
       showAlert('success', t('supportProvider.supportOfferings.cards.alerts.offeringCancelled', 'Intervention cancelled successfully!'));
