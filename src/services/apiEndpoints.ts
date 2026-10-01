@@ -58,6 +58,7 @@ export const API_ENDPOINTS = {
   REQUEST_SESSIONS_ACCEPT: `${prefix}/mentoring/v1/requestSessions/accept?SkipValidation=true`,
   SP_REQUEST_SESSIONS_REJECT: `${prefix}/mentoring/v1/requestSessions/reject`,
   REQUEST_SESSIONS_GET_DETAILS: `${prefix}/mentoring/v1/requestSessions/getDetails`,
+  REQUEST_SESSIONS_UPDATE: `${prefix}/mentoring/v1/requestSessions/update`,
   REQUESTOR_ASSIGN_MENTEES: (sessionId: string | number) => `${prefix}/mentoring/v1/sessions/addMentees/${sessionId}`,
   RESOURCES_LIST: `${prefix}/mentoring/v1/resources/list`,
   RESOURCE_DELETE: (resourceId: string | number, sessionId: string | number) =>

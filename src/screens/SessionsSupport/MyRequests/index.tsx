@@ -84,6 +84,7 @@ export const MyRequests: React.FC<MyRequestsProps> = ({
           : '';
         const descriptionText = item.description || item.agenda || item.session?.description || item.session?.notes || '';
         const statusStyle = getStatusBadgeStyles(item.status);
+        const hasInfoRequests = Boolean(item.meta?.extra_information);
 
         return (
           <Box
@@ -107,18 +108,27 @@ export const MyRequests: React.FC<MyRequestsProps> = ({
                 ) : null}
               </VStack>
 
-              <Badge
-                {...styles.cardBadge}
-                borderColor={statusStyle.borderColor}
-                bg={statusStyle.bg}
-              >
-                <BadgeText
-                  {...styles.cardBadgeText}
-                  color={statusStyle.color}
+              <HStack {...styles.cardBadgesHStack}>
+                {hasInfoRequests ? (
+                  <Badge {...styles.cardBadge} {...styles.infoRequestedBadge}>
+                    <BadgeText {...styles.cardBadgeText} {...styles.infoRequestedBadgeText}>
+                      {t('lc.sessionsSupport.requestDetails.infoRequestedBadge', 'Info requested')}
+                    </BadgeText>
+                  </Badge>
+                ) : null}
+                <Badge
+                  {...styles.cardBadge}
+                  borderColor={statusStyle.borderColor}
+                  bg={statusStyle.bg}
                 >
-                  {statusStyle.label}
-                </BadgeText>
-              </Badge>
+                  <BadgeText
+                    {...styles.cardBadgeText}
+                    color={statusStyle.color}
+                  >
+                    {statusStyle.label}
+                  </BadgeText>
+                </Badge>
+              </HStack>
             </HStack>
 
             {descriptionText ? (

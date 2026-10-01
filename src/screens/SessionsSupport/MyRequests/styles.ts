@@ -46,6 +46,18 @@ export const myRequestsStyles = {
     fontWeight: '$medium' as const,
     textTransform: 'none' as const,
   },
+  cardBadgesHStack: {
+    space: 'xs' as const,
+    alignItems: 'center' as const,
+    flexWrap: 'wrap' as const,
+  },
+  infoRequestedBadge: {
+    bg: '$blue50',
+    borderColor: '$blue200',
+  },
+  infoRequestedBadgeText: {
+    color: '$blue600',
+  },
   cardDescriptionBox: {
     bg: '#F8FAFC',
     borderRadius: '$lg' as const,

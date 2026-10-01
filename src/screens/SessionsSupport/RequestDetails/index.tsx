@@ -232,6 +232,7 @@ export const RequestDetailsScreen: React.FC = () => {
   const mentorName = requestItem.mentor_name || sessionObj.mentor_name || requestItem.mentorName || '-';
 
   const notesText = sessionObj.description || requestItem.description || requestItem.agenda || '';
+  const extraInformation: string = requestItem.meta?.extra_information || '';
 
   const pillar = displayValue(sessionObj.category || requestItem.category || requestItem.pillar);
   const trainingArea = displayValue(sessionObj.title || requestItem.title || requestItem.training_session);
@@ -340,6 +341,22 @@ export const RequestDetailsScreen: React.FC = () => {
                 </VStack>
               </Box>
             </Box>
+
+            {/* Additional information the Support Provider asked for about this request */}
+            {extraInformation ? (
+              <Box {...styles.detailsCard}>
+                <Box {...styles.detailsCardBanner}>
+                  <Text {...styles.infoCardHeader}>
+                    {t('lc.sessionsSupport.requestDetails.infoRequestedLabel', 'Information Requested by Provider')}
+                  </Text>
+                </Box>
+                <Box {...styles.detailsCardContent}>
+                  <Box {...styles.notesBox}>
+                    <Text {...styles.notesText}>{extraInformation}</Text>
+                  </Box>
+                </Box>
+              </Box>
+            ) : null}
 
             {/* Card 2: Submitted Information */}
             <Box {...styles.detailsCard}>

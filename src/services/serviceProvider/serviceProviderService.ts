@@ -452,14 +452,9 @@ export const acceptAndScheduleSupportRequest = async (
 export const requestMoreInfoForSupportRequest = async (
   payload: RequestInfoPayload
 ): Promise<{ success: boolean; message: string; result?: any }> => {
-  const reqId = String(payload.requestId);
-  const response = await api.request({
-    method: 'GET',
-    url: `${API_ENDPOINTS.REQUEST_SESSIONS_GET_DETAILS}?request_session_id=${encodeURIComponent(reqId)}`,
-    data: {
-      request_session_id: reqId,
-      message: payload.message || '',
-    },
+  const response = await api.post(API_ENDPOINTS.REQUEST_SESSIONS_UPDATE, {
+    request_session_id: String(payload.requestId),
+    extra_information: payload.message || '',
   });
 
   const data = response.data;
