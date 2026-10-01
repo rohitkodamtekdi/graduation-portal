@@ -545,6 +545,20 @@ export default {
     space: 'md',
     width: '100%',
   } as const,
+  emptyStateBox: {
+    py: '$10',
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as const,
+  emptyStateIcon: {
+    size: 48,
+    color: '$textMuted',
+  } as const,
+  emptyStateText: {
+    color: '$textSecondary',
+    mt: '$3',
+    fontSize: '$sm',
+  } as const,
   tabTextProps: {
     fontSize: '$sm',
   } as const,

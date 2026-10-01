@@ -269,25 +269,15 @@ export const getSupportRequests = async (
   };
 
   try {
-    // Tab badge counts must stay accurate regardless of which tab is currently active, so every
-    // category is fetched in parallel on every call - not just the one the user happens to be on.
-    // Using Promise.allSettled ensures that a failure in one category does not discard the successful responses of others.
-    const [sessionsSettled, additionalServicesSettled, assetsSettled, declinedSettled] = await Promise.allSettled([
-      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, SUPPORT_REQUEST_TABS.SESSIONS) }),
-      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES) }),
-      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(false, SUPPORT_REQUEST_TABS.ASSETS) }),
-      api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, { params: buildParams(true) }),
-    ]);
+    const isDeclinedTab = tab === SUPPORT_REQUEST_TABS.DECLINED;
+    const response = await api.get(API_ENDPOINTS.REQUEST_SESSIONS_LIST, {
+      params: buildParams(isDeclinedTab, isDeclinedTab ? undefined : (tab as 'sessions' | 'additional_services' | 'assets')),
+    });
 
-    const extractSettled = (
-      result: PromiseSettledResult<any>,
+    const extractResult = (
+      res: any,
       mapTab: 'sessions' | 'additional_services' | 'assets' | 'declined'
     ) => {
-      if (result.status !== 'fulfilled') {
-        console.warn(`[SupportRequests] Failed to fetch ${mapTab}:`, result.reason);
-        return null;
-      }
-      const res = result.value;
       if (res?.data?.responseCode !== 'OK') return null;
       const resObj = res.data.result;
       const rawList = Array.isArray(resObj) ? resObj : (resObj?.data || []);
@@ -297,29 +287,27 @@ export const getSupportRequests = async (
       return { mapped, count };
     };
 
-    const sessionsResult = extractSettled(sessionsSettled, SUPPORT_REQUEST_TABS.SESSIONS);
-    if (sessionsResult) {
-      sessionsData = sessionsResult.mapped;
-      sessionsCount = sessionsResult.count;
-      sessionsOverdueCount = sessionsResult.mapped.filter(i => (i.overdueDays || 0) > 0).length;
-    }
-
-    const additionalServicesResult = extractSettled(additionalServicesSettled, SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES);
-    if (additionalServicesResult) {
-      additionalServicesData = additionalServicesResult.mapped;
-      additionalServicesCount = additionalServicesResult.count;
-    }
-
-    const assetsResult = extractSettled(assetsSettled, SUPPORT_REQUEST_TABS.ASSETS);
-    if (assetsResult) {
-      assetsData = assetsResult.mapped;
-      assetsCount = assetsResult.count;
-    }
-
-    const declinedResult = extractSettled(declinedSettled, SUPPORT_REQUEST_TABS.DECLINED);
-    if (declinedResult) {
-      declinedData = declinedResult.mapped;
-      declinedCount = declinedResult.count;
+    const result = extractResult(response, tab);
+    if (result) {
+      switch (tab) {
+        case SUPPORT_REQUEST_TABS.SESSIONS:
+          sessionsData = result.mapped;
+          sessionsCount = result.count;
+          sessionsOverdueCount = result.mapped.filter(i => (i.overdueDays || 0) > 0).length;
+          break;
+        case SUPPORT_REQUEST_TABS.ADDITIONAL_SERVICES:
+          additionalServicesData = result.mapped;
+          additionalServicesCount = result.count;
+          break;
+        case SUPPORT_REQUEST_TABS.ASSETS:
+          assetsData = result.mapped;
+          assetsCount = result.count;
+          break;
+        case SUPPORT_REQUEST_TABS.DECLINED:
+          declinedData = result.mapped;
+          declinedCount = result.count;
+          break;
+      }
     }
   } catch (error) {
     console.warn('[SupportRequests] Failed to fetch session requests:', error);
