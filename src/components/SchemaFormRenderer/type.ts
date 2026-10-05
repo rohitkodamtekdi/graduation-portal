@@ -173,6 +173,7 @@ export interface FormField {
   _title?: any;
   _subTitle?: any;
   _input?: any;
+  _pill?: any;
 }
 
 export interface FormRow {

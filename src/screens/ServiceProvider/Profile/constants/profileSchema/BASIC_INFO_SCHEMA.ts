@@ -32,6 +32,7 @@ export const BASIC_INFO_SCHEMA: FormSection[] = [
             label: { key: 'basicInfo.type', fallback: 'Provider Type' },
             optionsSource: 'organizationTypes',
             _input: styles.input,
+            _pill: styles.providerTypePill,
             validation: [
               { rule: 'required', message: { key: 'errors.typeRequired', fallback: 'Provider Type is required' } }
             ]
