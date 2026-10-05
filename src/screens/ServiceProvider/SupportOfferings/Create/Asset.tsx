@@ -268,7 +268,6 @@ const App = (): React.JSX.Element => {
             onSubmit={(formValues) => handleSave(formValues, false)}
             onSaveDraft={(formValues) => handleSave(formValues, true)}
             isSubmitting={isSubmitting}
-            // Uploads picked Asset Documents before submit (without it they're sent as raw file objects)
             uploadService={uploadService}
           />
         </Card>

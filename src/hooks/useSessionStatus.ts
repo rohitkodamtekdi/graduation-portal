@@ -14,7 +14,7 @@ const toMs = (value: string | number): number =>
 
 // Normalizes a raw backend status (DRAFT / PUBLISHED / LIVE / COMPLETED / CANCELLED)
 // plus start/end dates into the human-facing status label shown on session/service cards.
-const deriveStatusLabel = (item: SessionStatusItem): string => {
+export const deriveStatusLabel = (item: SessionStatusItem): string => {
   const rawStatus = item?.status || '';
   const thisStatus = String(rawStatus).toUpperCase();
 

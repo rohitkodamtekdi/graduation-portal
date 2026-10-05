@@ -11,7 +11,6 @@ import {
   Text,
   Spinner,
   useAlert,
-  Box,
 } from '@ui';
 import { LucideIcon } from '@ui/index';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
@@ -35,6 +34,18 @@ import SupportCategories, { SupportCategoryItem } from './components/SupportCate
 import styles from './styles';
 
 const DEFAULT_CATEGORIES: SupportCategoryItem[] = [];
+
+// Card header: icon + title on one row, subtitle below starting under the icon
+const SectionHeader = ({ icon, title, subtitle, required = false }: { icon: string; title: string; subtitle: string; required?: boolean }) => (
+  <VStack {...styles.sectionHeader}>
+    <HStack {...styles.sectionTitleRow}>
+      <LucideIcon name={icon} {...styles.sectionIcon} />
+      <Text {...styles.sectionTitle}>{title}</Text>
+      {required && <Text {...styles.requiredAsterisk}>*</Text>}
+    </HStack>
+    <Text {...styles.sectionSubtitle}>{subtitle}</Text>
+  </VStack>
+);
 
 // Main screen component for viewing and managing the organization profile.
 const OrganizationProfile = (): React.JSX.Element => {
@@ -497,17 +508,11 @@ try {
         <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
           {/* Card 1: Basic Information */}
           <VStack {...styles.sectionCard}>
-            <HStack {...styles.sectionHeader}>
-              <Box {...styles.sectionIconContainer}>
-                <LucideIcon name="Building" {...styles.sectionIcon} />
-              </Box>
-              <VStack>
-                <Text {...styles.sectionTitle}>{t('profile.basicInfo', 'Basic Information')}</Text>
-                <Text {...styles.sectionSubtitle}>
-                  {t('profile.basicInfoSubtitle', 'General organisation profile details')}
-                </Text>
-              </VStack>
-            </HStack>
+            <SectionHeader
+              icon="Building"
+              title={t('profile.basicInfo', 'Basic Information')}
+              subtitle={t('profile.basicInfoSubtitle', 'General organisation profile details')}
+            />
 
             <SchemaFormRenderer
               schema={BASIC_INFO_SCHEMA}
@@ -523,17 +528,11 @@ try {
 
           {/* Card 2: Contact Person */}
           <VStack {...styles.sectionCard}>
-            <HStack {...styles.sectionHeader}>
-              <Box {...styles.sectionIconContainer}>
-                <LucideIcon name="User" {...styles.sectionIcon} />
-              </Box>
-              <VStack>
-                <Text {...styles.sectionTitle}>{t('profile.contactPerson', 'Contact Person')}</Text>
-                <Text {...styles.sectionSubtitle}>
-                  {t('profile.contactPersonSubtitle', 'Focal person for this organisation')}
-                </Text>
-              </VStack>
-            </HStack>
+            <SectionHeader
+              icon="User"
+              title={t('profile.contactPerson', 'Contact Person')}
+              subtitle={t('profile.contactPersonSubtitle', 'Focal person for this organisation')}
+            />
 
             <SchemaFormRenderer
               schema={CONTACT_PERSON_SCHEMA}
@@ -548,20 +547,12 @@ try {
 
           {/* Card 3: Coverage */}
           <VStack {...styles.sectionCard}>
-            <HStack {...styles.sectionHeader}>
-              <Box {...styles.sectionIconContainer}>
-                <LucideIcon name="MapPin" {...styles.sectionIcon} />
-              </Box>
-              <VStack>
-                <HStack {...styles.alignCenterRow}>
-                  <Text {...styles.sectionTitle}>{t('profile.coverage', 'Coverage')}</Text>
-                  <Text {...styles.requiredAsterisk}> *</Text>
-                </HStack>
-                <Text {...styles.sectionSubtitle}>
-                  {t('profile.coverageSubtitle', 'Select province and multi-select sites, then click + Add Province')}
-                </Text>
-              </VStack>
-            </HStack>
+            <SectionHeader
+              icon="MapPin"
+              title={t('profile.coverage', 'Coverage')}
+              subtitle={t('profile.coverageSubtitle', 'Select province and multi-select sites, then click + Add Province')}
+              required
+            />
 
             <ProvinceCoverage
               value={provinceCoverage}
@@ -573,20 +564,12 @@ try {
 
           {/* Card 4: Support Categories Offered */}
           <VStack {...styles.sectionCard}>
-            <HStack {...styles.sectionHeader}>
-              <Box {...styles.sectionIconContainer}>
-                <LucideIcon name="Layers" {...styles.sectionIcon} />
-              </Box>
-              <VStack>
-                <HStack {...styles.alignCenterRow}>
-                  <Text {...styles.sectionTitle}>{t('profile.supportCategoriesOffered', 'Support Categories Offered')}</Text>
-                  <Text {...styles.requiredAsterisk}> *</Text>
-                </HStack>
-                <Text {...styles.sectionSubtitle}>
-                  {t('profile.supportCategoriesSubtitle', 'Choose categories and sub-options, then click + Add Category')}
-                </Text>
-              </VStack>
-            </HStack>
+            <SectionHeader
+              icon="Layers"
+              title={t('profile.supportCategoriesOffered', 'Support Categories Offered')}
+              subtitle={t('profile.supportCategoriesSubtitle', 'Choose categories and sub-options, then click + Add Category')}
+              required
+            />
 
             <SupportCategories
               value={supportCategories}
@@ -598,17 +581,11 @@ try {
 
           {/* Card 5: Documents */}
           <VStack {...styles.sectionCard}>
-            <HStack {...styles.sectionHeader}>
-              <Box {...styles.sectionIconContainer}>
-                <LucideIcon name="FileText" {...styles.sectionIcon} />
-              </Box>
-              <VStack>
-                <Text {...styles.sectionTitle}>{t('profile.documents', 'Documents')}</Text>
-                <Text {...styles.sectionSubtitle}>
-                  {t('profile.documentsSubtitle', 'Upload organisation registration and certificates')}
-                </Text>
-              </VStack>
-            </HStack>
+            <SectionHeader
+              icon="FileText"
+              title={t('profile.documents', 'Documents')}
+              subtitle={t('profile.documentsSubtitle', 'Upload organisation registration and certificates')}
+            />
 
             <SchemaFormRenderer
               schema={DOCUMENTS_SCHEMA}
