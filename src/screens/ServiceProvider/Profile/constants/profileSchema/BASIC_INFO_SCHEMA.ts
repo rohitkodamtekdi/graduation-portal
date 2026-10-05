@@ -27,7 +27,7 @@ export const BASIC_INFO_SCHEMA: FormSection[] = [
         fields: [
           {
             name: 'organizationType',
-            type: 'pillmultiselect',
+            type: 'pillselect',
             required: true,
             label: { key: 'basicInfo.type', fallback: 'Provider Type' },
             optionsSource: 'organizationTypes',

@@ -1035,6 +1035,7 @@ const PillOptionsRow: React.FC<{
           disabled={isDisabled}
           onPress={() => onToggle(option.value, option)}
           flex={1}
+          justifyContent="center"
           px="$3"
           py={isMulti ? "$2" : "$2.5"}
           borderRadius={isMulti ? "$xl" : "$2xl"}
