@@ -378,15 +378,7 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
           </Text>
         )}
         {value.map(item => (
-          <Pressable
-            key={item.id}
-            onPress={() => {
-              if (isEdit) {
-                handleSelectCategory(item.categoryName);
-              }
-            }}
-          >
-            <VStack {...styles.categoryCard}>
+            <VStack key={item.id} {...styles.categoryCard}>
               <HStack {...styles.cardHeader}>
                 <HStack {...styles.supportCategoryHeader}>
                   <Text {...styles.cardTitleText}>
@@ -497,7 +489,6 @@ export const SupportCategories: React.FC<SupportCategoriesProps> = ({
                 </VStack>
               )}
             </VStack>
-          </Pressable>
         ))}
       </VStack>
 
