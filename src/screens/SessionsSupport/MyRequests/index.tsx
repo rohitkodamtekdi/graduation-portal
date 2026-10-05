@@ -4,6 +4,8 @@ import { useLanguage } from '@contexts/LanguageContext';
 import { useNavigation } from '@react-navigation/native';
 import moment from 'moment';
 import styles from './styles';
+import { getStatusColors } from '../MyTraining&Sessions/LcMySessionTab';
+import { SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
 
 interface MyRequestsProps {
   items: any[];
@@ -84,6 +86,9 @@ export const MyRequests: React.FC<MyRequestsProps> = ({
           : '';
         const descriptionText = item.description || item.agenda || item.session?.description || item.session?.notes || '';
         const statusStyle = getStatusBadgeStyles(item.status);
+        // History items: same Completed badge (colors + icon) as the Training/Assets history cards
+        const isCompleted = item.status === SESSION_STATUS_LABEL.COMPLETED;
+        const completedColors = getStatusColors(SESSION_STATUS_LABEL.COMPLETED);
 
         return (
           <Box
@@ -107,18 +112,29 @@ export const MyRequests: React.FC<MyRequestsProps> = ({
                 ) : null}
               </VStack>
 
-              <Badge
-                {...styles.cardBadge}
-                borderColor={statusStyle.borderColor}
-                bg={statusStyle.bg}
-              >
-                <BadgeText
-                  {...styles.cardBadgeText}
-                  color={statusStyle.color}
+              {isCompleted ? (
+                <Badge borderWidth={1} borderColor={completedColors.border} bg={completedColors.bg} borderRadius="$full" px="$2" py="$0.5">
+                  <HStack space="xs" alignItems="center">
+                    <LucideIcon name={completedColors.icon} size={11} color={completedColors.text} />
+                    <BadgeText {...styles.cardBadgeText} color={completedColors.text}>
+                      {SESSION_STATUS_LABEL.COMPLETED}
+                    </BadgeText>
+                  </HStack>
+                </Badge>
+              ) : (
+                <Badge
+                  {...styles.cardBadge}
+                  borderColor={statusStyle.borderColor}
+                  bg={statusStyle.bg}
                 >
-                  {statusStyle.label}
-                </BadgeText>
-              </Badge>
+                  <BadgeText
+                    {...styles.cardBadgeText}
+                    color={statusStyle.color}
+                  >
+                    {statusStyle.label}
+                  </BadgeText>
+                </Badge>
+              )}
             </HStack>
 
             {descriptionText ? (
@@ -136,8 +152,9 @@ export const MyRequests: React.FC<MyRequestsProps> = ({
                 onPress={() => {
                   const requestId = item.id || item._id;
                   if (requestId) {
+                    const isCompleted = (item.status || '').toLowerCase().includes('complete');
                     // @ts-ignore
-                    navigation.navigate('request-details', { requestId });
+                    navigation.navigate('request-details', { requestId, ...(isCompleted ? { statusOverride: item.status } : {}) });
                   }
                 }}
               >
