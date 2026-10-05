@@ -5,7 +5,10 @@
       "name": "Name",
       "id": "ID",
       "contact": "Contact",
-      "email": "Email",
+      "phoneNumber": "Phone Number",
+      "email": "Email Address",
+      "dob": "Date of Birth",
+      "emergencyContact": "Emergency Contact",
       "address": "Address",
       "addressFields": {
         "street": "Street Address",
@@ -2762,6 +2765,54 @@
         "cancel": "Cancel",
         "successMsg": "Resource deleted successfully!"
       }
+    }
+  },
+  "participantJourney": {
+    "title": "Participant Portal",
+    "welcomeBack": "Welcome back!",
+    "welcomeBackNamed": "Welcome back, {{name}}!",
+    "backToSessions": "Back to Sessions",
+    "idpProgressSubtitle": "Track your progress across the four core pillars of the graduation programme.",
+    "sessionsSubtitle": "View your upcoming sessions and review your attendance history.",
+    "noSessions": "No sessions found.",
+    "pageTitle": {
+      "participant-portal": "Participant Portal",
+      "idp-progress": "My Progress",
+      "my-sessions": "My Sessions & Services",
+      "my-graduation": "My Graduation"
+    },
+    "tabs": {
+      "scheduled": "Scheduled",
+      "attended": "Attended",
+      "missed": "Missed"
+    },
+    "sessionFilters": {
+      "all": "All",
+      "trainingsAndSessions": "Trainings & Sessions",
+      "additionalServices": "Additional Services"
+    },
+    "menu": {
+      "home": "Home",
+      "myProfile": "My Profile"
+    },
+    "graduation": {
+      "criteriaTitle": "Graduation Criteria",
+      "criteriaSubtitle": "12 indicators across 4 pillars · Track participant's progress toward graduation",
+      "achieved": "Achieved",
+      "onTrack": "On Track",
+      "atRisk": "At Risk",
+      "toAchieve": "To Achieve:",
+      "graduationReadiness": "Graduation Readiness:"
+    },
+    "cards": {
+      "idpProgress": "My Progress",
+      "idpProgressDescription": "View your tasks and progress",
+      "sessions": "My Sessions & Services",
+      "sessionsDescription": "View scheduled and missed sessions",
+      "graduation": "My Graduation",
+      "graduationDescription": "View graduation criteria",
+      "coachName": "Coach Name",
+      "contact": "Contact"
     }
   }
 }

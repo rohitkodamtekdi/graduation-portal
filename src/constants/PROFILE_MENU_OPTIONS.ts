@@ -110,6 +110,28 @@ export const LC_MENU_OPTIONS: MenuItemData[] = [
   },
 ];
 
+// Participant menu options containing Profile and Logout
+export const PARTICIPANT_MENU_OPTIONS: MenuItemData[] = [
+  {
+    key: 'myProfile',
+    label: 'participantJourney.menu.myProfile',
+    textValue: 'myProfile',
+    iconName: 'User',
+    iconSizeValue: 16,
+    iconColor: theme.tokens.colors.textForegroundColor,
+    showDividerAfter: false,
+  },
+  {
+    key: 'logout',
+    label: 'common.logout',
+    textValue: 'logout',
+    iconName: 'LogOut',
+    iconSizeValue: 16,
+    iconColor: theme.tokens.colors.error600,
+    showDividerAfter: false,
+  },
+];
+
 // Default export for Admin (backward compatibility)
 export default ADMIN_MENU_OPTIONS;
 

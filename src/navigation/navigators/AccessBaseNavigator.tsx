@@ -41,10 +41,13 @@ const createScreenWithLayout = (
   return ScreenWithLayout;
 };
 
-function titleNamespaceForRole(role?: string): 'admin' | 'lc' {
+function titleNamespaceForRole(role?: string): 'admin' | 'lc' | 'participantJourney' {
   const r = role?.toLowerCase();
   if (r === 'admin' || r === 'supervisor') {
     return 'admin';
+  }
+  if (r === 'participant') {
+    return 'participantJourney';
   }
   return 'lc';
 }

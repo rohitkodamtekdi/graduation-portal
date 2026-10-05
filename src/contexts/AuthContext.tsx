@@ -12,12 +12,12 @@ import { syncLibraryMasterData } from '../services/libraryDataService';
 import offlineStorage from '../services/offlineStorage';
 import { STORAGE_KEYS } from '@constants/STORAGE_KEYS';
 import { getToken, removeToken } from '../services/api';
-import { ADMIN_ROLES, SUPERVISOR_ROLES, LC_ROLES, MENTOR_ROLES } from '@constants/ROLES';
+import { ADMIN_ROLES, SUPERVISOR_ROLES, LC_ROLES, MENTOR_ROLES, PARTICIPANT_ROLES } from '@constants/ROLES';
 import { isNative } from '@utils/platform';
 import { useLanguage } from './LanguageContext';
 // import { setupTabCloseHandler } from '@utils/tabCloseHandler';
 
-export type UserRole = 'Admin' | 'Supervisor' | 'LC' | 'Mentor';
+export type UserRole = 'Admin' | 'Supervisor' | 'LC' | 'Mentor' | 'Participant';
 
 export interface User {
   id: string;
@@ -51,7 +51,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
  * Checks admin roles first (priority), then supervisor roles, then mentor roles, then LC roles.
  * Throws error if user doesn't have any authorized role.
  * @param userData - User data from API response
- * @returns UserRole based on role priority (Admin > Supervisor > Mentor > LC)
+ * @returns UserRole based on role priority (Admin > Supervisor > Mentor > LC > Participant)
  * @throws Error if user doesn't have any authorized role
  */
 const determineUserRole = (
@@ -108,6 +108,18 @@ const determineUserRole = (
   if (lcOrganizations.length > 0) {
     logger.info('User has LC role based on organizations');
     return 'LC';
+  }
+
+  const participantOrganizations = userData.organizations.filter((org: any) => {
+    if (!org?.roles || !Array.isArray(org.roles)) {
+      return false;
+    }
+    return org.roles.some((role: any) => PARTICIPANT_ROLES.includes(role?.title));
+  });
+
+  if (participantOrganizations.length > 0) {
+    logger.info('User has participant role based on organizations');
+    return 'Participant';
   }
 
   // If no matching roles found in organizations, throw unauthorized error
