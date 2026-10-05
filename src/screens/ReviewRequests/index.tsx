@@ -5,7 +5,7 @@
  * documents (pathway switch / dropout requests) submitted by Coaches.
  */
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { VStack, HStack, Box, useAlert } from '@ui';
+import { VStack, HStack, Box, Text, useAlert, Modal } from '@ui';
 import TitleHeader from '@components/TitleHeader';
 import NotFound from '@components/NotFound';
 import FilterButton from '@components/Filter';
@@ -35,9 +35,8 @@ const DEFAULT_PAGE_SIZE = 10;
 const TYPE_FILTER_DATA = [
   { labelKey: 'admin.reviewRequests.filters.pathwaySwitch', value: 'USER_PROJECT_TEMPLATE_CHANGE' },
   { labelKey: 'admin.reviewRequests.filters.dropoutRequest', value: 'PROGRAM_USER_DROPPING_OUT' },
-  { labelKey: 'admin.reviewRequests.filters.allTypes', value: 'all' },
 ];
-
+const showClearButton = false;
 const ReviewRequestsScreen = (): React.JSX.Element => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
@@ -52,6 +51,10 @@ const ReviewRequestsScreen = (): React.JSX.Element => {
   const [isLoading, setIsLoading] = useState(false);
   const [decidingId, setDecidingId] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [confirmState, setConfirmState] = useState<{
+    row: ChangeRequestRecord;
+    decision: 'APPROVED' | 'REJECTED';
+  } | null>(null);
 
   // Province/Site filter options + fetch, reused from AssignUsers' pattern.
   const { filters: provinceSiteFilters } = useParticipantFilterOptions(
@@ -67,9 +70,8 @@ const ReviewRequestsScreen = (): React.JSX.Element => {
         type: 'select' as const,
         data: TYPE_FILTER_DATA,
       },
-      ...provinceSiteFilters,
     ],
-    [provinceSiteFilters],
+    [],
   );
 
   // FilterButton only reports a value once the user actually touches a
@@ -100,6 +102,7 @@ const ReviewRequestsScreen = (): React.JSX.Element => {
     setIsLoading(true);
     try {
       const response = await listChangeRequests({
+        programId: process.env.GLOBAL_LC_PROGRAM_ID as string,
         status: activeTab,
         action: effectiveAction,
         province: effectiveProvince,
@@ -131,38 +134,42 @@ const ReviewRequestsScreen = (): React.JSX.Element => {
     setFilterValues(newFilters);
   }, []);
 
-  const handleDecision = useCallback(
-    async (row: ChangeRequestRecord, decision: 'APPROVED' | 'REJECTED') => {
-      setDecidingId(row._id);
-      try {
-        await decideChangeRequest({ id: row._id, decision });
-        showAlert(
-          'success',
-          decision === 'APPROVED'
-            ? t('admin.reviewRequests.approveSuccess', 'Request approved successfully.')
-            : t('admin.reviewRequests.rejectSuccess', 'Request rejected successfully.'),
-        );
-        setRefreshKey(k => k + 1);
-      } catch (error: any) {
-        showAlert(
-          'error',
-          error?.message || t('admin.reviewRequests.decisionError', 'Could not update the request. Try again.'),
-        );
-      } finally {
-        setDecidingId(null);
-      }
-    },
-    [showAlert, t],
-  );
-
+  // Approve/Reject buttons only open the confirmation dialog; the actual
+  // decision API call is deferred to handleConfirmDecision, fired only
+  // when the user presses "Yes, Continue".
   const handleApprove = useCallback(
-    (row: ChangeRequestRecord) => handleDecision(row, 'APPROVED'),
-    [handleDecision],
+    (row: ChangeRequestRecord) => setConfirmState({ row, decision: 'APPROVED' }),
+    [],
   );
   const handleReject = useCallback(
-    (row: ChangeRequestRecord) => handleDecision(row, 'REJECTED'),
-    [handleDecision],
+    (row: ChangeRequestRecord) => setConfirmState({ row, decision: 'REJECTED' }),
+    [],
   );
+  const handleCancelDecision = useCallback(() => setConfirmState(null), []);
+
+  const handleConfirmDecision = useCallback(async () => {
+    if (!confirmState) return;
+    const { row, decision } = confirmState;
+    setDecidingId(row._id);
+    try {
+      await decideChangeRequest({ id: row._id, decision });
+      showAlert(
+        'success',
+        decision === 'APPROVED'
+          ? t('admin.reviewRequests.approveSuccess', 'Request approved successfully.')
+          : t('admin.reviewRequests.rejectSuccess', 'Request rejected successfully.'),
+      );
+      setRefreshKey(k => k + 1);
+      setConfirmState(null);
+    } catch (error: any) {
+      showAlert(
+        'error',
+        error?.message || t('admin.reviewRequests.decisionError', 'Could not update the request. Try again.'),
+      );
+    } finally {
+      setDecidingId(null);
+    }
+  }, [confirmState, showAlert, t]);
 
   const columns = useMemo(
     () =>
@@ -216,7 +223,7 @@ const ReviewRequestsScreen = (): React.JSX.Element => {
         }
       />
 
-      <FilterButton data={filterOptions} onFilterChange={handleFilterChange} _container={styles.filterContainer} />
+      <FilterButton data={filterOptions} showClearButton={showClearButton} onFilterChange={handleFilterChange} _container={styles.filterContainer} />
 
       <Box {...styles.tableWrapper}>
         <DataTable
@@ -244,6 +251,37 @@ const ReviewRequestsScreen = (): React.JSX.Element => {
           }}
         />
       </Box>
+
+      <Modal
+        isOpen={!!confirmState}
+        onClose={handleCancelDecision}
+        onCancel={handleCancelDecision}
+        onConfirm={handleConfirmDecision}
+        confirmLoading={!!confirmState && decidingId === confirmState.row._id}
+        size="sm"
+        maxWidth={420}
+        headerTitle={
+          confirmState?.decision === 'APPROVED'
+            ? t('admin.reviewRequests.confirm.approveTitle', 'Approve Request')
+            : t('admin.reviewRequests.confirm.rejectTitle', 'Reject Request')
+        }
+        cancelButtonText={t('admin.reviewRequests.confirm.cancel', 'No, Cancel')}
+        confirmButtonText={t('admin.reviewRequests.confirm.continue', 'Yes, Continue')}
+      >
+        <Text>
+          {confirmState
+            ? `${t('admin.reviewRequests.confirm.question', 'Do you want to')} ${
+                confirmState.decision === 'APPROVED'
+                  ? t('admin.reviewRequests.confirm.acceptWord', 'accept')
+                  : t('admin.reviewRequests.confirm.rejectWord', 'reject')
+              } ${t('admin.reviewRequests.confirm.theRequestFor', 'the request for')} ${
+                confirmState.row.entityName ||
+                confirmState.row.requestorName ||
+                t('admin.reviewRequests.confirm.thisParticipant', 'this participant')
+              }?`
+            : ''}
+        </Text>
+      </Modal>
     </VStack>
   );
 };

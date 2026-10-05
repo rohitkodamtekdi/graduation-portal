@@ -503,7 +503,7 @@ export default function ParticipantDetail() {
       <Container px="$4" py="$6" $md-px="$6">
         {showOnboardingProject === "not_eligible" ? (
           <></>
-        ) : !participant?.onBoardedProjectId && !targetingCriteria && showOnboardingProject !== 'dropout' ?
+        ) : !participant?.onBoardedProjectId && !targetingCriteria ?
           <TargetingCriteriaCard isReadOnly={!!(showOnboardingProject !== "not_enrolled" || isdminPanalAccess || participant?.accountUserStatus === USER_STATUS.INACTIVE)} user={user} participant={participant} setTargetingCriteria={handleTargetingCriteriaResponce}/>
           : showOnboardingProject ? (
           <>

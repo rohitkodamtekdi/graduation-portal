@@ -11,6 +11,7 @@ export type ChangeRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type ChangeRequestAction = 'USER_PROJECT_TEMPLATE_CHANGE' | 'PROGRAM_USER_DROPPING_OUT';
 
 export interface ChangeRequestListParams {
+  programId:string; 
   status: ChangeRequestStatus;
   action?: ChangeRequestAction;
   province?: string;
@@ -69,9 +70,10 @@ export const listChangeRequests = async (
   params: ChangeRequestListParams,
 ): Promise<ChangeRequestListResponse> => {
   try {
-    const { status, action, province, site, pageNo = 1, pageSize = 10 } = params;
+    const { programId, status, action, province, site, pageNo = 1, pageSize = 10 } = params;
 
     const queryParams = new URLSearchParams({
+      programId,
       status,
       page: pageNo.toString(),
       limit: pageSize.toString(),

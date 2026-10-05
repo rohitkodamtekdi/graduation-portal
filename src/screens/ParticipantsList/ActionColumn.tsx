@@ -181,9 +181,9 @@ export const ActionColumn: React.FC<ActionColumnProps> = ({
           )
         }
 
-        // If dropout request is pending approval, hide the dropout action
+        // If dropout request is pending approval, hide dropout and add-log actions
         if (isDropoutRequestSentForApproval) {
-          filterMenuItems = filterMenuItems.filter(e => e.key !== 'dropout');
+          filterMenuItems = filterMenuItems.filter(e => e.key !== 'dropout' && e.key !== 'log-visit');
         }
 
         const isParticipantDataOffline = await isParticipantOffline(`${user?.id}`, participant.userId);
@@ -266,11 +266,8 @@ export const ActionColumn: React.FC<ActionColumnProps> = ({
       try {
         if (user?.role === 'LC') {
           const response = await requestChange({
-            province: user.province.value || '',
-            site: user.site.value || '',
             requestees: [String(participant.hierarchy[1])],
             entityId: userEntityId,
-            entityName: participant.name || '',
             action: 'PROGRAM_USER_DROPPING_OUT',
             changePayload: {
               status: STATUS.DROPOUT,

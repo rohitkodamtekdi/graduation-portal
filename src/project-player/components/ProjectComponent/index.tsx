@@ -206,11 +206,8 @@ const ProjectComponent = React.memo(() => {
       if (isReplace) {
         if (user?.role === 'LC') {
           const response = await requestChange({
-            province: user.province.value || '',
-            site: user.site.value || '',
             requestees: [config.profileInfo?.hierarchy?.['1'] || ''],
             entityId: config.profileInfo?.entityId || userId,
-            entityName: config.profileInfo?.name || '',
             action: 'USER_PROJECT_TEMPLATE_CHANGE',
             changePayload: { ...reqBody, projectId: oldProjectData._id },
             programId: process.env.GLOBAL_LC_PROGRAM_ID as string,

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import moment from 'moment';
 import { VStack, HStack, Button, ButtonText, Modal, Text } from '@ui';
 import { useAlert } from '@components/ui';
 import { TYPOGRAPHY } from '@constants/TYPOGRAPHY';
@@ -27,6 +28,44 @@ interface UserProfileModalProps {
   onEdit?: () => void;
 }
 
+/**
+ * Resolves the role assigned to `user`/`userProfile`, tolerating the different
+ * shapes this data can arrive in:
+ * - account/search-shaped: `user_organizations[0].roles[0].role.{id,title,label}`
+ * - AuthContext-shaped: `organizations[0].roles[0].{id,title,label}` (role fields
+ *   sit directly on the role item, no nested `.role`)
+ */
+const resolveRoleInfo = (
+  user: any,
+  userProfile: any,
+): { id?: string; title?: string; label?: string } | null => {
+  const nestedCandidates: any[] = [
+    user?.user_organizations?.[0]?.roles,
+    user?.user_organizations?.[0]?.organization?.roles,
+    userProfile?.user_organizations?.[0]?.roles,
+    userProfile?.user_organizations?.[0]?.organization?.roles,
+  ];
+  const nestedOrgRoles = nestedCandidates.find(
+    (arr) => Array.isArray(arr) && arr.length > 0,
+  );
+  if (nestedOrgRoles?.[0]?.role) {
+    return nestedOrgRoles[0].role;
+  }
+
+  const directCandidates: any[] = [
+    user?.organizations?.[0]?.roles,
+    userProfile?.organizations?.[0]?.roles,
+  ];
+  const directOrgRoles = directCandidates.find(
+    (arr) => Array.isArray(arr) && arr.length > 0,
+  );
+  if (directOrgRoles?.[0] && (directOrgRoles[0].id || directOrgRoles[0].title)) {
+    return directOrgRoles[0];
+  }
+
+  return null;
+};
+
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   isOpen,
   onClose,
@@ -46,11 +85,53 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const { roles, provinces, genders, organisations, positions, countryCodes } =
     useUserManagementFilters({});
   const [formSites, setFormSites] = useState<any[]>([]);
+  // The profile being viewed might hold a role that `roles` doesn't include
+  // (e.g. a tenant_admin's own role is intentionally excluded from `roles`,
+  // which is scoped to the roles a tenant_admin may assign to *other* users).
+  // Track it separately so it can still be rendered/validated as a valid option.
+  const [extraRoleOption, setExtraRoleOption] = useState<{
+    id: string;
+    title: string;
+    label: string;
+  } | null>(null);
+
+  // Kept in sync with `roles` so the profile-fetch effect below can read the
+  // latest value without needing `roles` in its dependency array (which would
+  // otherwise force a redundant re-fetch once the async roles list resolves).
+  const rolesRef = useRef(roles);
+  rolesRef.current = roles;
+
+  const effectiveRoles = useMemo(() => {
+    if (!extraRoleOption) return roles;
+    const alreadyPresent = roles.some(
+      (r: any) => r.id?.toString() === extraRoleOption.id,
+    );
+    if (alreadyPresent) return roles;
+    return [
+      ...roles,
+      {
+        id: extraRoleOption.id,
+        title: extraRoleOption.title,
+        label: extraRoleOption.label,
+        status: 'ACTIVE',
+      },
+    ];
+  }, [roles, extraRoleOption]);
 
   const [values, setValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const initialValuesRef = useRef<Record<string, string>>({});
+  const firstNameRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (isOpen && mode === 'edit') {
+      const timer = setTimeout(() => {
+        firstNameRef.current?.focus?.();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, mode]);
 
   const editSchema = useMemo(
     () =>
@@ -86,13 +167,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   ): Record<string, string> => {
     if (!user) return {};
 
-    const orgRoles = (user as any)?.user_organizations?.[0]?.roles ||
-      (user as any)?.user_organizations?.[0]?.organization?.roles ||
-      (userProfile as any)?.user_organizations?.[0]?.roles ||
-      (userProfile as any)?.user_organizations?.[0]?.organization?.roles || [];
-    const roleId = orgRoles[0]?.role?.id?.toString() ||
-      orgRoles[0]?.role?.title ||
-      orgRoles[0]?.role?.label ||
+    const resolvedRoleInfo = resolveRoleInfo(user, userProfile);
+    const roleId = resolvedRoleInfo?.id?.toString() ||
+      resolvedRoleInfo?.title ||
+      resolvedRoleInfo?.label ||
       (user as any)?.roleId?.toString() ||
       (user as any)?.role ||
       (userProfile as any)?.roleId?.toString() ||
@@ -111,7 +189,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         if (val.value === 'other') {
           return val.label != null ? String(val.label) : '';
         }
-        const res = val.value ?? val.metaInformation?.name ?? val.name ?? val.label ?? val.id ?? val._id;
+        const valValue = (val.value !== undefined && val.value !== null && val.value !== '') ? val.value : undefined;
+        const res = valValue ?? val.metaInformation?.name ?? val.name ?? val.label ?? val.id ?? val._id;
         return res != null ? String(res) : '';
       }
       return String(val);
@@ -124,6 +203,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       if (!keys.includes(snake)) keys.push(snake);
       if (!keys.includes(camel)) keys.push(camel);
 
+      if (fieldName === 'dob') {
+        keys.push('date_of_birth', 'dateOfBirth', 'birth_date', 'birthDate');
+      }
       if (fieldName === 'countryCode') {
         keys.push('phone_code', 'phoneCode');
       }
@@ -226,7 +308,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     const alternativePhoneCode = formatPhoneCode(getFieldVal('alternativePhoneCode'));
     const alternativePhone = getFieldVal('alternativePhone');
     const gender = getFieldIdVal('gender');
-    const dob = getFieldVal('dob');
+    const rawDob = getFieldVal('dob');
+    const dob = (() => {
+      if (!rawDob) return '';
+      const clean = rawDob.replace(/[\/\-]/g, '_');
+      if (/^\d{4}_\d{2}_\d{2}$/.test(clean)) return clean;
+      const parsed = moment(rawDob, ['YYYY_MM_DD', 'YYYY-MM-DD', 'YYYY/MM/DD', 'DD/MM/YYYY', 'DD-MM-YYYY', 'DD_MM_YYYY']);
+      return parsed.isValid() ? parsed.format('YYYY_MM_DD') : clean;
+    })();
 
     const employee_id = getFieldVal('employee_id');
     let organisationId = getFieldVal('organization');
@@ -237,7 +326,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
     const roleTitle = (() => {
       if (!roleId) return '';
-      const matchedRole = roles.find((r: any) => r.id.toString() === roleId);
+      if (resolvedRoleInfo?.title) return resolvedRoleInfo.title.toLowerCase();
+      const matchedRole = effectiveRoles.find((r: any) => r.id.toString() === roleId);
       return (matchedRole?.title || '').toLowerCase();
     })();
 
@@ -273,6 +363,21 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           //console.log('PROFILE API =>', profile);
           setSelectedUserProfile(profile);
 
+          // If this profile's actual role isn't in the (possibly restricted)
+          // `roles` list — e.g. a tenant_admin's own role is excluded from
+          // the list of roles they're allowed to assign to other users —
+          // track it separately so the Role field still shows/validates correctly.
+          const roleInfo = resolveRoleInfo(user, profile);
+          if (roleInfo?.id && !rolesRef.current.some((r: any) => r.id?.toString() === roleInfo.id!.toString())) {
+            setExtraRoleOption({
+              id: roleInfo.id.toString(),
+              title: roleInfo.title || '',
+              label: roleInfo.label || roleInfo.title || '',
+            });
+          } else {
+            setExtraRoleOption(null);
+          }
+
           const mapped = mapUserToFormValues(user, profile);
           //console.log('MAPPED VALUES =>', mapped);
           setValues(mapped);
@@ -307,7 +412,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const optionsMap = useMemo(
     () =>
       mapFiltersToOptionsMap({
-        roles,
+        roles: effectiveRoles,
         genders,
         provinces,
         sites: formSites,
@@ -316,7 +421,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         countryCodes,
       }),
     [
-      roles,
+      effectiveRoles,
       genders,
       provinces,
       formSites,
@@ -327,8 +432,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   );
 
   const handleFieldChange = (name: string, value: string) => {
+    let nextValues: Record<string, string> = {};
     setValues(prev => {
       const updated = { ...prev, [name]: value };
+      nextValues = updated;
 
       // Clear site if province changes
       if (name === 'provinceId') {
@@ -344,7 +451,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       }
 
       if (name === 'roleId') {
-        const selectedRole = roles.find((r: any) => r.id.toString() === value);
+        const selectedRole = effectiveRoles.find((r: any) => r.id.toString() === value);
         const roleTitle = (selectedRole?.title || '').toLowerCase();
         updated.isParticipant = roleTitle === 'user' ? 'true' : 'false';
       }
@@ -353,10 +460,20 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     });
 
     setErrors(prev => {
-      const next = { ...prev, [name]: '' };
+      const next = { ...prev };
+      const validationErrs = validateSchema(
+        CREATE_USER_FORM_SCHEMA,
+        nextValues,
+        optionsMap,
+      );
+      if (validationErrs[name]) {
+        next[name] = validationErrs[name];
+      } else {
+        delete next[name];
+      }
       if (name === 'roleId') {
-        next.provinceId = '';
-        next.siteId = '';
+        delete next.provinceId;
+        delete next.siteId;
       }
       return next;
     });
@@ -386,13 +503,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       optionsMap,
     );
     if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+      setErrors({});
+      setTimeout(() => {
+        setErrors(validationErrors);
+      }, 0);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const payload = mapFormValuesToPayload(values, roles);
+      const payload = mapFormValuesToPayload(values, effectiveRoles);
       await updateOrgAdminUser(user!.id, payload);
       showAlert(
         'success',
@@ -458,6 +578,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               mode={mode}
               t={t}
               _input={INPUT_STYLE}
+              firstNameRef={firstNameRef}
             />
           </VStack>
         )}

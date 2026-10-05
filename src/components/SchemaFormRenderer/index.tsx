@@ -2356,6 +2356,20 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
     prevErrorsRef.current = errors;
   }, [errors, revealAndFocusField]);
 
+  // Synchronize internalErrors with errors prop — clear any internal error when the parent clears it
+  useEffect(() => {
+    setInternalErrors(prev => {
+      if (!Object.keys(prev).some(key => !errors[key])) return prev;
+      const next = { ...prev };
+      Object.keys(next).forEach(key => {
+        if (!errors[key]) {
+          delete next[key];
+        }
+      });
+      return next;
+    });
+  }, [errors]);
+
   useEffect(() => {
     return () => {
       if (highlightTimeoutRef.current)

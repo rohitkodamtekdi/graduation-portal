@@ -41,6 +41,8 @@ import { getUserProfile } from '../../services/authenticationService';
 import { TYPOGRAPHY } from '@constants/TYPOGRAPHY';
 import openExternalLink from '@utils/openExternalLink';
 import { useOfflineSync } from '@contexts/OfflineSyncContext';
+import { UserProfileModal } from '../../screens/UserManagement/UserProfileModal';
+import type { AdminUserManagementData } from '@app-types/Users';
 
 /**
  * Header Component - Enhanced for LC Layout Support
@@ -93,6 +95,8 @@ const Header: React.FC<{
   const { showAlert } = useAlert();
   const { pendingBreakdown } = useOfflineSync();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showAdminProfileModal, setShowAdminProfileModal] = useState(false);
+  const [adminProfileModalMode, setAdminProfileModalMode] = useState<'edit' | 'preview'>('preview');
 
   const openMyProfile = async () => {
     try {
@@ -113,6 +117,9 @@ const Header: React.FC<{
     logger.log('Menu selected:', key);
     if (key === 'myProfile') {
       await openMyProfile();
+    } else if (key === 'profile') {
+      setAdminProfileModalMode('preview');
+      setShowAdminProfileModal(true);
     } else if (key === 'logout') {
       if (pendingBreakdown.total > 0) {
         setShowLogoutConfirm(true);
@@ -462,6 +469,20 @@ const Header: React.FC<{
           </Box>
         </VStack>
       </Modal>
+
+      {/* Admin/Tenant Admin "Profile" menu — reuses the same modal used for "View Profile" in User Management */}
+      {showAdminProfileModal && (
+        <UserProfileModal
+          isOpen={showAdminProfileModal}
+          onClose={() => setShowAdminProfileModal(false)}
+          onSuccess={() => setShowAdminProfileModal(false)}
+          user={user as unknown as AdminUserManagementData}
+          isMobile={isMobile}
+          t={t}
+          mode={adminProfileModalMode}
+          onEdit={() => setAdminProfileModalMode('edit')}
+        />
+      )}
 
       <Modal
         isOpen={showLogoutConfirm}

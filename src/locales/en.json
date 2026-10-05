@@ -237,7 +237,8 @@
       "observation": "Observation",
       "template": "Develop Intervention Plan",
       "participants": "Participants",
-      "project": "Project"
+      "project": "Project",
+      "review-requests": "Review Requests"
     },
     "home": "Home",
     "dashboard": "Dashboards",
@@ -1540,8 +1541,7 @@
       "filters": {
         "type": "Request Type",
         "pathwaySwitch": "Pathway Switch",
-        "dropoutRequest": "Dropout Request",
-        "allTypes": "All Types"
+        "dropoutRequest": "Dropout Request"
       },
       "table": {
         "participant": "Participant",

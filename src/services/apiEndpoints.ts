@@ -30,7 +30,7 @@ export const API_ENDPOINTS = {
   ENTITY_TYPES_LIST: `${prefix}/entity-management/v1/entityTypes/list`,  // Fetch entity types (province, district, etc.)
   ENTITIES_BY_TYPE: `${prefix}/entity-management/v1/entities/listByEntityType`,  // Fetch entities by type (e.g., provinces)
   USERS_LIST: `${prefix}/user/v1/account/search`,  // Search users for user management
-  DEACTIVATE_USER: `user/v1/admin/deactivateUser`,
+  DEACTIVATE_USER: `${prefix}/user/v1/admin/deactivateUser`,
   ORG_ADMIN_UPDATE_USER: `${prefix}/user/v1/org-admin/updateUser`,
   UPDATE_USER: `${prefix}/user/v1/user/update`,
   CREATE_USER: `${prefix}/user/v1/tenant/accountCreate`,

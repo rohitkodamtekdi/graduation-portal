@@ -293,11 +293,8 @@ export const updateInterventionPlan = async (
 
 export const requestChange = async (
   reqBody: {
-    province: string;
-    site: string;
     requestees: string[];
     entityId: string;
-    entityName: string;
     action: 'PROGRAM_USER_DROPPING_OUT' | 'USER_PROJECT_TEMPLATE_CHANGE';
     changePayload: any;
     programId: string;
