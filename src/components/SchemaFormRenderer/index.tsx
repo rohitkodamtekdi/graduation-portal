@@ -51,6 +51,7 @@ import Select from '@components/ui/Inputs/Select';
 import DatePicker from '@components/ui/Inputs/DatePicker';
 import { openFilePicker } from '../../project-player/components/Task/FileEvidence/file-picker';
 import { TYPOGRAPHY } from '@constants/TYPOGRAPHY';
+import openExternalLink from '@utils/openExternalLink';
 import styles from './Styles';
 import {
   type FormSection,
@@ -695,6 +696,46 @@ function toFilePreviewItems(value: any): FilePreviewItem[] {
     };
   });
 }
+
+// Read-only file list for preview mode: file icon + name, eye icon opens the document
+const FileViewList = ({ value }: { value: any }) => {
+  const items = toFilePreviewItems(value);
+  if (!items.length) {
+    return <Text {...TYPOGRAPHY.bodySmall} color="$textForeground">-</Text>;
+  }
+  return (
+    <VStack space="sm" width="100%">
+      {items.map(item => {
+        let name = item.name;
+        try {
+          name = decodeURIComponent(item.name);
+        } catch {}
+        return (
+          <HStack
+            key={item.key}
+            alignItems="center"
+            space="md"
+            width="100%"
+            bg="$backgroundLight100"
+            borderRadius="$lg"
+            px="$4"
+            py="$3"
+          >
+            <LucideIcon name="FileText" size={18} color="$primary500" />
+            <Text {...TYPOGRAPHY.bodySmall} color="$textForeground" flex={1} numberOfLines={1}>
+              {name}
+            </Text>
+            {!!item.previewUri && (
+              <Pressable onPress={() => openExternalLink(item.previewUri as string)} accessibilityLabel={`View ${name}`}>
+                <LucideIcon name="Eye" size={18} color="$textForeground" />
+              </Pressable>
+            )}
+          </HStack>
+        );
+      })}
+    </VStack>
+  );
+};
 
 /**
  * Uploads every `file`-type field's picked asset(s) via `uploadService` and
@@ -3252,9 +3293,13 @@ const FieldContainer = memo(
             </Text>
           )}
 
-          <Text {...TYPOGRAPHY.bodySmall} color="$textForeground">
-            {displayValue}
-          </Text>
+          {field.type === FORM_FIELD_TYPES.FILE ? (
+            <FileViewList value={field.name ? values[field.name] : undefined} />
+          ) : (
+            <Text {...TYPOGRAPHY.bodySmall} color="$textForeground">
+              {displayValue}
+            </Text>
+          )}
         </VStack>
       );
     }
