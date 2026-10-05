@@ -381,6 +381,7 @@ const SessionDetailsScreen: React.FC = () => {
         onClose={() => setIsAssignModalOpen(false)}
         session={session}
         onConfirm={handleConfirmAssignment}
+        maxSelectable={session?.seats_remaining}
       />
     </Box>
   );

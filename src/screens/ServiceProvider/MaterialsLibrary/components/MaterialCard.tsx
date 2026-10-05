@@ -3,7 +3,7 @@ import { Box, HStack, VStack, Text, Pressable } from '@gluestack-ui/themed';
 import LucideIcon from '@components/ui/LucideIcon';
 import styles from '../styles';
 import { useLanguage } from '@contexts/LanguageContext';
-import { MaterialItem } from '../../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
+import { MaterialItem, MATERIAL_FORMATS } from '../../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
 
 export interface MaterialCardProps {
   item: MaterialItem;
@@ -20,41 +20,11 @@ export default function MaterialCard({
 }: MaterialCardProps): React.JSX.Element {
   const { t } = useLanguage();
 
-  const getCategoryBadgeProps = (category: string, format: string) => {
-    const normCat = category.toLowerCase().trim();
-    const normForm = format.toLowerCase().trim();
-
-    let icon = 'FileText';
-    let iconBg = '$error50'; // light red
-    let iconBorder = '$error200';
-    let iconColor = '$error600'; // dark red
-
-    if (normCat.includes('management') || normCat.includes('business')) {
-      icon = 'TrendingUp';
-      iconBg = '$success50'; // light green
-      iconBorder = '$success300';
-      iconColor = '$success700'; // dark green
-    } else if (normForm.includes('video')) {
-      icon = 'Video';
-      iconBg = '$purple50'; // light purple
-      iconBorder = '$purple300';
-      iconColor = '$purple600'; // dark purple
-    } else if (normCat.includes('financial') || normCat.includes('literacy')) {
-      icon = 'BookOpen';
-      iconBg = '$primary100'; // light primary/reddish
-      iconBorder = '$primary300';
-      iconColor = '$primary500'; // dark primary
-    } else if (normCat.includes('asset') || normCat.includes('equipment')) {
-      icon = 'Package';
-      iconBg = '$blue50'; // light blue
-      iconBorder = '$blue200';
-      iconColor = '$blue600'; // dark blue
-    }
-
-    return { icon, iconBg, iconBorder, iconColor };
-  };
-
-  const badge = getCategoryBadgeProps(item.category, item.format);
+  // The icon shows the file format only: blue for Word documents, red for PDFs (and anything else)
+  const badge =
+    item.format === MATERIAL_FORMATS.WORD
+      ? { icon: 'FileText', iconBg: '$blue50', iconBorder: '$blue200', iconColor: '$blue600' }
+      : { icon: 'FileText', iconBg: '$error50', iconBorder: '$error200', iconColor: '$error600' };
 
   return (
     <Box {...styles.materialCard}>
@@ -69,13 +39,15 @@ export default function MaterialCard({
             <LucideIcon name={badge.icon} size={styles.cardHeaderIconProps.size} color={badge.iconColor} />
           </Box>
           <VStack {...styles.cardHeaderTextCol}>
-            <Box {...styles.cardBadgeWrapper}>
-              <HStack {...styles.categoryBadgeCard}>
-                <Text {...styles.categoryBadgeTextCard}>
-                  {item.category}
-                </Text>
-              </HStack>
-            </Box>
+            {item.category ? (
+              <Box {...styles.cardBadgeWrapper}>
+                <HStack {...styles.categoryBadgeCard}>
+                  <Text {...styles.categoryBadgeTextCard}>
+                    {item.category}
+                  </Text>
+                </HStack>
+              </Box>
+            ) : null}
             <Text {...styles.cardTitle} numberOfLines={1}>
               {item.title}
             </Text>
@@ -83,9 +55,11 @@ export default function MaterialCard({
         </HStack>
 
         {/* Card Description */}
-        <Text {...styles.cardDescription} numberOfLines={3}>
-          {item.description}
-        </Text>
+        {item.description ? (
+          <Text {...styles.cardDescription} numberOfLines={3}>
+            {item.description}
+          </Text>
+        ) : null}
 
         {/* File Info Box */}
         <Box {...styles.fileInfoBox}>
@@ -95,9 +69,6 @@ export default function MaterialCard({
               {item.fileName || 'file'}
             </Text>
           </HStack>
-          <Text {...styles.fileSizeText}>
-            {item.fileSize}
-          </Text>
         </Box>
 
         {/* Associated offering if exists */}
@@ -112,17 +83,11 @@ export default function MaterialCard({
       </VStack>
 
       <VStack>
-        {/* Metadata Row: Upload Date and Downloads */}
+        {/* Metadata Row: Upload Date */}
         <Box {...styles.metaRow}>
           <Text {...styles.metaItemText}>
             {t('supportProvider.materialsLibrary.card.uploaded', { date: item.uploadDate })}
           </Text>
-          <HStack {...styles.downloadsBox}>
-            <LucideIcon name="Download" size={styles.downloadsIcon.size} color={styles.downloadsIcon.color} />
-            <Text {...styles.downloadsText}>
-              {t('supportProvider.materialsLibrary.card.downloads', { count: item.downloads })}
-            </Text>
-          </HStack>
         </Box>
 
         {/* Card Footer Actions */}

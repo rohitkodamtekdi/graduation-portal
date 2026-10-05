@@ -113,6 +113,16 @@ const SessionsSupportScreen: React.FC = () => {
           { count: selectedIds.length, defaultValue: `${selectedIds.length} participant(s) assigned to session successfully.` }
         )
       );
+
+      // Decrement seats_remaining locally so reopening the modal enforces the updated limit
+      const decrementSeats = (session: any) => {
+        if ((session.id || session._id) !== sessionId) return session;
+        const currentRemaining = session.seats_remaining ?? session.seats_limit ?? 0;
+        return { ...session, seats_remaining: Math.max(0, currentRemaining - selectedIds.length) };
+      };
+      setSelectedSession((prev: any) => (prev ? decrementSeats(prev) : prev));
+      setItems((prev) => prev.map(decrementSeats));
+      setMySessions((prev) => prev.map(decrementSeats));
       return true;
     } catch (err: any) {
       console.error('Error assigning participants:', err);
@@ -779,6 +789,7 @@ const SessionsSupportScreen: React.FC = () => {
         onClose={() => setIsAssignModalOpen(false)}
         session={selectedSession}
         onConfirm={handleConfirmAssignment}
+        maxSelectable={selectedSession?.seats_remaining}
       />
 
       <AssignParticipantsModal

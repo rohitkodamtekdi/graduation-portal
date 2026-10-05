@@ -1645,6 +1645,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
       <Textarea
         {...(styles.input as any)}
         {...resolvedInputProps}
+        h="auto"
         isInvalid={!!error}
         isDisabled={isFieldDisabled}
         isReadOnly={field.isReadOnly}
