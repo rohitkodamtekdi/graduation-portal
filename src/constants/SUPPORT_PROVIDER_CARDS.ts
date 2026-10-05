@@ -53,6 +53,7 @@ export const SESSION_STATUS_LABEL = {
   DRAFT: "Draft",
   PUBLISHED: "Published",
   COMPLETED: "Completed",
+  EXPIRED: "Expired",
   UPCOMING: "Upcoming",
   IN_PROGRESS: "In progress",
   LIVE: "In progress",

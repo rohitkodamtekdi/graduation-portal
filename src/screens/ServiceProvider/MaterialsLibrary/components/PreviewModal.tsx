@@ -4,7 +4,7 @@ import Modal from '@components/ui/Modal';
 import LucideIcon from '@components/ui/LucideIcon';
 import styles from '../styles';
 import { useLanguage } from '@contexts/LanguageContext';
-import { MaterialItem } from '../../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
+import { MaterialItem, MATERIAL_FORMATS } from '../../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
 
 export interface PreviewModalProps {
   isOpen: boolean;
@@ -27,9 +27,8 @@ export default function PreviewModal({
     if (fileName && fileName.includes('.')) {
       return fileName.split('.').pop()?.toUpperCase() || 'FILE';
     }
-    if (format === 'PDF Document') return 'PDF';
-    if (format === 'Templates & Decks') return 'TPL';
-    if (format === 'Video Guide') return 'VIDEO';
+    if (format === MATERIAL_FORMATS.PDF) return 'PDF';
+    if (format === MATERIAL_FORMATS.WORD) return 'DOCX';
     return 'FILE';
   };
 
@@ -152,7 +151,7 @@ export default function PreviewModal({
           </HStack>
         ) : null}
 
-        {/* Properties Grid */}
+        {/* Properties Grid - File Name and Upload Date side by side (size/downloads aren't tracked) */}
         <Box {...styles.previewMetaGrid}>
           {/* File Name */}
           <Box {...styles.previewGridItem}>
@@ -164,16 +163,6 @@ export default function PreviewModal({
             </Text>
           </Box>
 
-          {/* File Size */}
-          <Box {...styles.previewGridItem}>
-            <Text {...styles.previewGridLabel}>
-              {t('supportProvider.materialsLibrary.previewModal.fileSize')}
-            </Text>
-            <Text {...styles.previewGridValue}>
-              {item.fileSize || 'N/A'}
-            </Text>
-          </Box>
-
           {/* Upload Date */}
           <Box {...styles.previewGridItem}>
             <Text {...styles.previewGridLabel}>
@@ -181,16 +170,6 @@ export default function PreviewModal({
             </Text>
             <Text {...styles.previewGridValue}>
               {item.uploadDate}
-            </Text>
-          </Box>
-
-          {/* Downloads */}
-          <Box {...styles.previewGridItem}>
-            <Text {...styles.previewGridLabel}>
-              {t('supportProvider.materialsLibrary.previewModal.downloads')}
-            </Text>
-            <Text {...styles.previewGridValue}>
-              {item.downloads}
             </Text>
           </Box>
         </Box>

@@ -209,7 +209,11 @@ const App = (): React.JSX.Element => {
                 key={tab.key}
                 tab={tab}
                 isActive={activeTab === tab.key}
-                onPress={(key) => setActiveTab(key)}
+                onPress={(key) => {
+                  if (key === activeTab) return;
+                  setRequestsData([]);
+                  setActiveTab(key);
+                }}
                 _text={styles.tabTextProps}
                 _container={styles.tabButtonContainer}
                 iconSize={16}

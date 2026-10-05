@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, ButtonIcon, ButtonText, Container, HStack, LucideIcon, VStack } from '@ui';
+import { Box, Button, ButtonIcon, ButtonText, Container, HStack, LucideIcon, Text, VStack } from '@ui';
 import styles from './styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -56,7 +56,7 @@ const App = (): React.JSX.Element => {
   const [page, setPage] = useState<number>(1);
   const [limit] = useState<number>(5);
   const [total, setTotal] = useState<number>(0);
-  const [_loading, setLoading] = useState<boolean>(false);
+  const [_loading, setLoading] = useState<boolean>(true);
 
   const tabs = [
     { key: 'sessions', label: t('supportProvider.supportOfferings.tabs.trainings', 'Trainings & Sessions'), icon: 'GraduationCap' },
@@ -299,6 +299,13 @@ const App = (): React.JSX.Element => {
             _container={styles.filterContainer}
             _input={styles.filterInputProps}
           />
+
+          {!_loading && items.length === 0 && (
+            <Box {...styles.emptyStateBox}>
+              <LucideIcon name="FileX" size={styles.emptyStateIcon.size} color={styles.emptyStateIcon.color} />
+              <Text {...styles.emptyStateText}>{t('common.noDataFound')}</Text>
+            </Box>
+          )}
 
           {activeTab === 'sessions' && (
             <TrainingCard
