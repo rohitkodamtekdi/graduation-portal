@@ -20,6 +20,8 @@ export interface MaterialsContentProps {
   fetchMaterials: () => Promise<void>;
   isUploadOpen: boolean;
   onUploadClose: () => void;
+  /** Category options (from the categories API) for the upload form */
+  categoryOptions?: { label: string; value: string }[];
 }
 
 export default function MaterialsContent({
@@ -27,6 +29,7 @@ export default function MaterialsContent({
   fetchMaterials,
   isUploadOpen,
   onUploadClose,
+  categoryOptions = [],
 }: MaterialsContentProps): React.JSX.Element {
   const { showAlert } = useAlert();
   const { t } = useLanguage();
@@ -127,6 +130,7 @@ export default function MaterialsContent({
         isOpen={isUploadOpen}
         onClose={onUploadClose}
         onUpload={handleUpload}
+        categoryOptions={categoryOptions}
       />
 
       <PreviewModal

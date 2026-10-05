@@ -22,6 +22,10 @@ import Modal from '@components/ui/Modal';
 import LucideIcon from '@components/ui/LucideIcon';
 import styles from '../styles';
 import { useLanguage } from '@contexts/LanguageContext';
+import {
+  MATERIAL_FORMATS,
+  ALLOWED_MATERIAL_EXTENSIONS,
+} from '../../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
 
 export interface UploadResourceModalProps {
   isOpen: boolean;
@@ -34,12 +38,15 @@ export interface UploadResourceModalProps {
     fileName: string;
     associatedOffering: string;
   }) => void;
+  /** Category options (from the categories API) */
+  categoryOptions?: { label: string; value: string }[];
 }
 
 export default function UploadResourceModal({
   isOpen,
   onClose,
   onUpload,
+  categoryOptions = [],
 }: UploadResourceModalProps): React.JSX.Element {
   const { t } = useLanguage();
   const [title, setTitle] = useState('');
@@ -50,17 +57,9 @@ export default function UploadResourceModal({
   const [associatedOffering, setAssociatedOffering] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  const CATEGORY_OPTIONS = [
-    { label: t('supportProvider.materialsLibrary.categories.financialLiteracy'), value: 'Financial Literacy' },
-    { label: t('supportProvider.materialsLibrary.categories.businessManagement'), value: 'Business Management' },
-    { label: t('supportProvider.materialsLibrary.categories.assetEquipment'), value: 'Asset & Equipment Support' },
-    { label: t('supportProvider.materialsLibrary.categories.legalCompliance'), value: 'Legal & Compliance' },
-  ];
-
   const FORMAT_OPTIONS = [
-    { label: t('supportProvider.materialsLibrary.formats.pdf'), value: 'PDF Document' },
-    { label: t('supportProvider.materialsLibrary.formats.template'), value: 'Templates & Decks' },
-    { label: t('supportProvider.materialsLibrary.formats.video'), value: 'Video Guide' },
+    { label: t('supportProvider.materialsLibrary.formats.pdf'), value: MATERIAL_FORMATS.PDF },
+    { label: t('supportProvider.materialsLibrary.formats.word'), value: MATERIAL_FORMATS.WORD },
   ];
 
   const handleClose = () => {
@@ -80,10 +79,19 @@ export default function UploadResourceModal({
       return;
     }
 
+    // Only PDF / Word files are allowed - the file name's extension must match the chosen format
+    const ext = fileName.trim().includes('.') ? fileName.trim().split('.').pop()?.toLowerCase() || '' : '';
+    const allowedForFormat = format === MATERIAL_FORMATS.PDF ? ['pdf'] : ['doc', 'docx'];
+    if (fileName.trim() && (!ALLOWED_MATERIAL_EXTENSIONS.includes(ext) || !allowedForFormat.includes(ext))) {
+      setErrorMsg(t('supportProvider.materialsLibrary.uploadModal.invalidFileType'));
+      return;
+    }
+
     onUpload({
       title,
       description,
-      category,
+      // Save the readable label; the filter still matches it since it compares names ignoring spaces/underscores
+      category: categoryOptions.find((opt) => opt.value === category)?.label ?? category,
       format,
       fileName: fileName.trim(),
       associatedOffering: associatedOffering.trim(),
@@ -189,7 +197,7 @@ export default function UploadResourceModal({
               <SelectPortal>
                 <SelectBackdrop />
                 <SelectContent>
-                  {CATEGORY_OPTIONS.map((opt) => (
+                  {categoryOptions.map((opt) => (
                     <SelectItem key={opt.value} label={opt.label} value={opt.value} />
                   ))}
                 </SelectContent>

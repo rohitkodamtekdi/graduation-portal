@@ -106,6 +106,14 @@ const getStatusColors = (status: string) => {
         icon: 'XCircle',
       };
 
+    case SESSION_STATUS_LABEL.EXPIRED:
+      return {
+        bg: '$error50',
+        border: '$red200',
+        text: '$red600',
+        icon: 'Clock',
+      };
+
     case SESSION_STATUS_LABEL.COMPLETED:
     default:
       return {
@@ -189,7 +197,13 @@ const Card: React.FC<CardProps> = ({
   const deliveryBadge = getDeliveryBadge(deliveryMode);
 
   const currentStatus = item.status.toUpperCase();
-  const { statusTag } = useSessionStatus(item);
+  const { statusTag: derivedStatusTag } = useSessionStatus(item);
+  // Provider view: session time is over but attendance not yet confirmed in DB
+  const isExpired =
+    !footer &&
+    derivedStatusTag === SESSION_STATUS_LABEL.COMPLETED &&
+    currentStatus !== SESSION_STATUS.COMPLETED;
+  const statusTag = isExpired ? SESSION_STATUS_LABEL.EXPIRED : derivedStatusTag;
   const statusColors = getStatusColors(statusTag);
   const { requesterName, requesterOrgName } = useRequesterInfo(item as any);
 
@@ -371,7 +385,7 @@ const Card: React.FC<CardProps> = ({
                 {statusColors.icon ? (
                   <LucideIcon name={statusColors.icon} {...styles.badgeIconProps(statusColors.text)} />
                 ) : null}
-                <BadgeText {...styles.badgeText(statusColors.text)}>{statusTag}</BadgeText>
+                <BadgeText {...styles.badgeText(statusColors.text)} {...(isExpired && { fontWeight: '$bold' })}>{statusTag}</BadgeText>
               </HStack>
             </Badge>
           </HStack>
@@ -471,7 +485,7 @@ const Card: React.FC<CardProps> = ({
                 </Button>
               )}
 
-              {currentStatus === SESSION_STATUS.COMPLETED && expectedParticipants > 0 && (
+              {isExpired && expectedParticipants > 0 && (
                 <Button variant={'outlineghost' as any}  {...styles.outlineActionBtn} onPress={handleOpenCompleteModal}  >
                   {/* @ts-ignore */}
                   <ButtonText {...styles.outlineActionBtnText}>
@@ -535,7 +549,7 @@ const Card: React.FC<CardProps> = ({
                   {t('supportProvider.supportOfferings.cards.attendance', 'Attendance')}
                 </Text>
 
-                {currentStatus === SESSION_STATUS.COMPLETED && expectedParticipants > 0 && (
+                {isExpired && expectedParticipants > 0 && (
                   <Button variant="solid"  {...styles.confirmAttendanceBtn} onPress={handleOpenCompleteModal}  >
                     <ButtonIcon as={LucideIcon} name="Check" {...styles.cardWhiteIconProps} />
                     <ButtonText {...(styles.confirmAttendanceBtnText as any)}>

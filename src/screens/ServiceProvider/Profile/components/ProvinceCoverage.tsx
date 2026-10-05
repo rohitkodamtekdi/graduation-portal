@@ -147,6 +147,9 @@ export const ProvinceCoverage: React.FC<ProvinceCoverageProps> = ({
       }));
   }, [provinces, value, selectedProvinceId]);
 
+  // Every province already has a coverage card; new ones can't be added (existing ones are edited via pencil)
+  const allProvincesAdded = !editingProvinceId && provinces.length > 0 && provinceOptions.length === 0;
+
   const handleSiteChange = (selectedValues: string[]) => {
     if (selectedValues.includes('Select All')) {
       const regularOptions = sites.map((s: any) => s._id || s.id || '');
@@ -255,15 +258,7 @@ export const ProvinceCoverage: React.FC<ProvinceCoverageProps> = ({
           </Text>
         )}
         {value.map(item => (
-          <Pressable
-            key={item.provinceId}
-            onPress={() => {
-              if (isEdit) {
-                handleEditCard(item);
-              }
-            }}
-          >
-            <VStack {...styles.coverageCard}>
+            <VStack key={item.provinceId} {...styles.coverageCard}>
               <HStack {...styles.cardHeader}>
                 <HStack {...styles.cardHeaderLeft}>
                   <LucideIcon name="MapPin" {...styles.mapPinIcon} />
@@ -298,7 +293,6 @@ export const ProvinceCoverage: React.FC<ProvinceCoverageProps> = ({
                 ))}
               </HStack> */}
             </VStack>
-          </Pressable>
         ))}
       </VStack>
 
@@ -320,8 +314,12 @@ export const ProvinceCoverage: React.FC<ProvinceCoverageProps> = ({
                 options={provinceOptions}
                 value={selectedProvinceId}
                 onChange={(val) => setSelectedProvinceId(val)}
-                placeholder={t('profile.selectProvincePlaceholder', 'Select province')}
-                disabled={loadingProvinces || !!editingProvinceId}
+                placeholder={
+                  allProvincesAdded
+                    ? t('profile.allProvincesAdded', 'All provinces added')
+                    : t('profile.selectProvincePlaceholder', 'Select province')
+                }
+                disabled={loadingProvinces || !!editingProvinceId || allProvincesAdded}
               />
             </VStack>
 

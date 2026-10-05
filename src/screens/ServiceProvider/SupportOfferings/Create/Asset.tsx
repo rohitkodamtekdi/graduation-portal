@@ -10,7 +10,7 @@ import { useLanguage } from '@contexts/LanguageContext';
 import { useAuth } from '@contexts/AuthContext';
 import { getSitesByProvince, getProvincesList } from '../../../../services/usersService';
 import { requestSession, getLivelihoodsOptions, getAssetTypesOptions, createSession } from '../../../../services/mentoringService';
-import { requestAssetPayloadMapping } from '@utils/supportProvider';
+import { requestAssetPayloadMapping, uploadService } from '@utils/supportProvider';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
 import {
@@ -268,6 +268,7 @@ const App = (): React.JSX.Element => {
             onSubmit={(formValues) => handleSave(formValues, false)}
             onSaveDraft={(formValues) => handleSave(formValues, true)}
             isSubmitting={isSubmitting}
+            uploadService={uploadService}
           />
         </Card>
       </Container>

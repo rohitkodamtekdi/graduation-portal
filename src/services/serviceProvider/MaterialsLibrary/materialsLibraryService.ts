@@ -1,10 +1,37 @@
-import { getResourcesList } from '../../mentoringService';
+import {
+  getResourcesList,
+  getSessionCategories,
+  getAdditionalServiceCategories,
+  getLivelihoodsOptions,
+  MentoringOption,
+} from '../../mentoringService';
+
+// Only PDF and Word documents are supported in the Materials Library
+export const MATERIAL_FORMATS = {
+  PDF: 'PDF Document',
+  WORD: 'Word Document',
+} as const;
+
+export const ALLOWED_MATERIAL_EXTENSIONS = ['pdf', 'doc', 'docx'];
+
+/** Maps a resource's type / file name to one of MATERIAL_FORMATS ('' for any other file type) */
+export const getMaterialFormat = (type: string, fileName: string): string => {
+  const ext = (fileName.includes('.') ? fileName.split('.').pop() : '')?.toLowerCase() || '';
+  const kind = (type || '').toLowerCase();
+  if (kind === 'pdf' || ext === 'pdf') return MATERIAL_FORMATS.PDF;
+  if (['doc', 'docx', 'msword'].includes(kind) || kind.includes('wordprocessingml') || ['doc', 'docx'].includes(ext)) {
+    return MATERIAL_FORMATS.WORD;
+  }
+  return '';
+};
 
 export interface MaterialItem {
   id: string;
   title: string;
   description: string;
   category: string;
+  /** Raw category value (e.g. 'social_empowerment') from the linked session, used for exact filtering */
+  categoryValue?: string;
   format: string;
   fileName: string;
   fileSize: string;
@@ -26,7 +53,6 @@ export interface MaterialsLibraryResponse {
   stats: {
     totalResources: number;
     pdfDocuments: number;
-    templatesDecks: number;
     totalDownloads: number;
   };
 }
@@ -45,23 +71,38 @@ export const getMaterialsList = async (
   let items: MaterialItem[] = [];
 
   try {
-    const apiRes = await getResourcesList();
+    // A resource's category is its linked session's category (Pillar for trainings, service category
+    // for additional services, livelihood category for assets); the entity lists turn values into labels.
+    const [apiRes, sessionCategories, serviceCategories, livelihoods] = await Promise.all([
+      getResourcesList(),
+      getSessionCategories().catch(() => [] as MentoringOption[]),
+      getAdditionalServiceCategories().catch(() => [] as MentoringOption[]),
+      getLivelihoodsOptions().catch(() => [] as MentoringOption[]),
+    ]);
     const rawResources = apiRes?.result || [];
+    const categoryLabels = new Map<string, string>(
+      [...(sessionCategories || []), ...(serviceCategories || []), ...(livelihoods || [])].map((c) => [c.value, c.label]),
+    );
 
     if (Array.isArray(rawResources) && rawResources.length > 0) {
       items = rawResources.map((resource: any) => {
         const fileName = resource.name || `resource-${resource.id}`;
-        const isPdf = (resource.type || '').toLowerCase() === 'pdf' || fileName.toLowerCase().endsWith('.pdf');
+        const session = resource.session || {};
+        // Asset sessions always have categories ['asset']; their real category is meta.livelihoods
+        const isAsset = session.meta?.support_offering_type === 'asset' || session.categories?.[0] === 'asset';
+        const categoryValue: string = (isAsset ? session.meta?.livelihoods : session.categories?.[0]) || '';
 
         return {
           id: String(resource.id),
           title: fileName,
-          description: '',
-          category: '',
-          format: isPdf ? 'PDF Document' : 'Templates & Decks',
+          // Resources have no description of their own; show the linked session's
+          description: session.description || '',
+          category: categoryLabels.get(categoryValue) || categoryValue,
+          categoryValue,
+          format: getMaterialFormat(resource.type, fileName),
           fileName,
           fileSize: '',
-          associatedOffering: '',
+          associatedOffering: resource.session?.title || '',
           uploadDate: resource.created_at ? new Date(resource.created_at).toLocaleDateString('en-GB') : '',
           downloads: 0,      
           fileUrl: resource.link || '',
@@ -86,11 +127,15 @@ export const getMaterialsList = async (
   }
 
   // Apply category filter (skip if it contains 'all')
+  // Exact match on the category value; the label comparison covers locally added items that only have a label.
+  // (The old substring check matched every item without a category, so the filter never narrowed anything.)
   if (category && !category.toLowerCase().includes('all')) {
-    const targetCat = category.toLowerCase().replace(/[\s-_]/g, '');
+    const normalize = (value: string) => value.toLowerCase().replace(/[\s-_]/g, '');
+    const targetCat = normalize(category);
     filtered = filtered.filter((item) => {
-      const itemCat = item.category.toLowerCase().replace(/[\s-_]/g, '');
-      return itemCat === targetCat || itemCat.includes(targetCat) || targetCat.includes(itemCat);
+      if (item.categoryValue) return item.categoryValue === category;
+      const itemCat = normalize(item.category);
+      return itemCat !== '' && itemCat === targetCat;
     });
   }
 
@@ -99,17 +144,15 @@ export const getMaterialsList = async (
     const targetForm = format.toLowerCase().replace(/[\s-_]/g, '');
     filtered = filtered.filter((item) => {
       const itemForm = item.format.toLowerCase().replace(/[\s-_]/g, '');
-      return itemForm === targetForm || itemForm.includes(targetForm) || targetForm.includes(itemForm);
+      return itemForm === targetForm;
     });
   }
 
   // Compute stats on the complete set (unfiltered)
   const totalResources = items.length;
+  // "PDFs & Word Documents" stat card counts both supported formats
   const pdfDocuments = items.filter(
-    (item) => item.format.toLowerCase() === 'pdf document'
-  ).length;
-  const templatesDecks = items.filter(
-    (item) => item.format.toLowerCase() === 'templates & decks'
+    (item) => item.format === MATERIAL_FORMATS.PDF || item.format === MATERIAL_FORMATS.WORD
   ).length;
   const totalDownloads = items.reduce((acc, item) => acc + item.downloads, 0);
 
@@ -119,7 +162,6 @@ export const getMaterialsList = async (
     stats: {
       totalResources,
       pdfDocuments,
-      templatesDecks,
       totalDownloads,
     },
   };
@@ -146,7 +188,7 @@ export const uploadMaterial = async (
   const newMaterial: MaterialItem = {
     ...payload,
     id: String(Date.now()),
-    fileSize: payload.format === 'PDF Document' ? '2.1 MB' : '1.5 MB', // placeholder size
+    fileSize: payload.format === MATERIAL_FORMATS.PDF ? '2.1 MB' : '1.5 MB', // placeholder size
     uploadDate: formattedDate,
     downloads: 0,
   };

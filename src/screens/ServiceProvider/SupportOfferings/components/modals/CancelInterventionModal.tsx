@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from '@components/ui/Modal';
-import { VStack, Text, Box, LucideIcon } from '@ui';
+import { VStack, Text, Box, LucideIcon, Textarea, TextareaInput } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
 import { theme } from '@config/theme';
+
+const REASON_MAX_LENGTH = 500;
 
 interface CancelInterventionModalProps {
   isOpen: boolean;
@@ -13,7 +15,7 @@ interface CancelInterventionModalProps {
   supportTypeLabel: string;
   location?: string;
   isSubmitting?: boolean;
-  onConfirmCancel: () => void;
+  onConfirmCancel: (reason: string) => void;
 }
 
 const CancelInterventionModal: React.FC<CancelInterventionModalProps> = ({
@@ -28,6 +30,25 @@ const CancelInterventionModal: React.FC<CancelInterventionModalProps> = ({
   onConfirmCancel,
 }) => {
   const { t } = useLanguage();
+  const [reason, setReason] = useState('');
+  const [showReasonError, setShowReasonError] = useState(false);
+
+  // Start with an empty reason every time the modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      setReason('');
+      setShowReasonError(false);
+    }
+  }, [isOpen]);
+
+  const handleConfirm = () => {
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+      setShowReasonError(true);
+      return;
+    }
+    onConfirmCancel(trimmedReason);
+  };
 
   return (
     <Modal
@@ -43,7 +64,7 @@ const CancelInterventionModal: React.FC<CancelInterventionModalProps> = ({
       confirmButtonColor={theme.tokens.colors.error600}
       confirmLoading={isSubmitting}
       onCancel={onClose}
-      onConfirm={onConfirmCancel}
+      onConfirm={handleConfirm}
     >
       <VStack space="md">
         <Text fontSize="$sm" color="$textPrimary">
@@ -71,6 +92,37 @@ const CancelInterventionModal: React.FC<CancelInterventionModalProps> = ({
             ) : null}
           </VStack>
         </Box>
+
+        <VStack space="xs">
+          <Text fontSize="$sm" fontWeight="$medium" color="$textPrimary">
+            {t('supportProvider.supportOfferings.cancelModal.reasonLabel', 'Reason for cancellation')}
+            <Text color="$error600"> *</Text>
+          </Text>
+          <Textarea
+            isDisabled={isSubmitting}
+            isInvalid={showReasonError}
+            borderColor={showReasonError ? '$error600' : undefined}
+          >
+            <TextareaInput
+              value={reason}
+              maxLength={REASON_MAX_LENGTH}
+              placeholder={t(
+                'supportProvider.supportOfferings.cancelModal.reasonPlaceholder',
+                'Enter the reason for cancelling this intervention',
+              )}
+              placeholderTextColor="$textMuted"
+              onChangeText={(value: string) => {
+                setReason(value);
+                if (showReasonError && value.trim()) setShowReasonError(false);
+              }}
+            />
+          </Textarea>
+          {showReasonError ? (
+            <Text fontSize="$xs" color="$error600">
+              {t('supportProvider.supportOfferings.cancelModal.reasonRequired', 'Please enter a reason for cancellation.')}
+            </Text>
+          ) : null}
+        </VStack>
 
         <Text fontSize="$xs" color="$textMuted">
           {t(

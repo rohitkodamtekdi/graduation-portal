@@ -12,6 +12,15 @@ import sessionStyles from '../styles';
 
 const getStatusBadgeStyles = (status: string, t: any) => {
   const normalized = (status || '').toLowerCase();
+  if (normalized.includes('complete')) {
+    return {
+      bg: '$green50',
+      borderColor: '$green200',
+      color: '$green600',
+      icon: 'CheckCircle2',
+      label: t('lc.sessionsSupport.requestDetails.statusCompleted', 'Completed'),
+    };
+  }
   if (normalized.includes('accept') || normalized.includes('publish') || normalized.includes('approved') || normalized.includes('live')) {
     return {
       bg: '$green50',
@@ -72,7 +81,7 @@ export const RequestDetailsScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute() as any;
 
-  const { requestId } = route.params || {};
+  const { requestId, statusOverride } = route.params || {};
 
   const [loading, setLoading] = useState(true);
   const [requestItem, setRequestItem] = useState<any>(null);
@@ -227,7 +236,7 @@ export const RequestDetailsScreen: React.FC = () => {
   }
 
   const sessionObj = requestItem.session || requestItem.session_details || {};
-  const statusStyle = getStatusBadgeStyles(requestItem.status, t);
+  const statusStyle = getStatusBadgeStyles(statusOverride || requestItem.status, t);
   const requestedDateStr = formatDate(requestItem.created_at || requestItem.createdAt || requestItem.requested_at);
   const mentorName = requestItem.mentor_name || sessionObj.mentor_name || requestItem.mentorName || '-';
 
