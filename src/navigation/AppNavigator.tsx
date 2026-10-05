@@ -25,7 +25,7 @@ const lazyScreen = (
   loader: () => Promise<{ default: ScreenComponent }>,
 ): ScreenComponent => lazy(loader) as unknown as ScreenComponent;
 
-const HomeScreen = lazyScreen(() => import('../screens/Home'));
+const LcDashboardScreen = lazyScreen(() => import('../screens/LcDashboard'));
 const UserManagementScreen = lazyScreen(() => import('../screens/UserManagement'));
 const SelectLanguageScreen = lazyScreen(() => import('../screens/Language/Index'));
 const WelcomePage = lazyScreen(() => import('../screens/Welcome'));
@@ -109,7 +109,7 @@ const getAccessPages = (
   switch (role) {
     case 'admin':
       return [
-        // { name: 'home', path: '/', component: HomeScreen },
+        // { name: 'home', path: '/', component: LcDashboardScreen },
         {
           name: 'user-management',
           path: '/',
@@ -204,7 +204,7 @@ const getAccessPages = (
       return [
         { name: 'welcome', component: WelcomePage },
         { name: 'select-language', component: SelectLanguageScreen },
-        { name: 'dashboard', component: HomeScreen },
+        { name: 'dashboard', component: LcDashboardScreen },
         { name: 'participant-detail', path: '/participants/:id', component: ParticipantDetail },
         { name: 'log-visit', path: '/participants/:id/log-visit', component: LogVisit },
         { name: 'check-ins-list', path: '/participants/:id/check-ins-list/:solutionId?', component: CheckInsList },
