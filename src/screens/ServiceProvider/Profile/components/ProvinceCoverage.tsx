@@ -258,15 +258,7 @@ export const ProvinceCoverage: React.FC<ProvinceCoverageProps> = ({
           </Text>
         )}
         {value.map(item => (
-          <Pressable
-            key={item.provinceId}
-            onPress={() => {
-              if (isEdit) {
-                handleEditCard(item);
-              }
-            }}
-          >
-            <VStack {...styles.coverageCard}>
+            <VStack key={item.provinceId} {...styles.coverageCard}>
               <HStack {...styles.cardHeader}>
                 <HStack {...styles.cardHeaderLeft}>
                   <LucideIcon name="MapPin" {...styles.mapPinIcon} />
@@ -301,7 +293,6 @@ export const ProvinceCoverage: React.FC<ProvinceCoverageProps> = ({
                 ))}
               </HStack> */}
             </VStack>
-          </Pressable>
         ))}
       </VStack>
 
