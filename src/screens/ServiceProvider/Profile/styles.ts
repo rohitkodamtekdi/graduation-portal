@@ -31,19 +31,15 @@ export default {
     elevation: 2,
   },
   sectionHeader: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: '$3',
     mb: '$2',
   },
-  sectionIconContainer: {
-    p: 0,
-    bg: 'transparent',
-    justifyContent: 'center' as const,
+  sectionTitleRow: {
     alignItems: 'center' as const,
+    gap: '$2',
   },
   sectionTitle: {
     fontSize: 16,
+    lineHeight: 24,
     fontWeight: '700' as const,
     color: '$textForeground',
     p: 0,
