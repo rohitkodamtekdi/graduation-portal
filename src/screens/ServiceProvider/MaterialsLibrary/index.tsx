@@ -12,17 +12,25 @@ import MaterialsContent from './components/MaterialsContent';
 import styles from './styles';
 
 // Service
-import { getMaterialsList, MaterialItem } from '../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
+import { getMaterialsList, MaterialItem, MATERIAL_FORMATS } from '../../../services/serviceProvider/MaterialsLibrary/materialsLibraryService';
+import {
+  getSessionCategories,
+  getAdditionalServiceCategories,
+  getLivelihoodsOptions,
+  MentoringOption,
+} from '../../../services/mentoringService';
 
 const MaterialsLibraryScreen = (): React.JSX.Element => {
   const { t } = useLanguage();
   const [filters, setFilters] = useState<Record<string, any>>({});
+  // A material's category is its session's category: Pillars (trainings), service categories
+  // (additional services) and livelihood categories (assets)
+  const [categories, setCategories] = useState<MentoringOption[]>([]);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [materials, setMaterials] = useState<MaterialItem[]>([]);
   const [stats, setStats] = useState({
     totalResources: 0,
     pdfDocuments: 0,
-    templatesDecks: 0,
     totalDownloads: 0,
   });
 
@@ -46,19 +54,32 @@ const MaterialsLibraryScreen = (): React.JSX.Element => {
     fetchMaterials();
   }, [filters]);
 
+  useEffect(() => {
+    Promise.all([
+      getSessionCategories().catch(() => []),
+      getAdditionalServiceCategories().catch(() => []),
+      getLivelihoodsOptions().catch(() => []),
+    ]).then(([pillars, services, livelihoods]) => {
+      const seen = new Set<string>();
+      setCategories(
+        [...(pillars || []), ...(services || []), ...(livelihoods || [])].filter((c) =>
+          c?.value && !seen.has(c.value) ? (seen.add(c.value), true) : false,
+        ),
+      );
+    });
+  }, []);
+
+  const categoryOptions = categories.map((category) => ({ label: category.label, value: category.value }));
+
   const categoryFilterOptions = [
     { label: t('supportProvider.materialsLibrary.filters.allCategories'), value: 'All' },
-    { label: t('supportProvider.materialsLibrary.categories.financialLiteracy'), value: 'Financial Literacy' },
-    { label: t('supportProvider.materialsLibrary.categories.businessManagement'), value: 'Business Management' },
-    { label: t('supportProvider.materialsLibrary.categories.assetEquipment'), value: 'Asset & Equipment Support' },
-    { label: t('supportProvider.materialsLibrary.categories.legalCompliance'), value: 'Legal & Compliance' },
+    ...categoryOptions,
   ];
 
   const formatFilterOptions = [
     { label: t('supportProvider.materialsLibrary.filters.allFormats'), value: 'All' },
-    { label: t('supportProvider.materialsLibrary.formats.pdf'), value: 'PDF Document' },
-    { label: t('supportProvider.materialsLibrary.formats.template'), value: 'Templates & Decks' },
-    { label: t('supportProvider.materialsLibrary.formats.video'), value: 'Video Guide' },
+    { label: t('supportProvider.materialsLibrary.formats.pdf'), value: MATERIAL_FORMATS.PDF },
+    { label: t('supportProvider.materialsLibrary.formats.word'), value: MATERIAL_FORMATS.WORD },
   ];
 
   const filterConfigs = [
@@ -145,6 +166,7 @@ const MaterialsLibraryScreen = (): React.JSX.Element => {
             fetchMaterials={fetchMaterials}
             isUploadOpen={isUploadOpen}
             onUploadClose={() => setIsUploadOpen(false)}
+            categoryOptions={categoryOptions}
           />
         </VStack>
       </Container>

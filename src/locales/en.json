@@ -2981,8 +2981,7 @@
       },
       "formats": {
         "pdf": "PDF Document",
-        "template": "Templates & Decks",
-        "video": "Video Guide"
+        "word": "Word Document"
       },
       "card": {
         "linked": "Linked: {{offering}}",
@@ -3008,7 +3007,8 @@
         "cancel": "Cancel",
         "addLibrary": "Add to Library",
         "successMsg": "Resource uploaded successfully!",
-        "errorMsg": "Failed to upload resource. Please fill all required fields."
+        "errorMsg": "Failed to upload resource. Please fill all required fields.",
+        "invalidFileType": "Only PDF (.pdf) or Word (.doc, .docx) files are allowed, and the file must match the selected format."
       },
       "previewModal": {
         "title": "Category & Purpose",

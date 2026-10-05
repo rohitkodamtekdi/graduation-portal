@@ -15,6 +15,7 @@ import {
 } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useRequesterInfo } from '@hooks/useSessionStatus';
+import { SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
 import type { AssetItem } from '../../../../../types/supportOfferingsTypes';
 import { cancelSession } from '../../../../../services/mentoringService';
 import CancelInterventionModal from '../modals/CancelInterventionModal';
@@ -84,12 +85,13 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onView
   const claimed = getClaimedCount(item);
   const totalFund = getTotalFund(item);
 
-  const handleConfirmCancel = async () => {
+  // The cancel API marks the session as CANCELLED (it is not deleted), so keep the card and show it as Cancelled
+  const handleConfirmCancel = async (reason: string) => {
     if (isCancelling) return;
     setIsCancelling(true);
     try {
-      await cancelSession(item.id);
-      setItem((prev) => ({ ...prev, status: 'Cancelled' }));
+      await cancelSession(item.id, reason);
+      setItem((prev) => ({ ...prev, status: SESSION_STATUS_LABEL.CANCELLED }));
       setIsCancelModalOpen(false);
       showAlert('success', t('supportProvider.supportOfferings.cards.alerts.offeringCancelled', 'Intervention cancelled successfully!'));
     } catch (error) {
