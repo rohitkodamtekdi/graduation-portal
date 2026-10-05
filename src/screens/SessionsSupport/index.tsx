@@ -15,6 +15,7 @@ import {
   SUPPORT_OFFERING_SUB_TABS,
   SUPPORT_OFFERING_TYPE_VALUES,
   REQUEST_STATUS,
+  SESSION_STATUS,
   SESSION_STATUS_LABEL,
   OFFERING_FILTER_FIELDS as FILTER_FIELDS,
   OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL,
@@ -468,31 +469,34 @@ const SessionsSupportScreen: React.FC = () => {
         };
         let totalCount = 0;
 
-        if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY) {
+        if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY && activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
+          // Server-side paginated: only sessions marked COMPLETED in DB (attendance confirmed)
+          const result = await getRequestSessionsList({
+            ...params,
+            status: SESSION_STATUS.COMPLETED,
+            support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
+          });
+          fetchedData = result?.result?.data || [];
+          totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
+        } else if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY) {
           const historyParams = { ...params, page: 1, limit: HISTORY_FETCH_LIMIT };
-          let rawList: any[] = [];
-          if (activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
-            const result = await getRequestSessionsList({ ...historyParams, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION });
-            rawList = result?.result?.data || [];
-          } else {
-            const offeringType = activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES
-              ? SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE
-              : SUPPORT_OFFERING_TYPE_VALUES.ASSET;
-            const res = await getMyRequestsList({ ...historyParams, support_offering_type: offeringType });
-            rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
-              .filter((item: any) => matchesOfferingType(item, offeringType))
-              .map((item: any) => {
-                const session = item.session || item.session_details || {};
-                return {
-                  ...item,
-                  title: item.title || session.title || 'Untitled Request',
-                  status: item.status || REQUEST_STATUS.REQUESTED,
-                  start_date: item.start_date || session.start_date,
-                  end_date: item.end_date || session.end_date,
-                  delivery_mode: item.delivery_mode || session.delivery_mode,
-                };
-              });
-          }
+          const offeringType = activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES
+            ? SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE
+            : SUPPORT_OFFERING_TYPE_VALUES.ASSET;
+          const res = await getMyRequestsList({ ...historyParams, support_offering_type: offeringType });
+          const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
+            .filter((item: any) => matchesOfferingType(item, offeringType))
+            .map((item: any) => {
+              const session = item.session || item.session_details || {};
+              return {
+                ...item,
+                title: item.title || session.title || 'Untitled Request',
+                status: item.status || REQUEST_STATUS.REQUESTED,
+                start_date: item.start_date || session.start_date,
+                end_date: item.end_date || session.end_date,
+                delivery_mode: item.delivery_mode || session.delivery_mode,
+              };
+            });
           fetchedData = rawList.filter((item: any) => deriveStatusLabel(item) === SESSION_STATUS_LABEL.COMPLETED);
           // Additional Services History reuses the My Requests card, whose badge reads `status`
           if (activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES) {
@@ -848,6 +852,9 @@ const SessionsSupportScreen: React.FC = () => {
                     item={session}
                     isFirst={idx === 0}
                     hideSchedule={activeTab === SUPPORT_OFFERING_TABS.ASSETS}
+                    isShowLoadMore={idx === mySessions.length - 1 && isShowLoadMore}
+                    onLoadMoreItems={onLoadMoreItems}
+                    isLoadingMore={_loading && page > 1}
                   />
                 ))}
               </VStack>
