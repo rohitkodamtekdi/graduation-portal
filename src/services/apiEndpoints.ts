@@ -48,6 +48,7 @@ export const API_ENDPOINTS = {
   MENTORING_PROFILE_UPDATE: `${prefix}/mentoring/v1/profile/update`,
   MENTORING_CREATE_SESSION: `${prefix}/mentoring/v1/sessions/update?notifyUser=false`,
   MENTORING_UPDATE_SESSION: (sessionId: string | number) => `${prefix}/mentoring/v1/sessions/update/${sessionId}`,
+  MENTORING_CANCEL_SESSION: (sessionId: string | number) => `${prefix}/mentoring/v1/mentors/cancel/${sessionId}`,
   MENTORING_DETAILS_SESSION: (sessionId: string | number) => `${prefix}/mentoring/v1/sessions/details/${sessionId}?get_mentees=true`,
   MENTORING_ENROLLED_MENTEES: (sessionId: string | number) => `${prefix}/mentoring/v1/sessions/enrolledMentees/${sessionId}`,
   USER_SESSIONS_LIST: `${prefix}/mentoring/v1/sessions/list`,

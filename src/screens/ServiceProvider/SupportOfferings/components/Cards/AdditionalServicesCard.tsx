@@ -85,11 +85,12 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
 
   const { requesterName, requesterOrgName } = useRequesterInfo(item as any);
 
-  const handleConfirmCancel = async () => {
+  // The cancel API marks the session as CANCELLED (it is not deleted), so keep the card and show it as Cancelled
+  const handleConfirmCancel = async (reason: string) => {
     if (isCancelling) return;
     setIsCancelling(true);
     try {
-      await cancelSession(item.id);
+      await cancelSession(item.id, reason);
       setStatusOverride(SESSION_STATUS_LABEL.CANCELLED);
       setIsCancelModalOpen(false);
       showAlert('success', t('supportProvider.supportOfferings.cards.alerts.offeringCancelled', 'Intervention cancelled successfully!'));

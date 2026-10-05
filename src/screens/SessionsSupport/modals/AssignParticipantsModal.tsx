@@ -26,6 +26,8 @@ interface AssignParticipantsModalProps {
   confirmTitle?: string;
   confirmSubtitle?: string;
   confirmButtonLabel?: string;
+  /** Max participants that can be selected (e.g. the session's seats_remaining); no limit when omitted */
+  maxSelectable?: number | string | null;
 }
 
 const PAGE_SIZE = 5;
@@ -43,11 +45,17 @@ export default function AssignParticipantsModal({
   confirmTitle,
   confirmSubtitle,
   confirmButtonLabel,
+  maxSelectable,
 }: AssignParticipantsModalProps): React.JSX.Element {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const parsedSeatLimit = maxSelectable === null || maxSelectable === undefined || maxSelectable === '' ? NaN : Number(maxSelectable);
+  const seatLimit = Number.isFinite(parsedSeatLimit) ? Math.max(0, parsedSeatLimit) : undefined;
+  const isSeatLimitReached = seatLimit !== undefined && selectedIds.length >= seatLimit;
+  const isOverSeatLimit = seatLimit !== undefined && selectedIds.length > seatLimit;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [participants, setParticipants] = useState<any[]>([]);
@@ -213,8 +221,8 @@ export default function AssignParticipantsModal({
         onPress={() => {
           setIsConfirmOpen(true);
         }}
-        disabled={selectedIds.length === 0 || isLoading || enrolledLookupError}
-        opacity={selectedIds.length === 0 || isLoading || enrolledLookupError ? 0.5 : 1}>
+        disabled={selectedIds.length === 0 || isLoading || enrolledLookupError || isOverSeatLimit}
+        opacity={selectedIds.length === 0 || isLoading || enrolledLookupError || isOverSeatLimit ? 0.5 : 1}>
         <ButtonText {...styles.assignParticipantsConfirmButtonText}>
           {t('lc.sessionsSupport.assignParticipantsModal.assignButtonText', { defaultValue: `${submitActionVerb || 'Assign'} ({{count}})`, count: selectedIds.length })}
         </ButtonText>
@@ -290,6 +298,17 @@ export default function AssignParticipantsModal({
             </HStack>
           </HStack>
 
+          {seatLimit !== undefined && (
+            <Text fontSize="$xs" color={isSeatLimitReached ? '$error600' : '$textMuted'} mb="$2">
+              {seatLimit === 0
+                ? t('lc.sessionsSupport.assignParticipantsModal.noSeatsLeft', 'No seats left in this session.')
+                : t('lc.sessionsSupport.assignParticipantsModal.seatsLeft', {
+                    defaultValue: 'Only {{count}} seat(s) available - you can assign up to {{count}} participant(s).',
+                    count: seatLimit,
+                  })}
+            </Text>
+          )}
+
           {/* Scrollable participant list (FlatList for virtualised incremental loading) */}
           <FlatList
             data={participants}
@@ -297,10 +316,15 @@ export default function AssignParticipantsModal({
             keyExtractor={(p) => p.userId}
             renderItem={({ item: p }) => {
               const isSelected = selectedIds.includes(p.userId);
+              // Once every available seat is taken, only already-selected participants can be toggled
+              const isSelectionBlocked = !isSelected && isSeatLimitReached;
 
               return (
                 <Pressable
+                  disabled={isSelectionBlocked}
+                  opacity={isSelectionBlocked ? 0.5 : 1}
                   onPress={() => {
+                    if (isSelectionBlocked) return;
                     setSelectedIds((prev) =>
                       prev.includes(p.userId)
                         ? prev.filter((id) => id !== p.userId)
