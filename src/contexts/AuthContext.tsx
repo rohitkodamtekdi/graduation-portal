@@ -17,7 +17,7 @@ import { isNative } from '@utils/platform';
 import { useLanguage } from './LanguageContext';
 // import { setupTabCloseHandler } from '@utils/tabCloseHandler';
 
-export type UserRole = 'Admin' | 'Supervisor' | 'LC' | 'Mentor';
+export type UserRole = 'admin' | 'tenant_admin' | 'org_admin' | 'mentor';
 
 export interface User {
   id: string;
@@ -68,7 +68,7 @@ const determineUserRole = (
 
   if (adminOrganizations.length > 0) {
     logger.info('User has admin role based on organizations');
-    return 'Admin';
+    return 'admin';
   }
 
   // Check for supervisor roles (tenant_admin, supervisor)
@@ -81,20 +81,7 @@ const determineUserRole = (
 
   if (supervisorOrganizations.length > 0) {
     logger.info('User has supervisor role based on organizations');
-    return 'Supervisor';
-  }
-
-  // Check for mentor roles (mentor)
-  const mentorOrganizations = userData.organizations.filter((org: any) => {
-    if (!org?.roles || !Array.isArray(org.roles)) {
-      return false;
-    }
-    return org.roles.some((role: any) => MENTOR_ROLES.includes(role?.title));
-  });
-
-  if (mentorOrganizations.length > 0) {
-    logger.info('User has mentor role based on organizations');
-    return 'Mentor';
+    return 'tenant_admin'; // Return 'tenant_admin' as the mapped role for supervisor
   }
 
   // Check for LC roles
@@ -107,7 +94,20 @@ const determineUserRole = (
 
   if (lcOrganizations.length > 0) {
     logger.info('User has LC role based on organizations');
-    return 'LC';
+    return 'org_admin';
+  }
+
+  // Check for mentor roles (mentor)
+  const mentorOrganizations = userData.organizations.filter((org: any) => {
+    if (!org?.roles || !Array.isArray(org.roles)) {
+      return false;
+    }
+    return org.roles.some((role: any) => MENTOR_ROLES.includes(role?.title));
+  });
+
+  if (mentorOrganizations.length > 0) {
+    logger.info('User has mentor role based on organizations');
+    return 'mentor';
   }
 
   // If no matching roles found in organizations, throw unauthorized error
@@ -368,7 +368,7 @@ export const useAuth = () => {
  * };
  * ```
  */
-export const useIsSupervisor = (): boolean => {
+/*export const useIsSupervisor = (): boolean => {
   const { user } = useAuth();
   const currentUserRole = user?.role;
 
@@ -387,7 +387,7 @@ export const useIsSupervisor = (): boolean => {
         }
         return org.roles.some((role: any) => {
           const roleTitle = role?.title?.toLowerCase() || '';
-          return roleTitle === 'tenant_admin' || roleTitle === 'supervisor';
+          return roleTitle === 'tenant_admin';
         });
       });
       return hasSupervisorRole;
@@ -395,7 +395,7 @@ export const useIsSupervisor = (): boolean => {
     
     return false;
   }, [user, currentUserRole]);
-};
+};*/
 
 /**
  * Custom hook to check if the current logged-in user specifically holds the
@@ -428,7 +428,7 @@ export const useIsdminPanalAccess = (): boolean => {
 
   return useMemo(() => {
     // Check mapped role first
-    if (currentUserRole?.toLowerCase() === 'supervisor') {
+    if (currentUserRole?.toLowerCase() === 'tenant_admin') {
       return true;
     }
     
@@ -441,7 +441,7 @@ export const useIsdminPanalAccess = (): boolean => {
         }
         return org.roles.some((role: any) => {
           const roleTitle = role?.title?.toLowerCase() || '';
-          return roleTitle === 'admin' || roleTitle === 'tenant_admin' || roleTitle === 'supervisor';
+          return roleTitle === 'admin' || roleTitle === 'tenant_admin';
         });
       });
       return hasSupervisorRole;

@@ -23,7 +23,7 @@ const createScreenWithLayout = (
     };
 
     // For LC role screens, pass title if needed
-    if (user?.role?.toLowerCase() === 'lc' && pageName === 'home') {
+    if (user?.role?.toLowerCase() === 'org_admin' && pageName === 'home') {
       layoutProps.title = t('settings.selectLanguage');
     }
 
@@ -44,12 +44,13 @@ const createScreenWithLayout = (
 
 function titleNamespaceForRole(role?: string): 'admin' | 'lc' | "supportProvider" {
   const r = role?.toLowerCase();
-  if (r === 'admin' || r === 'supervisor') {
+  if (r === 'admin' || r === 'tenant_admin') {
     return 'admin';
   }
   if (MENTOR_ROLES.includes(r || "")) {
     return 'supportProvider';
   }
+
   return 'lc';
 }
 

@@ -204,7 +204,7 @@ const ProjectComponent = React.memo(() => {
           .catch(() => {});
 
       if (isReplace) {
-        if (user?.role === 'LC') {
+        if (user?.role === 'org_admin') {
           const response = await requestChange({
             requestees: [config.profileInfo?.hierarchy?.['1'] || ''],
             entityId: config.profileInfo?.entityId || userId,

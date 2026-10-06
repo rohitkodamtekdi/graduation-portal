@@ -2973,7 +2973,7 @@
         "discard": "Discard Draft",
         "alerts": {
           "draftSaved": "Draft saved successfully!",
-          "sessionSaved": "Additional Service request saved successfully!"
+          "sessionSaved": "Session saved successfully!"
         }
       },
       "additionalService": {
