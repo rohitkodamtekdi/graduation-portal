@@ -264,7 +264,7 @@ export const ActionColumn: React.FC<ActionColumnProps> = ({
     async (userEntityId: string, finalReason: string) => {
       setDropoutLoading(true);
       try {
-        if (user?.role === 'LC') {
+        if (user?.role === 'org_admin') {
           const response = await requestChange({
             requestees: [String(participant.hierarchy[1])],
             entityId: userEntityId,

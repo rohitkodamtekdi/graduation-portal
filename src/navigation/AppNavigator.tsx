@@ -150,7 +150,7 @@ const getAccessPages = (
         { name: 'check-ins-list', path: '/participants/:id/check-ins-list/:solutionId?', component: CheckInsList },
         { name: 'observation', path: '/participants/:id/observation/:solutionId/:submissionNumber?', component: Observation },
       ];
-    case 'supervisor':
+    case 'tenant_admin':
       return [
         {
           name: 'user-management',
@@ -200,7 +200,7 @@ const getAccessPages = (
         { name: 'materials', path: "/materials", component: SPMaterialsScreen },
         { name: 'profile', path: "/profile", component: SPProfileScreen },
       ];
-    case 'lc':
+    case 'org_admin':
       return [
         { name: 'welcome', component: WelcomePage },
         { name: 'select-language', component: SelectLanguageScreen },

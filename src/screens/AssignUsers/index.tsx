@@ -19,7 +19,7 @@ import { AssignUsersStyles } from './Styles';
 import { theme } from '@config/theme';
 import { getLinkageChampions, assignLCsToSupervisor, getMappedLCsForSupervisor, getParticipants, assignParticipantsToLC, getMappedParticipantsForLC, getSupervisorsByProvince } from '../../services/assignUsersService';
 import { getInitials } from '@utils/helper';
-import { useIsSupervisor, useAuth } from '../../contexts/AuthContext';
+import { useIsTenantAdmin, useAuth } from '../../contexts/AuthContext';
 
 // Type declaration for process.env (injected by webpack DefinePlugin on web, available in React Native)
 declare const process:
@@ -33,7 +33,7 @@ declare const process:
 const AssignUsersScreen = () => {
  const { t } = useLanguage();
  const { user } = useAuth();
- const isSupervisor = useIsSupervisor();
+ const isSupervisor = useIsTenantAdmin();
  type AssignTab = 'LC_TO_SUPERVISOR' | 'PARTICIPANT_TO_LC';
 
  // Supervisors default to PARTICIPANT_TO_LC, others default to LC_TO_SUPERVISOR

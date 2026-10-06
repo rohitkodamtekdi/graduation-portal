@@ -170,7 +170,7 @@ const ParticipantHeader: React.FC<ParticipantHeaderProps> = ({
 
   const handleBackPress = () => {
     const role = user?.role?.toLowerCase();
-    if (role === 'admin' || role === 'supervisor') {
+    if (role === 'admin' || role === 'tenant_admin') {
       // @ts-ignore
       navigation.navigate('user-management');
     } else {
