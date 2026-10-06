@@ -5,12 +5,7 @@ export const attendedSessionsStyles = {
   },
   container: {
     flex: 1,
-    bg: '$white',
-    borderWidth: 1,
-    borderColor: '$borderLight300',
-    borderRadius: '$lg',
-    m: '$4',
-    p: '$6',
+    width: '100%' as const,
   },
   content: {
     flex: 1,
@@ -53,11 +48,12 @@ export const attendedSessionsStyles = {
     width: '100%' as const,
   },
   card: (isAttended: boolean) => ({
-    bg: isAttended ? '$success50' : '$white',
+    bg: isAttended ? '#F5FBF7' : '$white',
     borderWidth: 1,
-    borderColor: isAttended ? '#a7f3d0' : '$borderLight200',
-    borderRadius: 16,
-    p: '$4' as const,
+    borderColor: isAttended ? '#BBF7D0' : '$borderLight200',
+    borderRadius: 12,
+    px: '$4' as const,
+    py: '$4' as const,
     width: '100%' as const,
   }),
   cardHeaderHStack: {
@@ -91,6 +87,7 @@ export const attendedSessionsStyles = {
     fontSize: 12 as const,
     color: isAttended ? '$success600' : '$textMuted',
     fontWeight: '$medium' as const,
+    textTransform: 'none' as const,
   }),
   chevronIconProps: {
     size: 18,
@@ -99,46 +96,30 @@ export const attendedSessionsStyles = {
   subtitleText: {
     fontSize: '$xs' as const,
     color: '$textSecondary' as const,
-    mt: '$0.5' as const,
+    mt: '$1' as const,
   },
   metaRowHStack: {
     alignItems: 'center' as const,
-    flexWrap: 'wrap' as const,
-    columnGap: 32 as const,
-    rowGap: 8 as const,
+    width: '100%' as const,
     mt: '$3' as const,
   },
   metaItemHStack: {
+    flex: 1,
     alignItems: 'center' as const,
-    space: 'xs' as const,
+    space: 'sm' as const,
+  },
+  metaIconProps: {
+    size: 14,
+    color: '$success600',
+  },
+  loadMoreContainer: {
+    alignItems: 'center' as const,
+    mt: '$4' as const,
+    width: '100%' as const,
   },
   metaText: {
     fontSize: '$xs' as const,
     color: '$textSecondary' as const,
-  },
-  deliveryText: {
-    fontSize: '$xs' as const,
-    color: '$success600' as const,
-    fontWeight: '$medium' as const,
     textTransform: 'capitalize' as const,
   },
-  tagsRowHStack: {
-    flexWrap: 'wrap' as const,
-    columnGap: 8 as const,
-    rowGap: 8 as const,
-    mt: '$3' as const,
-  },
-  tagBadge: (isPrimary: boolean) => ({
-    bg: isPrimary ? '#FFEDD5' : '$backgroundLight100',
-    borderRadius: '$full' as const,
-    paddingLeft: 10 as const,
-    paddingRight: 10 as const,
-    paddingTop: 2 as const,
-    paddingBottom: 2 as const,
-  }),
-  tagBadgeText: (isPrimary: boolean) => ({
-    fontSize: 11 as const,
-    color: isPrimary ? '#C2410C' : '$textSecondary',
-    fontWeight: '$medium' as const,
-  }),
 } as const;

@@ -209,6 +209,46 @@ export const getSessionEnrolledParticipants = async (
   }
 };
 
+export interface AttendedSessionItem {
+  id: number | string;
+  title: string;
+  description?: string;
+  status: string;
+  start_date?: number | string;
+  end_date?: number | string;
+  medium?: string[] | null;
+  categories?: (string | { value: string; label: string })[];
+  joined_at?: string | null;
+  mentor_name?: string;
+}
+
+/**
+ * Fetches the sessions a participant actually joined, for the "Attended Sessions" tab on the
+ * Participant Detail screen.
+ * Endpoint: GET /mentoring/v1/mentees/attendedSessions?userId=:participantId
+ */
+export const getAttendedSessions = async (
+  userId: string | number,
+  params?: { page?: number; limit?: number }
+): Promise<{ data: AttendedSessionItem[]; count: number }> => {
+  try {
+    const response = await api.get(API_ENDPOINTS.MENTEE_ATTENDED_SESSIONS, {
+      params: {
+        userId,
+        page: params?.page ?? 1,
+        limit: params?.limit ?? 20,
+      },
+    });
+    const data = response?.data?.result?.data || [];
+    const count = response?.data?.result?.count ?? data.length;
+
+    return { data, count };
+  } catch (error) {
+    console.error('Error fetching attended sessions:', error);
+    return { data: [], count: 0 };
+  }
+};
+
 /**
  * Complete Training Session API
  */
