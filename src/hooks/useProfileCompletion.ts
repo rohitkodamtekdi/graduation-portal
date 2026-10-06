@@ -55,8 +55,17 @@ export const useProfileCompletion = () => {
         
         const meta = profileData?.meta || {};
 
-        const provinceIds = Array.isArray(profileData.provinces) ? profileData.provinces : [];
-        const siteIds = Array.isArray(profileData.sites) ? profileData.sites : [];
+        // Mentoring profile stores `provinces`/`sites` arrays; a plain user profile (e.g. org_admin)
+        // stores a single `province`/`site`, either as an id or an entity object.
+        const toIdList = (...candidates: any[]): string[] => {
+          const raw = candidates.find((c) => c !== undefined && c !== null && c !== '' && !(Array.isArray(c) && c.length === 0));
+          if (raw === undefined) return [];
+          return (Array.isArray(raw) ? raw : [raw])
+            .map((entry: any) => (entry && typeof entry === 'object' ? entry._id || entry.id || entry.value : entry))
+            .filter(Boolean);
+        };
+        const provinceIds = toIdList(profileData.provinces, meta.provinces, profileData.province, meta.province);
+        const siteIds = toIdList(profileData.sites, meta.sites, profileData.site, meta.site);
 
         // Extract categories
         let cats: string[] = [];

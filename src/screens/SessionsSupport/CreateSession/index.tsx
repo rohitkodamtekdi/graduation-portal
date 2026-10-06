@@ -25,7 +25,7 @@ const DELIVERY_MODE_ICONS: Record<string, string> = {
   hybrid: 'Users',
 };
 
-import { useTrainingFormOptions } from '@hooks';
+import { useTrainingFormOptions, useProfileCompletion } from '@hooks';
 import styles from '../styles';
 
 const CreateSessionScreen = (): React.JSX.Element => {
@@ -41,6 +41,9 @@ const CreateSessionScreen = (): React.JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
   const { showAlert } = useAlert();
 
+  const { allowedProvinces, allowedSites, isProfileLoading } = useProfileCompletion();
+
+  // Restrict province/site to the org_admin's own profile; an empty list means no restriction on that level
   const { optionsMap } = useTrainingFormOptions({
     values,
     provinces,
@@ -48,6 +51,8 @@ const CreateSessionScreen = (): React.JSX.Element => {
     targetAudience,
     deliveryModes,
     deliveryModeIcons: DELIVERY_MODE_ICONS,
+    allowedProvinces: allowedProvinces.length > 0 ? allowedProvinces : undefined,
+    allowedSites: allowedSites.length > 0 ? allowedSites : undefined,
   });
 
   useEffect(() => {
@@ -153,7 +158,7 @@ const CreateSessionScreen = (): React.JSX.Element => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isProfileLoading) {
     return <Loader fullScreen message="Loading..." />;
   }
 

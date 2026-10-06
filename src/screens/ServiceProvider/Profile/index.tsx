@@ -92,10 +92,9 @@ const OrganizationProfile = (): React.JSX.Element => {
       try {
         let profile: any = {};
         try {
+          setProfileExists(false);
           const mentoringProfileRes = await getMentoringProfile();
-          console.log("Rohit Testing " + JSON.stringify(mentoringProfileRes));
           if (mentoringProfileRes?.result) {
-            console.log("mentoringProfileRes", mentoringProfileRes.result);
             profile = mentoringProfileRes.result
             setProfileExists(true);
             console.log('Mentoring profile fetched successfully:', profile);
@@ -121,9 +120,7 @@ const OrganizationProfile = (): React.JSX.Element => {
 
         const getField = (key: string, fallback: any = '') => {
           const val = profile?.[key];
-
-          console.log("Rohit Printing " + JSON.stringify(val));
-
+          
           if (val === undefined || val === null) {
             return fallback;
           }
@@ -414,9 +411,6 @@ try {
       organisationCredentials: resolvedValues.organisationCredentials,
     },
   };
-
-  console.log("Rohit Payload " + JSON.stringify(payload));
-
   try {
     if (profileExists) {
       await updateMentoringProfile(payload);

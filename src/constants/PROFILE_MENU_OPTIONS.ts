@@ -56,7 +56,6 @@ export const LC_MENU_OPTIONS: MenuItemData[] = [
     iconColor: '$textForegroundColor',
     showDividerAfter: false,
     route: 'dashboard', // Navigation route for dashboard menu item
-    isComingSoon: true,
   },
   {
     key: 'myParticipants',
