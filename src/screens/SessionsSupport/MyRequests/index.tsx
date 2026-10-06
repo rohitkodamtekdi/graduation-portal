@@ -86,6 +86,7 @@ export const MyRequests: React.FC<MyRequestsProps> = ({
           : '';
         const descriptionText = item.description || item.agenda || item.session?.description || item.session?.notes || '';
         const statusStyle = getStatusBadgeStyles(item.status);
+        const hasInfoRequests = Boolean(item.meta?.extra_information);
         // History items: same Completed badge (colors + icon) as the Training/Assets history cards
         const isCompleted = item.status === SESSION_STATUS_LABEL.COMPLETED;
         const completedColors = getStatusColors(SESSION_STATUS_LABEL.COMPLETED);
@@ -112,29 +113,38 @@ export const MyRequests: React.FC<MyRequestsProps> = ({
                 ) : null}
               </VStack>
 
-              {isCompleted ? (
-                <Badge borderWidth={1} borderColor={completedColors.border} bg={completedColors.bg} borderRadius="$full" px="$2" py="$0.5">
-                  <HStack space="xs" alignItems="center">
-                    <LucideIcon name={completedColors.icon} size={11} color={completedColors.text} />
-                    <BadgeText {...styles.cardBadgeText} color={completedColors.text}>
-                      {SESSION_STATUS_LABEL.COMPLETED}
+              <HStack {...styles.cardBadgesHStack}>
+                {hasInfoRequests ? (
+                  <Badge {...styles.cardBadge} {...styles.infoRequestedBadge}>
+                    <BadgeText {...styles.cardBadgeText} {...styles.infoRequestedBadgeText}>
+                      {t('lc.sessionsSupport.requestDetails.infoRequestedBadge', 'Info requested')}
                     </BadgeText>
-                  </HStack>
-                </Badge>
-              ) : (
-                <Badge
-                  {...styles.cardBadge}
-                  borderColor={statusStyle.borderColor}
-                  bg={statusStyle.bg}
-                >
-                  <BadgeText
-                    {...styles.cardBadgeText}
-                    color={statusStyle.color}
+                  </Badge>
+                ) : null}
+                {isCompleted ? (
+                  <Badge borderWidth={1} borderColor={completedColors.border} bg={completedColors.bg} borderRadius="$full" px="$2" py="$0.5">
+                    <HStack space="xs" alignItems="center">
+                      <LucideIcon name={completedColors.icon} size={11} color={completedColors.text} />
+                      <BadgeText {...styles.cardBadgeText} color={completedColors.text}>
+                        {SESSION_STATUS_LABEL.COMPLETED}
+                      </BadgeText>
+                    </HStack>
+                  </Badge>
+                ) : (
+                  <Badge
+                    {...styles.cardBadge}
+                    borderColor={statusStyle.borderColor}
+                    bg={statusStyle.bg}
                   >
-                    {statusStyle.label}
-                  </BadgeText>
-                </Badge>
-              )}
+                    <BadgeText
+                      {...styles.cardBadgeText}
+                      color={statusStyle.color}
+                    >
+                      {statusStyle.label}
+                    </BadgeText>
+                  </Badge>
+                )}
+              </HStack>
             </HStack>
 
             {descriptionText ? (

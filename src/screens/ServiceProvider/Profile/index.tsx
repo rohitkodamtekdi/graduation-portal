@@ -149,7 +149,7 @@ const OrganizationProfile = (): React.JSX.Element => {
 
         const mapped = {
           name: getField('about') || getField('name') || user?.name || '',
-          organizationType: orgType,
+          organizationType: orgType[0] || '',
           contactPersonName: getField('name') || user?.name || '',
           contactEmail: getField('email') || user?.email || '',
           contactPhone: getField('phone') || user?.phone || '',
@@ -397,7 +397,8 @@ try {
     email: values.contactEmail,
     phone: values.contactPhone,
     phone_code: values.phone_code? values.phone_code.toString().replace('+', ''): '27',
-    provider_type: values.organizationType,
+    // Single select in UI, but backend still stores provider_type as an array
+    provider_type: values.organizationType ? [values.organizationType] : [],
     meta: {
       provinces,
       sites,

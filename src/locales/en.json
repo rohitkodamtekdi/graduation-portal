@@ -2474,6 +2474,8 @@
         "titleLabel": "Title",
         "notesUpdatesLabel": "Notes / Updates",
         "submittedInfoLabel": "Submitted Information",
+        "infoRequestedLabel": "Information Requested by Provider",
+        "infoRequestedBadge": "Info requested",
         "pillarLabel": "Pillar",
         "trainingSessionLabel": "Training / Session",
         "descriptionLabel": "Description",
