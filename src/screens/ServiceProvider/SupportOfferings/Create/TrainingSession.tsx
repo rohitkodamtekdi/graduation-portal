@@ -39,7 +39,7 @@ const App = (): React.JSX.Element => {
   const sessionId = route.params?.id;
   const { t } = useLanguage();
   const { user } = useAuth() || {};
-  const isLc = user?.role === 'LC';
+  const isLc = user?.role === 'org_admin';
   const [provinces, setProvinces] = useState<any[]>([]);
   const [pillers, setPillers] = useState<MentoringOption[]>([]);
   const [targetAudience, setTargetAudience] = useState<MentoringOption[]>([]);
