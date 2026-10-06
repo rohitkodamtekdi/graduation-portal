@@ -37,8 +37,8 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
   const [filterType, setFilterType] = useState<'ATTENDED' | 'MISSED'>('ATTENDED');
 
   const filterOptions = [
-    { label: t('participantDetail.attendedSessions.attended', 'Attended'), value: 'ATTENDED' },
-    { label: t('participantDetail.attendedSessions.missed', 'Missed'), value: 'MISSED' },
+    { label: t('participantDetail.attendedSessions.attended'), value: 'ATTENDED' },
+    { label: t('participantDetail.attendedSessions.missed'), value: 'MISSED' },
   ];
 
   const participantId = participant?.userId || participant?.id || (participant as any)?._id;
@@ -74,7 +74,7 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
     fetchSessions();
   }, [fetchSessions]);
 
-  const formatDate = (val: any) => {
+  const formatDate = useCallback((val: any) => {
     if (!val) return '--';
     const num = Number(val);
     if (!isNaN(num)) {
@@ -83,12 +83,12 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
     }
     const m = moment(val);
     return m.isValid() ? m.format('ddd, D MMM YYYY') : String(val);
-  };
+  }, []);
 
   const isAttended = filterType === 'ATTENDED';
   const sectionTitle = isAttended
-    ? t('participantDetail.attendedSessions.sectionTitle', 'Attended Sessions')
-    : t('participantDetail.attendedSessions.missed', 'Missed');
+    ? t('participantDetail.attendedSessions.sectionTitle')
+    : t('participantDetail.attendedSessions.missed');
 
   return (
     <Box {...styles.container}>
@@ -118,18 +118,12 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
         /* Empty State */
         <VStack {...styles.content} py="$10" space="xs">
           <Text {...styles.emptyTitle}>
-            {t('participantDetail.attendedSessions.noSessionsTitle', 'No Sessions Found')}
+            {t('participantDetail.attendedSessions.noSessionsTitle')}
           </Text>
           <Text {...styles.emptyDescription}>
             {isAttended
-              ? t(
-                  'participantDetail.attendedSessions.noAttended',
-                  'This participant has not attended any sessions yet.'
-                )
-              : t(
-                  'participantDetail.attendedSessions.noMissed',
-                  'No missed sessions recorded for this participant.'
-                )}
+              ? t('participantDetail.attendedSessions.noAttended')
+              : t('participantDetail.attendedSessions.noMissed')}
           </Text>
         </VStack>
       ) : (
@@ -149,8 +143,8 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
                     <Badge {...styles.statusBadge(isAttended)}>
                       <BadgeText {...styles.statusBadgeText(isAttended)}>
                         {isAttended
-                          ? t('participantDetail.attendedSessions.attended', 'Attended')
-                          : t('participantDetail.attendedSessions.missed', 'Missed')}
+                          ? t('participantDetail.attendedSessions.attended')
+                          : t('participantDetail.attendedSessions.missed')}
                       </BadgeText>
                     </Badge>
                   </HStack>
@@ -159,7 +153,7 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
 
                 <Text {...styles.subtitleText}>
                   {item.mentor_name ||
-                    t('participantDetail.attendedSessions.serviceProvider', 'Service Provider')}
+                    t('participantDetail.attendedSessions.serviceProvider')}
                 </Text>
 
                 {/* Date and Mode */}
@@ -181,7 +175,7 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
               {!isLoadingMore ? (
                 <Button onPress={() => setPage((prev) => prev + 1)}>
                   <ButtonText>
-                    {t('supportProvider.supportOfferings.buttonTexts.loadMoreSessions', 'Load More Sessions')}
+                    {t('supportProvider.supportOfferings.buttonTexts.loadMoreSessions')}
                   </ButtonText>
                 </Button>
               ) : (
