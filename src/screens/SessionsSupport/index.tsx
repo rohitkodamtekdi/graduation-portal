@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Box, Button, ButtonIcon, ButtonText, Container, HStack, LucideIcon, Pressable, Text, VStack, useAlert, Badge, BadgeText, Spinner } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useAuth } from '@contexts/AuthContext';
+import { useProfileCompletion } from '@hooks';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import PageHeader from '@components/PageHeader';
 import MyRequests from './MyRequests';
@@ -67,6 +69,11 @@ const SessionsSupportScreen: React.FC = () => {
   const [isRequestAssetModalOpen, setIsRequestAssetModalOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<AssetItem | null>(null);
   const { showAlert } = useAlert();
+  const { user } = useAuth() || {};
+  const { allowedProvinces, allowedSites, isProfileLoading } = useProfileCompletion();
+  // org_admin / tenant_admin operate on a single province: lock it and limit sites to their profile
+  const isProvinceLocked = (user?.role === 'org_admin' || user?.role === 'tenant_admin') && allowedProvinces.length > 0;
+  const lockedProvinceId = isProvinceLocked ? allowedProvinces[0] : undefined;
 
   const handleAssignSessionClick = (item: any) => {
     setSelectedSession(item);
@@ -256,13 +263,13 @@ const SessionsSupportScreen: React.FC = () => {
             setProvincesList(provincesData);
             const { result: { data } } = await getSitesByProvince();
             setAllSiteOptions(data || []);
-            const dynamicProvinces = [
-              { label: 'All Provinces', value: FILTER_ALL.ALL_PROVINCES },
-              ...provincesData.map((p: any) => ({
-                label: p.metaInformation?.name || p.name || p.title || p.label,
-                value: p._id || p.id || p.value,
-              })),
-            ];
+            const mappedProvinces = provincesData.map((p: any) => ({
+              label: p.metaInformation?.name || p.name || p.title || p.label,
+              value: p._id || p.id || p.value,
+            }));
+            const dynamicProvinces = isProvinceLocked
+              ? mappedProvinces.filter((p: any) => allowedProvinces.includes(p.value))
+              : [{ label: 'All Provinces', value: FILTER_ALL.ALL_PROVINCES }, ...mappedProvinces];
             setProvinceOptions(dynamicProvinces);
           }
 
@@ -309,11 +316,12 @@ const SessionsSupportScreen: React.FC = () => {
         console.error('Error fetching filter data:', err);
       }
     };
+    if (isProfileLoading) return;
     fetchFilterData();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isProfileLoading, isProvinceLocked]);
 
   // Fetch dynamic sites based on selected province filter
   useEffect(() => {
@@ -349,12 +357,15 @@ const SessionsSupportScreen: React.FC = () => {
         const fetchedSites = res?.result?.data || [];
 
         if (isMounted) {
+          const mappedSites = fetchedSites.map((s: any) => ({
+            label: s.metaInformation?.name || s.name || s.title || s.label,
+            value: s._id || s.id || s.value,
+          }));
           const dynamicSites = [
             { label: 'All Sites', value: FILTER_ALL.ALL_SITES },
-            ...fetchedSites.map((s: any) => ({
-              label: s.metaInformation?.name || s.name || s.title || s.label,
-              value: s._id || s.id || s.value,
-            })),
+            ...(isProvinceLocked && allowedSites.length > 0
+              ? mappedSites.filter((s: any) => allowedSites.includes(s.value))
+              : mappedSites),
           ];
 
           setSiteOptions(dynamicSites);
@@ -371,7 +382,7 @@ const SessionsSupportScreen: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [filters.province, provincesList]);
+  }, [filters.province, provincesList, isProvinceLocked, allowedSites]);
 
   // Fetch dynamic types based on selected pillar filter
   useEffect(() => {
@@ -768,6 +779,8 @@ const SessionsSupportScreen: React.FC = () => {
                 typeOptions={typeOptions}
                 statusOptions={statusOptions}
                 formatOptions={formatOptions}
+                hideProvince={isProvinceLocked}
+                initialValue={lockedProvinceId ? { [FILTER_FIELDS.PROVINCE]: lockedProvinceId } : undefined}
                 shouldDisableSite={!filters[FILTER_FIELDS.PROVINCE] || filters[FILTER_FIELDS.PROVINCE] === FILTER_ALL.ALL_PROVINCES}
                 shouldDisableType={!filters[FILTER_FIELDS.PILLAR] || filters[FILTER_FIELDS.PILLAR] === FILTER_ALL.ALL_PILLARS}
               />
