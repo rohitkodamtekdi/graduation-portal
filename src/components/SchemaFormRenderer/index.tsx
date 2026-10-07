@@ -2443,14 +2443,30 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
   ) => {
     setInternalErrors(prev => {
       const next = { ...prev };
+      let changed = false;
       visited.forEach(name => {
         if (!(name in next)) return; // never revealed — stays hidden
-        if (freshErrors[name]) next[name] = freshErrors[name];
-        else delete next[name]; // now valid — clear it
+        if (freshErrors[name]) {
+          if (next[name] !== freshErrors[name]) {
+            next[name] = freshErrors[name];
+            changed = true;
+          }
+        } else {
+          delete next[name]; // now valid — clear it
+          changed = true;
+        }
       });
-      return next;
+      return changed ? next : prev;
     });
   };
+
+  // Re-checks the already-revealed errors on every value change, so a message clears as soon as the field is filled
+  const hasRevealedErrors = Object.keys(internalErrors).length > 0;
+  useEffect(() => {
+    if (!hasRevealedErrors) return;
+    const { errors: freshErrors, visited } = collectValidationForRoots(schema, schema, values, optionsMap, t);
+    applyValidationResult(freshErrors, visited);
+  }, [values, hasRevealedErrors]);
 
   const prevErrorsRef = useRef<Record<string, string>>(errors);
 
