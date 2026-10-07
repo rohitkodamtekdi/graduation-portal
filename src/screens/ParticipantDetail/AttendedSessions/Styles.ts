@@ -5,8 +5,7 @@ export const attendedSessionsStyles = {
   },
   container: {
     flex: 1,
-    m: '$4',
-    p: '$6',
+    width: '100%',
   },
   content: {
     flex: 1,

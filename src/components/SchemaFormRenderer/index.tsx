@@ -1066,7 +1066,8 @@ const PillOptionsRow: React.FC<{
   isDisabled: boolean;
   /** pillmultiselect only — shows a checked/unchecked checkbox beside each pill's label. */
   isMulti?: boolean;
-}> = memo(({ options, isSelected, onToggle, isDisabled, isMulti = false }) => (
+  _pill?: any;
+}> = memo(({ options, isSelected, onToggle, isDisabled, isMulti = false, _pill }) => (
   <HStack space="sm" flexWrap="wrap">
     {options.map(option => {
       const selected = isSelected(option.value);
@@ -1083,6 +1084,7 @@ const PillOptionsRow: React.FC<{
           borderColor={selected ? '$primary500' : '$borderColor'}
           bg={selected ? '$bgPrimary/5' : 'transparent'}
           opacity={isDisabled ? 0.5 : 1}
+          {..._pill}
         >
           <HStack space="xs" alignItems={"center"} justifyContent={isMulti ? "flex-start" : "center"}>
             {isMulti && (
@@ -1378,6 +1380,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         isSelected={optionValue => optionValue === value}
         onToggle={(optionValue, other) => onChange(field.name || '', optionValue, other)}
         isDisabled={isDisabled}
+        _pill={field._pill}
       />
     );
   }
@@ -1402,6 +1405,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         }}
         isDisabled={isDisabled}
         isMulti
+        _pill={field._pill}
       />
     );
   }

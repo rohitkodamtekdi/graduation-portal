@@ -10,7 +10,7 @@ import {
 } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
 import type { ParticipantData } from '@app-types/participant';
-import { getMenteeSessions } from '../../../services/SessionSupportServices/sessionRequestorService';
+import { getMenteeSessions } from '../../../services/SupportOfferingsServices/supportOfferingsService';
 import { formatDateString } from '@utils/helper';
 import { attendedSessionsStyles as styles } from './Styles';
 

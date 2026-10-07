@@ -57,6 +57,10 @@ export default {
     m: 0,
   },
 
+  providerTypePill: {
+    justifyContent: 'center' as const,
+  },
+
   // Field/Input styling
   input: {
     variant: 'outline' as const,

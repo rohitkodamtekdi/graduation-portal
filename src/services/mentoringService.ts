@@ -78,6 +78,11 @@ export const getCertificateProvided = async (): Promise<MentoringOption[]> => {
 };
 
 /**
+ * Saving a draft skips the backend required/business validations (enforced again on publish).
+ */
+const draftParams = (payload: any) => (payload?.status === 'DRAFT' ? { SkipValidation: true } : undefined);
+
+/**
  * Create/Update Mentoring Session
  * Endpoint: POST /mentoring/v1/sessions/update
  *
@@ -86,7 +91,9 @@ export const getCertificateProvided = async (): Promise<MentoringOption[]> => {
  */
 export const createSession = async (payload: any): Promise<any> => {
   try {
-    const response = await api.post(API_ENDPOINTS.MENTORING_CREATE_SESSION, payload);
+    const response = await api.post(API_ENDPOINTS.MENTORING_CREATE_SESSION, payload, {
+      params: draftParams(payload),
+    });
     return response.data;
   } catch (error: any) {
     throw error;
@@ -99,7 +106,9 @@ export const createSession = async (payload: any): Promise<any> => {
  */
 export const updateSession = async (sessionId: string | number, payload: any): Promise<any> => {
   try {
-    const response = await api.post(API_ENDPOINTS.MENTORING_UPDATE_SESSION(sessionId), payload);
+    const response = await api.post(API_ENDPOINTS.MENTORING_UPDATE_SESSION(sessionId), payload, {
+      params: draftParams(payload),
+    });
     return response.data;
   } catch (error: any) {
     throw error;
