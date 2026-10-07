@@ -111,7 +111,7 @@ const CreateSessionScreen = (): React.JSX.Element => {
   const handleSave = async (formValues: any, isDraft: boolean) => {
     try {
       setValues(formValues);
-      const payload: any = valueMapping({ ...formValues, isDraft }, false, optionsMap);
+      const payload: any = valueMapping({ ...formValues, isDraft , recommended_for: 'user'}, false, optionsMap);
       if (sessionId && modeType === FORM_MODE.EDIT) {
         payload.id = sessionId;
         payload._id = sessionId;
