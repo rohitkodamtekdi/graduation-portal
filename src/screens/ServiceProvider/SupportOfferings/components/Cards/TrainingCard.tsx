@@ -223,9 +223,9 @@ const Card: React.FC<CardProps> = ({
   const startMs = parseToMs(item.start_date);
   const endMs = parseToMs(item.end_date);
 
-  // Date & Time display matching Figma: "Fri, 20 Mar 2026, 10:00"
+  // Date & Time display in 12-hour format, same as the form's time picker: "Fri, 20 Mar 2026, 01:15 PM"
   const displayDateTime = startMs
-    ? moment(startMs).format('ddd, D MMM YYYY, HH:mm')
+    ? moment(startMs).format('ddd, D MMM YYYY, hh:mm A')
     : '--';
 
   // Duration display matching Figma: "3 hours" (or "2 days 2 hours" when >= 24 hours)

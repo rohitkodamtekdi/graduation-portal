@@ -287,7 +287,7 @@ const SessionDetailsScreen: React.FC = () => {
                     {session.startMoment ? session.startMoment.format('dddd, D MMMM YYYY') : ''}
                   </Text>
                   <Text {...styles.detailsTimeValue}>
-                    {session.startMoment ? session.startMoment.format('HH:mm') : ''}
+                    {session.startMoment ? session.startMoment.format('hh:mm A') : ''}
                   </Text>
                 </VStack>
               </HStack>
