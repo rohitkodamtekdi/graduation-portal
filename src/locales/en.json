@@ -2146,14 +2146,17 @@
     "attendedSessions": {
       "title": "Sessions",
       "sectionTitle": "Attended Sessions",
+      "missedSectionTitle": "Missed Sessions",
       "attended": "Attended",
       "missed": "Missed",
       "serviceProvider": "Service Provider",
       "noSessionsTitle": "No Sessions Found",
       "noMissedSessionsTitle": "No Missed Sessions",
       "noSessionsDescription": "Sessions this participant has attended will appear here.",
-      "noAttended": "This participant has not attended any sessions yet.",
-      "noMissed": "No missed sessions recorded for this participant."
+      "noAttendedTitle": "No attended sessions",
+      "noMissedTitle": "No missed sessions",
+      "noAttended": "Scheduled sessions that {{name}} attended will appear here",
+      "noMissed": "Scheduled sessions that {{name}} missed will appear here"
     },
     "interventionPlan": {
       "noPlanAssigned": "No Intervention Plan Assigned",

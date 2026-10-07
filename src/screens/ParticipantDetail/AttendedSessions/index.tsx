@@ -1,20 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   VStack,
   HStack,
   Text,
-  Select,
+  Spinner,
+  Pressable,
+  LucideIcon,
 } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
 import type { ParticipantData } from '@app-types/participant';
+import { getMenteeSessions } from '../../../services/SessionSupportServices/sessionRequestorService';
+import { formatDateString } from '@utils/helper';
 import { attendedSessionsStyles as styles } from './Styles';
 
 interface AttendedSessionsProps {
   participant?: ParticipantData;
 }
 
-const AttendedSessions: React.FC<AttendedSessionsProps> = () => {
+const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
   const { t } = useLanguage();
   const [filterType, setFilterType] = useState<'ATTENDED' | 'MISSED'>('ATTENDED');
 
@@ -23,35 +27,115 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = () => {
     { label: t('participantDetail.attendedSessions.missed'), value: 'MISSED' },
   ];
 
+  const participantName = participant?.name ?? '';
   const isAttended = filterType === 'ATTENDED';
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const menteeId = participant?.userId;
+    if (!menteeId) return;
+    let cancelled = false;
+    setLoading(true);
+    getMenteeSessions(menteeId, isAttended ? 'attended' : 'missed')
+      .then((data: any[]) => !cancelled && setSessions(data))
+      .catch(() => !cancelled && setSessions([]))
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [participant?.userId, isAttended]);
+
+  const formatEpoch = (value?: string) =>
+    value ? formatDateString(new Date(Number(value) * 1000).toISOString()) : '';
 
   return (
     <Box {...styles.container}>
       {/* Header with Title and Filter */}
       <HStack {...styles.headerHStack}>
         <Text {...styles.headerTitleText}>
-          {t('participantDetail.attendedSessions.title')}
+          {isAttended
+            ? t('participantDetail.attendedSessions.sectionTitle')
+            : t('participantDetail.attendedSessions.missedSectionTitle')}{' '}
+          ({sessions.length})
         </Text>
-        <Box {...styles.filterSelectBox}>
-          <Select
-            options={filterOptions}
-            value={filterType}
-            onChange={(val: any) => setFilterType(val as 'ATTENDED' | 'MISSED')}
-          />
-        </Box>
+        <HStack {...styles.toggleHStack}>
+          {filterOptions.map(opt => {
+            const active = opt.value === filterType;
+            return (
+              <Pressable
+                key={opt.value}
+                onPress={() => setFilterType(opt.value as 'ATTENDED' | 'MISSED')}
+                {...styles.toggleButton(active)}>
+                <Text {...styles.toggleButtonText(active)}>{opt.label}</Text>
+              </Pressable>
+            );
+          })}
+        </HStack>
       </HStack>
 
-      {/* Empty State */}
-      <VStack {...styles.content} py="$10" space="xs">
-        <Text {...styles.emptyTitle}>
-          {t('participantDetail.attendedSessions.noSessionsTitle')}
-        </Text>
-        <Text {...styles.emptyDescription}>
-          {isAttended
-            ? t('participantDetail.attendedSessions.noAttended')
-            : t('participantDetail.attendedSessions.noMissed')}
-        </Text>
-      </VStack>
+      {loading ? (
+        <Box {...styles.loadingContainer}>
+          <Spinner size="large" color="$primary500" />
+        </Box>
+      ) : sessions.length === 0 ? (
+        <Box {...styles.emptyStateContainer}>
+          <VStack {...styles.emptyStateVStack}>
+            <Box {...styles.emptyStateIconContainer}>
+              <LucideIcon name="Clock" size={30} color="$textMutedForeground" />
+            </Box>
+            <Text {...styles.emptyStateTitle}>
+              {isAttended
+                ? t('participantDetail.attendedSessions.noAttendedTitle', 'No attended sessions')
+                : t('participantDetail.attendedSessions.noMissedTitle', 'No missed sessions')}
+            </Text>
+            <Text {...styles.emptyStateDescription}>
+              {isAttended
+                ? t('participantDetail.attendedSessions.noAttended', { name: participantName })
+                : t('participantDetail.attendedSessions.noMissed', { name: participantName })}
+            </Text>
+          </VStack>
+        </Box>
+      ) : (
+        <VStack {...styles.listVStack}>
+          {sessions.map(session => (
+            <Box key={session.id} {...styles.card(isAttended)}>
+              <HStack {...styles.cardHeaderHStack}>
+                <HStack {...styles.cardTitleHStack}>
+                  <Text {...styles.cardTitleText}>{session.title}</Text>
+                  <Box {...styles.statusBadge(isAttended)}>
+                    <Text {...styles.statusBadgeText(isAttended)}>
+                      {isAttended
+                        ? t('participantDetail.attendedSessions.attended')
+                        : t('participantDetail.attendedSessions.missed')}
+                    </Text>
+                  </Box>
+                </HStack>
+              </HStack>
+              {!!session.description && (
+                <Text {...styles.subtitleText}>{session.description}</Text>
+              )}
+              <HStack {...styles.metaRowHStack}>
+                <HStack {...styles.metaItemHStack}>
+                  <LucideIcon name="Calendar" size={14} color="$textSecondary" />
+                  <Text {...styles.metaText}>{formatEpoch(session.start_date)}</Text>
+                </HStack>
+                {!!session.mentor_name && (
+                  <Text {...styles.metaText}>
+                    {t('participantDetail.attendedSessions.serviceProvider')}: {session.mentor_name}
+                  </Text>
+                )}
+                {!!session.delivery_mode && (
+                  <HStack {...styles.metaItemHStack}>
+                    <LucideIcon name="Building2" size={14} color="$success600" />
+                    <Text {...styles.deliveryText}>{session.delivery_mode}</Text>
+                  </HStack>
+                )}
+              </HStack>
+            </Box>
+          ))}
+        </VStack>
+      )}
     </Box>
   );
 };

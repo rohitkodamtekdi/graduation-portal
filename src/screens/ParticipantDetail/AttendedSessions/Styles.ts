@@ -5,10 +5,6 @@ export const attendedSessionsStyles = {
   },
   container: {
     flex: 1,
-    bg: '$white',
-    borderWidth: 1,
-    borderColor: '$borderLight300',
-    borderRadius: '$lg',
     m: '$4',
     p: '$6',
   },
@@ -28,6 +24,35 @@ export const attendedSessionsStyles = {
     color: '$textMutedForeground',
     textAlign: 'center' as const,
   },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    py: '$12',
+  },
+  emptyStateVStack: {
+    space: 'md' as const,
+    alignItems: 'center' as const,
+  },
+  emptyStateIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: '$full' as const,
+    bg: '$backgroundLight50',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  emptyStateTitle: {
+    fontSize: '$lg',
+    fontWeight: '$bold' as const,
+    color: '$textPrimary',
+    textAlign: 'center' as const,
+  },
+  emptyStateDescription: {
+    fontSize: '$sm',
+    color: '$textSecondary',
+    textAlign: 'center' as const,
+  },
   loadingContainer: {
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
@@ -41,10 +66,27 @@ export const attendedSessionsStyles = {
     mb: '$4' as const,
   },
   headerTitleText: {
-    fontSize: '$md' as const,
+    fontSize: '$sm' as const,
     fontWeight: '$bold' as const,
     color: '$textPrimary' as const,
   },
+  toggleHStack: {
+    borderWidth: 1,
+    borderColor: '$borderLight300',
+    borderRadius: '$full' as const,
+    p: '$0.5' as const,
+  },
+  toggleButton: (active: boolean) => ({
+    bg: active ? '$primary500' : 'transparent',
+    borderRadius: '$full' as const,
+    px: '$4' as const,
+    py: '$1.5' as const,
+  }),
+  toggleButtonText: (active: boolean) => ({
+    fontSize: '$sm' as const,
+    fontWeight: '$medium' as const,
+    color: active ? '$white' : '$textSecondary',
+  }),
   filterSelectBox: {
     width: 140 as const,
   },

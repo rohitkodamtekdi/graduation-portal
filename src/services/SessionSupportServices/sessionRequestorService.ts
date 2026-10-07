@@ -180,3 +180,21 @@ export const getEnrolledMenteeIds = async (
     throw error;
   }
 };
+
+/**
+ * Get the sessions a mentee has attended or missed.
+ * Endpoint: GET /mentoring/v1/mentees/sessions?menteeId=&scope=attended|missed
+ *
+ * @param menteeId - Mentee (participant) user id
+ * @param scope - 'attended' or 'missed'
+ */
+export const getMenteeSessions = async (
+  menteeId: string | number,
+  scope: 'attended' | 'missed'
+): Promise<any[]> => {
+  const response = await api.get(API_ENDPOINTS.SESSION_MENTEES_SESSIONS, {
+    params: { menteeId, scope },
+  });
+  const data = response?.data?.result?.data;
+  return Array.isArray(data) ? data : [];
+};
