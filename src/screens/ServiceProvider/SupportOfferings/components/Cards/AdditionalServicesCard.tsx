@@ -199,16 +199,18 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
               </Button>
             )}
 
-            {/* ALL STATUSES: View Requests */}
-            <Button
-              variant="solid" {...styles.detailsBtn}
-              onPress={() => setIsRequestsModalOpen(true)}
-            >
-              {/* @ts-ignore */}
-              <ButtonText {...styles.detailsBtnText}>
-                {t('supportProvider.supportOfferings.cards.viewRequests')}
-              </ButtonText>
-            </Button>
+            {/* NON-DRAFT: View Requests (a draft is not published, so it has no requests or attendance yet) */}
+            {!isDraft && (
+              <Button
+                variant="solid" {...styles.detailsBtn}
+                onPress={() => setIsRequestsModalOpen(true)}
+              >
+                {/* @ts-ignore */}
+                <ButtonText {...styles.detailsBtnText}>
+                  {t('supportProvider.supportOfferings.cards.viewRequests')}
+                </ButtonText>
+              </Button>
+            )}
           </HStack>
         </HStack>
         )}
