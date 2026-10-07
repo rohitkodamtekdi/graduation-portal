@@ -83,6 +83,14 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
     (item as any)?.meta?.requests ??
     undefined;
 
+  // requestsCount falls back to capacity (seats_limit), so the cancel warning uses the actually assigned count
+  const seatsLimit = (item as any)?.seats_limit;
+  const seatsRemaining = (item as any)?.seats_remaining;
+  const assignedCount =
+    seatsLimit !== undefined && seatsRemaining !== undefined
+      ? Math.max(0, Number(seatsLimit || 0) - Number(seatsRemaining || 0))
+      : undefined;
+
   const { requesterName, requesterOrgName } = useRequesterInfo(item as any);
 
   // The cancel API marks the session as CANCELLED (it is not deleted), so keep the card and show it as Cancelled
@@ -220,8 +228,8 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
         title={item.title}
         statusLabel={statusTag}
         participantsInfo={
-          requestsCount !== undefined
-            ? `${requestsCount} ${t('supportProvider.supportOfferings.cancelModal.assignedParticipants', 'assigned participants')}`
+          assignedCount !== undefined
+            ? `${assignedCount} ${t('supportProvider.supportOfferings.cancelModal.assignedParticipants', 'assigned participants')}`
             : undefined
         }
         supportTypeLabel={t('supportProvider.supportOfferings.cancelModal.additionalServiceType', 'Additional Service')}
