@@ -234,6 +234,7 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
         isOpen={isRequestsModalOpen}
         onClose={() => setIsRequestsModalOpen(false)}
         service={item}
+        onCompleted={() => setStatusOverride(SESSION_STATUS_LABEL.COMPLETED)}
       />
     </Box>
   );

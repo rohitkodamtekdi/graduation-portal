@@ -13,12 +13,15 @@ interface AdditionalServiceCompletionModalProps {
   isOpen: boolean;
   onClose: () => void;
   service: ServiceItem | null;
+  /** Called after the completion is saved successfully */
+  onCompleted?: () => void;
 }
 
 export default function AdditionalServiceCompletionModal({
   isOpen,
   onClose,
   service,
+  onCompleted,
 }: AdditionalServiceCompletionModalProps): React.JSX.Element | null {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
@@ -40,7 +43,7 @@ export default function AdditionalServiceCompletionModal({
           id: String(mentee.id),
           name: mentee.name || '',
           lcName: mentee.organization?.name || '',
-          isPresent: false,
+          isPresent: !!mentee.is_attended,
         })),
       );
     } catch (error) {
@@ -60,8 +63,11 @@ export default function AdditionalServiceCompletionModal({
     try {
       await completeTrainingSession(service.id, { mentees: selectedParticipantIds });
       showAlert('success', t(`${BASE_PATH}.saved`));
+      onCompleted?.();
     } catch (error) {
       showAlert('error', t(`${BASE_PATH}.completeFailed`));
+      // Rethrow so the modal stays open for a retry
+      throw error;
     }
   };
 
