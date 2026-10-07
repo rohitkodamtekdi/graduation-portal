@@ -978,6 +978,35 @@ export const sessionsSupportStyles = {
     fontSize: '$sm',
     fontWeight: '$semibold',
   },
+   emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    py: '$12',
+  },
+  emptyStateVStack: {
+    space: 'md' as const,
+    alignItems: 'center' as const,
+  },
+  emptyStateIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: '$full' as const,
+    bg: '$backgroundLight50',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  emptyStateTitle: {
+    fontSize: '$lg',
+    fontWeight: '$bold' as const,
+    color: '$textPrimary',
+    textAlign: 'center' as const,
+  },
+  emptyStateDescription: {
+    fontSize: '$sm',
+    color: '$textSecondary',
+    textAlign: 'center' as const,
+  },
 } as const;
 
 export default sessionsSupportStyles;

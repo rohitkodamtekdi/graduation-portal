@@ -530,7 +530,7 @@ const SessionsSupportScreen: React.FC = () => {
             });
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           } else {
-            result = await getRequestSessionsList({ ...params, support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION });
+            result = await getTrainingSessions({});
             fetchedData = result?.result?.data || [];
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           }
@@ -833,7 +833,21 @@ const SessionsSupportScreen: React.FC = () => {
                   />
                 ))}
               </VStack>
-            ) : null
+            ) : (
+                  <Box {...styles.emptyStateContainer}>
+                    <VStack {...styles.emptyStateVStack}>
+                      <Box {...styles.emptyStateIconContainer}>
+                        <LucideIcon name="Clock" size={30} color="$textMutedForeground" />
+                      </Box>
+                      <Text {...styles.emptyStateTitle}>
+                        {t('lc.sessionsSupport.emptyState.title', 'No Session Found')}
+                      </Text>
+                      {/* <Text {...styles.emptyStateDescription}>
+                        {t('lc.sessionsSupport.emptyState.description', 'No Session Found')}
+                      </Text> */}
+                    </VStack>
+                  </Box>
+                )
           ) : activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY && activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES ? (
             // Same card as My Requests (provider, requested date, notes, View Details -> request details page)
             <MyRequests
