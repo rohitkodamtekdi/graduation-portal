@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, ButtonIcon, ButtonText, Container, HStack, LucideIcon, Text, VStack } from '@ui';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Box, Button, ButtonIcon, ButtonText, Container, HStack, LucideIcon, Spinner, Text, VStack } from '@ui';
 import styles from './styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -73,6 +73,12 @@ const App = (): React.JSX.Element => {
   ];
 
   const handleTabChange = (key: string) => {
+    if (key === activeTab) return;
+    // Clear the previous tab's list so it is never rendered inside the new tab's cards while loading
+    setItems([]);
+    setTotal(0);
+    setPage(1);
+    setLoading(true);
     setActiveTab(key);
   };
 
@@ -219,8 +225,13 @@ const App = (): React.JSX.Element => {
     setPage(1);
   }, [activeTab, filters.search, filters.status, filters.province, filters.site]);
 
+  // Only the latest request may update the list, so a slow response from a previous tab/filter is ignored
+  const latestRequestIdRef = useRef(0);
+
   // Fetch listing data
   const fetchData = useCallback(async () => {
+    const requestId = ++latestRequestIdRef.current;
+    const isStale = () => requestId !== latestRequestIdRef.current;
     try {
       setLoading(true);
       const params = {
@@ -248,6 +259,7 @@ const App = (): React.JSX.Element => {
         fetchedData = Array.isArray(res) ? res : (res as any)?.result?.data || [];
         totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
       }
+      if (isStale()) return;
       if (page === 1) {
         setItems(fetchedData);
       } else {
@@ -255,13 +267,14 @@ const App = (): React.JSX.Element => {
       }
       setTotal(totalCount);
     } catch (err) {
+      if (isStale()) return;
       logger.error('Error fetching offerings list:', err);
       if (page === 1) {
         setItems([]);
         setTotal(0);
       }
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   }, [activeTab, filters.search, filters.status, filters.province, filters.site, page, limit]);
 
@@ -330,6 +343,12 @@ const App = (): React.JSX.Element => {
             _container={styles.filterContainer}
             _input={styles.filterInputProps}
           />
+
+          {_loading && page === 1 && items.length === 0 && (
+            <Box {...styles.emptyStateBox}>
+              <Spinner />
+            </Box>
+          )}
 
           {!_loading && items.length === 0 && (
             <Box {...styles.emptyStateBox}>
