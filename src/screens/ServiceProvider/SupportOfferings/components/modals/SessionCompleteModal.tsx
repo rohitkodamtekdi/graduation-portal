@@ -29,7 +29,8 @@ interface SessionCompleteModalProps {
   expectedParticipantsCount: number;
   initialParticipants?: ParticipantAttendanceItem[];
   isLoadingParticipants?: boolean;
-  onConfirmComplete: (selectedParticipantIds: string[]) => void;
+  /** May return a promise; the modal closes only after it resolves and stays open if it rejects */
+  onConfirmComplete: (selectedParticipantIds: string[]) => void | Promise<void>;
   title?: string;
   headerDescription?: React.ReactNode;
   headerBadge?: React.ReactNode;
@@ -87,25 +88,52 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleConfirm = () => {
-    if (isSubmitting) return;
+  // The modal stays mounted, so a previous submit must not block the next time it is opened
+  useEffect(() => {
+    if (isOpen) setIsSubmitting(false);
+  }, [isOpen]);
+
+  // Completion needs at least one enrolled participant; otherwise a session could be completed with nobody in it
+  const hasNoParticipants = isLoadingParticipants || participants.length === 0;
+  // Everyone was already marked present when opened and still is, so there is nothing new to save
+  const isAllAlreadyPresent =
+    initialParticipants.length > 0 &&
+    initialParticipants.every((p) => p.isPresent) &&
+    markedPresentCount === participants.length;
+  const isConfirmDisabled = hasNoParticipants || markedPresentCount === 0 || isAllAlreadyPresent;
+
+  // Waits for the save so the modal only closes on success; on failure the caller shows the error and the user can retry
+  const submitCompletion = async (selectedIds: string[]) => {
     setIsSubmitting(true);
+    try {
+      await onConfirmComplete(selectedIds);
+      onClose();
+    } catch {
+      // Error message is shown by the caller
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirm = () => {
+    if (isSubmitting || isConfirmDisabled) return;
     const selectedIds = participants
       .filter((p) => p.isPresent)
       .map((p) => String(p.id));
-    onConfirmComplete(selectedIds);
-    onClose();
+    submitCompletion(selectedIds);
   };
 
+  // Without onCancel, "Skip" itself completes the session, so it follows the same rule
+  const isSkipDisabled = !onCancel && hasNoParticipants;
+
   const handleSkip = () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+    if (isSubmitting || isSkipDisabled) return;
     if (onCancel) {
       onCancel();
+      onClose();
     } else {
-      onConfirmComplete([]);
+      submitCompletion([]);
     }
-    onClose();
   };
 
   const footerContent = (
@@ -113,6 +141,7 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
       <Button
         {...styles.modalFooterSkipButton}
         onPress={handleSkip}
+        isDisabled={isSkipDisabled || isSubmitting}
       >
         <ButtonText {...styles.modalFooterSkipButtonText}>
           {cancelButtonText || t('supportProvider.supportOfferings.modal.skipAndMarkComplete')}
@@ -122,8 +151,13 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
       <Button
         {...styles.modalFooterConfirmButton}
         onPress={handleConfirm}
+        isDisabled={isConfirmDisabled || isSubmitting}
       >
-        <ButtonIcon as={LucideIcon} name="Check" {...styles.modalButtonIconProps} />
+        {isSubmitting ? (
+          <Spinner color="$white" />
+        ) : (
+          <ButtonIcon as={LucideIcon} name="Check" {...styles.modalButtonIconProps} />
+        )}
         <ButtonText {...styles.modalFooterConfirmButtonText}>
           {confirmButtonText || t('supportProvider.supportOfferings.modal.confirmAndComplete')}
         </ButtonText>

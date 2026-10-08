@@ -302,7 +302,7 @@ const Card: React.FC<CardProps> = ({
           id: String(mentee.id),
           name: mentee.name || '',
           lcName: mentee.organization?.name || '',
-          isPresent: false,
+          isPresent: !!mentee.is_attended,
         }))
       );
     } finally {
@@ -326,6 +326,11 @@ const Card: React.FC<CardProps> = ({
       });
 
       const hasMarkedAttendance = selectedParticipantIds.length > 0;
+
+      // Keep the cached list in sync so reopening the modal shows the saved attendance
+      setEnrolledParticipants((prev) =>
+        prev ? prev.map((p) => ({ ...p, isPresent: selectedParticipantIds.includes(p.id) })) : prev
+      );
 
       setItem((prev) => {
         const prevLimit = prev.seats_limit || 0;
