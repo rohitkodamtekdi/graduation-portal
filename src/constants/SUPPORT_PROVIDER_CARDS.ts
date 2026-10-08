@@ -69,19 +69,19 @@ export const REQUEST_SUPPORT_OPTIONS = [
   {
     id: SUPPORT_CATEGORIES.TRAINING,
     icon: 'Calendar',
-    title: 'Session or Training',
+    title: 'Training & Sessions',
     route: 'sessions-support/request',
   },
   {
     id: SUPPORT_CATEGORIES.ADDITIONAL_SERVICE,
     icon: 'Wrench',
-    title: 'Additional Service',
+    title: 'Additional Services',
     route: 'sessions-support/request-additional-service',
   },
   {
     id: SUPPORT_CATEGORIES.ASSET,
     icon: 'Box',
-    title: 'Asset',
+    title: 'Assets',
     route: 'sessions-support/request-asset',
   },
 ];
