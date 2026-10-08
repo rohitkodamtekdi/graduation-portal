@@ -116,6 +116,8 @@ const App = (): React.JSX.Element => {
         if (isMounted && provincesData && provincesData.length > 0) {
           setProvincesList(provincesData);
           const { result: { data } } = await getSitesByProvince();
+          // Profile may have changed while the request was pending; drop the stale result
+          if (!isMounted) return;
           setAllSiteOptions(data || []);
           const mappedProvinces = provincesData.map((p: any) => ({
             label: p.metaInformation?.name || p.name || p.title || p.label,
@@ -192,6 +194,25 @@ const App = (): React.JSX.Element => {
       isMounted = false;
     };
   }, [filters.province, provincesList, restrictSites, allowedSites]);
+
+  // Drop selected province/site values the profile no longer allows so they aren't sent to the listing API
+  useEffect(() => {
+    if (isProfileLoading) return;
+    setFilters((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      if (restrictProvinces && prev.province && prev.province !== 'all-provinces' && !allowedProvinces.includes(prev.province)) {
+        delete next.province;
+        delete next.site;
+        changed = true;
+      }
+      if (restrictSites && next.site && next.site !== 'all-sites' && !allowedSites.includes(next.site)) {
+        delete next.site;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [isProfileLoading, restrictProvinces, restrictSites, allowedProvinces, allowedSites]);
 
   // Reset page when tab or filters change
   useEffect(() => {
