@@ -52,7 +52,7 @@ export const CreateUserForm = React.memo<CreateUserFormProps>(({
       setFormSites([]);
       return;
     }
-    getSitesByProvince({ provinceId: values.provinceId})
+    getSitesByProvince({ provinceId: values.provinceId })
       .then(res => setFormSites(res.result?.data || []))
       .catch(() => setFormSites([]));
   }, [values.provinceId]);
@@ -76,33 +76,43 @@ export const CreateUserForm = React.memo<CreateUserFormProps>(({
   }), [roles, genders, provinces, formSites, organisations, positions, countryCodes]);
 
   const handleFieldChange = useCallback((name: string, value: string) => {
+    let nextValues: Record<string, string> = {};
     setValues(prev => {
-      const next = { ...prev, [name]: value };
+      nextValues = { ...prev, [name]: value };
       if (name === 'email' && (prev.username === '' || prev.username === prev.email)) {
-        next.username = value;
+        nextValues.username = value;
       }
-      if (name === 'provinceId') next.siteId = '';
+      if (name === 'provinceId') nextValues.siteId = '';
       if (name === 'roleId') {
         const selectedRole = roles.find((r: any) => r.id.toString() === value);
         const roleTitle = (selectedRole?.title || '').toLowerCase();
-        next.isParticipant = roleTitle === 'user' ? 'true' : 'false';
+        nextValues.isParticipant = roleTitle === 'user' ? 'true' : 'false';
       }
-      return next;
+      return nextValues;
     });
     setErrors(prev => {
-      const next = { ...prev, [name]: '' };
+      const next = { ...prev };
+      const validationErrs = validateSchema(CREATE_USER_FORM_SCHEMA, nextValues, optionsMap);
+      if (validationErrs[name]) {
+        next[name] = validationErrs[name];
+      } else {
+        delete next[name];
+      }
       if (name === 'roleId') {
-        next.provinceId = '';
-        next.siteId = '';
+        delete next.provinceId;
+        delete next.siteId;
       }
       return next;
     });
-  }, [roles]);
+  }, [roles, optionsMap]);
 
   const handleSubmit = useCallback(async () => {
     const validationErrs = validateSchema(CREATE_USER_FORM_SCHEMA, values, optionsMap);
     if (Object.keys(validationErrs).length > 0) {
-      setErrors(validationErrs);
+      setErrors({});
+      setTimeout(() => {
+        setErrors(validationErrs);
+      }, 0);
       return;
     }
 
@@ -145,7 +155,7 @@ export const CreateUserForm = React.memo<CreateUserFormProps>(({
       return () => clearTimeout(timer);
     }
   }, [isOpen]);
-  
+
   return (
     <Modal
       isOpen={isOpen}
@@ -370,8 +380,8 @@ export const mapFormValuesToPayload = (
       payload.phone_code = values.countryCode.replace('+', '');
     }
   } else {
-      payload.phone = null;
-      payload.phone_code = null;
+    payload.phone = null;
+    payload.phone_code = null;
   }
 
   if (values.alternativePhone && values.alternativePhone.trim()) {

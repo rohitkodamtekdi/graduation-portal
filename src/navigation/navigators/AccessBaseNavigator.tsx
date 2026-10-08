@@ -42,7 +42,7 @@ const createScreenWithLayout = (
   return ScreenWithLayout;
 };
 
-function titleNamespaceForRole(role?: string): 'admin' | 'lc' | "supportProvider" {
+function titleNamespaceForRole(role?: string): 'admin' | 'lc' | "supportProvider" | 'participantJourney' {
   const r = role?.toLowerCase();
   if (r === 'admin' || r === 'tenant_admin') {
     return 'admin';
@@ -51,6 +51,9 @@ function titleNamespaceForRole(role?: string): 'admin' | 'lc' | "supportProvider
     return 'supportProvider';
   }
 
+  if (r === 'participant') {
+    return 'participantJourney';
+  }
   return 'lc';
 }
 

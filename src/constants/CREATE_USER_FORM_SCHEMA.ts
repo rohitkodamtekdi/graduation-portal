@@ -313,7 +313,7 @@ export const CREATE_USER_FORM_SCHEMA: FormSection[] = [
       },
     ],
   },
-  {
+    {
     type: "section",
     id: 'geographicAssignment',
     icon: 'MapPin',
