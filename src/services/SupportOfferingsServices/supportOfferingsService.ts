@@ -155,6 +155,7 @@ export const mapToAssetItem = (raw: any): AssetItem => {
     meeting_info_details: raw.meeting_info_details,
     quantity: availableQuantity !== undefined && availableQuantity !== null ? Number(availableQuantity) : undefined,
     estimatedValuePerParticipant: estimatedValue !== undefined && estimatedValue !== null ? Number(estimatedValue) : undefined,
+    createdAt: raw.created_at,
   };
 };
 

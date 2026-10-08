@@ -7,6 +7,7 @@ const SPTitleHeader = ({
   backButtonText,
   onNavigateBack,
   rightSection,
+  children,
 }: {
   title: string;
   subTitle?: string;
@@ -14,6 +15,7 @@ const SPTitleHeader = ({
   onNavigateBack?: () => void;
   badgeText?: string;
   rightSection?: any;
+  children?: React.ReactNode;
 }): React.JSX.Element => {
   return (
     <PageHeader
@@ -27,7 +29,9 @@ const SPTitleHeader = ({
       _leftSection={{ flexDirection: 'column', alignItems: 'start' }}
       _content={{ py: '$6', px: '$6' }}
       rightSection={rightSection}
-    />
+    >
+      {children}
+    </PageHeader>
   );
 };
 

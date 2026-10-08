@@ -1,510 +1,1264 @@
-import React, { memo, useEffect, useState, useMemo } from 'react';
-import { Box, HStack, VStack, Text, Heading, Button, ButtonText, LucideIcon } from '@ui';
-import { useNavigation } from '@react-navigation/native';
-import { useLanguage } from '@contexts/LanguageContext';
-import SimpleBarChart from '@components/charts/SimpleBarChart';
-import SimplePieChart from '@components/charts/SimplePieChart';
+import React, { memo, useState, useMemo, useEffect, useCallback } from 'react';
+import {
+  Box,
+  HStack,
+  VStack,
+  Text,
+  Heading,
+  LucideIcon,
+  Pressable,
+  Button,
+  ButtonText,
+} from '@ui';
+import { ScrollView, ActivityIndicator } from 'react-native';
+import Select from '@components/ui/Inputs/Select';
 import SimpleGroupedBarChart from '@components/charts/SimpleGroupedBarChart';
+import SimpleBarChart from '@components/charts/SimpleBarChart';
+import { useNavigation } from '@react-navigation/native';
+import { getProvincesList, getSitesByProvince } from '../../../../services/usersService';
 import {
   getTrainingSessions,
-  getAdditionalServices,
   getAssets,
 } from '../../../../services/SupportOfferingsServices/supportOfferingsService';
-import { getProvincesList } from '../../../../services/usersService';
-import type { TrainingSessionItem, AssetItem } from '../../../../types/supportOfferingsTypes';
+import {
+  getSupportRequests,
+  getDashboardScope,
+  type DashboardScope,
+} from '../../../../services/serviceProvider/serviceProviderService';
+import { SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
 import styles from '../styles';
 
-// Utility to format numbers with commas e.g. 5760000 -> "5,760,000"
-const formatNumberWithCommas = (num: number): string => {
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const SUB_CATEGORIES_MAP: Record<string, string[]> = {
+  training: [
+    'Personal Mastery Training',
+    'Financial Literacy Training',
+    'Generate Your Business Idea',
+    'Start Your Business',
+    'Technical & Vocational Training',
+    'Job Readiness Training',
+  ],
+  service: [
+    'Legal Compliance & Advisory',
+    'GBV & Mental Health Support',
+    'Substance Abuse Referral',
+    'Childcare & Family Support',
+  ],
+  asset: [
+    'Manufacturing & Textiles',
+    'Agriculture & Farming',
+    'Solar & Renewable Equipment',
+    'Tools & Hardware Kits',
+  ],
 };
 
-// Parse monetary string e.g. "R 3 500", "R 35,000" or number
-const parseCurrencyValue = (valStr?: string | number): number => {
-  if (typeof valStr === 'number') return valStr;
-  if (!valStr) return 0;
-  const cleaned = valStr.replace(/[^0-9.]/g, '');
-  return parseFloat(cleaned) || 0;
+const BENCHMARK_MONTHS = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
+const BENCHMARK_APPROVED = [120, 150, 180, 210, 240, 270];
+const BENCHMARK_DELIVERED = [95, 130, 160, 190, 215, 250];
+
+interface ProvinceFulfillmentItem {
+  province: string;
+  delivered: number;
+  committed: number;
+}
+
+// TODO: Committed is not captured per province yet, replace this dummy once the backend provides it
+const DUMMY_PROVINCE_COMMITTED = 100;
+
+const formatCurrency = (val: number): string => {
+  return Number(val || 0).toLocaleString('en-ZA');
 };
 
-const DashboardContent: React.FC = () => {
+// Percentage of value against base, 0 when base is empty e.g. getPercent(87, 100) -> 87
+const getPercent = (value: number, base: number): number => {
+  return base > 0 ? Math.round((value / base) * 100) : 0;
+};
+
+// Coverage badge text, capped at 100% with the extra shown as surplus e.g. 120 -> "100% (+20% Surplus)"
+const formatCoverage = (coverage: number): string => {
+  return coverage > 100 ? `100% (+${coverage - 100}% Surplus)` : `${coverage}%`;
+};
+
+// Rows of the Disaggregated Delivery Summary table, keyed by the scope API categories
+const SUMMARY_CATEGORY_ROWS = [
+  { key: SUPPORT_CATEGORIES.TRAINING, label: 'Training/Sessions', dotStyle: 'categoryDotPurple', rowStyle: 'summaryBodyRow' },
+  { key: SUPPORT_CATEGORIES.ADDITIONAL_SERVICE, label: 'Additional Services', dotStyle: 'categoryDotBlue', rowStyle: 'summaryBodyRowAlt' },
+  { key: SUPPORT_CATEGORIES.ASSET, label: 'Assets', dotStyle: 'categoryDotAmber', rowStyle: 'summaryBodyRow' },
+] as const;
+
+interface DashboardContentProps {
+  activeTab?: 'overview' | 'assets';
+  onTabChange?: (tab: 'overview' | 'assets') => void;
+  hideHeaderTabs?: boolean;
+}
+
+const DashboardContent: React.FC<DashboardContentProps> = ({
+  activeTab: propActiveTab,
+  onTabChange: propOnTabChange,
+  hideHeaderTabs = false,
+}) => {
   const navigation = useNavigation();
-  const { t } = useLanguage();
 
-  const [trainings, setTrainings] = useState<TrainingSessionItem[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [assets, setAssets] = useState<AssetItem[]>([]);
-  const [provincesList, setProvincesList] = useState<any[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Top Tabs: 'overview' | 'assets'
+  const [internalActiveTab, setInternalActiveTab] = useState<'overview' | 'assets'>('overview');
+  const activeTab = propActiveTab !== undefined ? propActiveTab : internalActiveTab;
+  const setActiveTab = propOnTabChange || setInternalActiveTab;
+
+  // Filter States
+  const [selectedProvince, setSelectedProvince] = useState<string>('all');
+  const [selectedSite, setSelectedSite] = useState<string>('all');
+  const [selectedSupportType, setSelectedSupportType] = useState<string>('all');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('all');
+
+  // Dynamic Options from API
+  const [provinceOptions, setProvinceOptions] = useState<{ label: string; value: string }[]>([
+    { label: 'All Provinces', value: 'all' },
+  ]);
+  const [siteOptions, setSiteOptions] = useState<{ label: string; value: string }[]>([
+    { label: 'All Sites', value: 'all' },
+  ]);
+
+  // Asset View Tab: 'published' | 'coach-requests'
+  const [assetViewTab, setAssetViewTab] = useState<'published' | 'coach-requests'>('published');
+  const [coachRequests, setCoachRequests] = useState<any[]>([]);
+  const [publishedAssets, setPublishedAssets] = useState<any[]>([]);
+  const [upcomingSessions, setUpcomingSessions] = useState<any[]>([]);
+  const [recentLogs, setRecentLogs] = useState<any[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState<boolean>(false);
+  const [loadingAssets, setLoadingAssets] = useState<boolean>(false);
+
+  // Rows shown in the asset tables, "Load More" shows the next ASSET_TABLE_PAGE_SIZE rows
+  const ASSET_TABLE_PAGE_SIZE = 5;
+  const [assetVisibleCount, setAssetVisibleCount] = useState<number>(ASSET_TABLE_PAGE_SIZE);
+  const [coachVisibleCount, setCoachVisibleCount] = useState<number>(ASSET_TABLE_PAGE_SIZE);
+
+  // KPI scope numbers (needed, committed, approved, delivered) from backend
+  const [scope, setScope] = useState<DashboardScope>({
+    needed: 0,
+    committed: 0,
+    approved: 0,
+    delivered: 0,
+  });
 
   useEffect(() => {
     let isMounted = true;
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const [trainingsData, servicesData, assetsData, provData] = await Promise.all([
-          getTrainingSessions({}),
-          getAdditionalServices({}),
-          getAssets({}),
-          getProvincesList(),
-        ]);
-
-        if (isMounted) {
-          setTrainings(trainingsData?.result?.data || []);
-          setServices(servicesData || []);
-          setAssets(assetsData || []);
-          setProvincesList(provData || []);
-        }
-      } catch (err) {
-        console.error('Error loading dashboard data:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+    const fetchScope = async () => {
+      const result = await getDashboardScope();
+      if (isMounted && result) setScope(result);
     };
-
-    fetchData();
+    fetchScope();
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // 1. KPI Statistics Calculations
-  const stats = useMemo(() => {
-    // Actually Needed (Total planned/onboarded)
-    const neededParticipants = 288;
-    const totalSessionsPlanned = trainings.length || 14;
-    const neededValueNumber = 5760000;
+  const coveragePct = getPercent(scope.committed, scope.needed);
+  const deliveryPct = getPercent(scope.delivered, scope.committed);
 
-    // Committed (Upcoming / In progress)
-    const committedSessions = trainings.filter(
-      (s) => s.status === 'Upcoming' || s.status === 'In progress'
-    );
-    const committedCount = committedSessions.length;
-    const committedParticipants = 100;
-    const committedValueNumber = 2000000;
-    const committedPct = Math.round((committedParticipants / neededParticipants) * 100);
+  // Delivered per province from scope API, named using the provinces list
+  const provinceFulfillment: ProvinceFulfillmentItem[] = useMemo(() => {
+    return Object.entries(scope.provinces || {})
+      .map(([provinceId, counts]) => ({
+        province: provinceOptions.find((p) => p.value === provinceId)?.label || provinceId,
+        delivered: counts.delivered,
+        committed: DUMMY_PROVINCE_COMMITTED,
+      }))
+      .sort((a, b) => b.delivered - a.delivered);
+  }, [scope.provinces, provinceOptions]);
 
-    // Delivered (Completed)
-    const completedSessions = trainings.filter((s) => s.status === 'Completed');
-    const deliveredCount = completedSessions.length;
-    const deliveredParticipants = 188;
-    const deliveredValueNumber = 3760000;
-    const deliveredPct = Math.round((deliveredParticipants / neededParticipants) * 100);
-
-    return {
-      neededParticipants,
-      totalSessionsPlanned,
-      neededValueNumber,
-      committedCount,
-      committedParticipants,
-      committedValueNumber,
-      committedPct,
-      deliveredCount,
-      deliveredParticipants,
-      deliveredValueNumber,
-      deliveredPct,
+  // 1. Fetch Dynamic Provinces from Backend
+  useEffect(() => {
+    let isMounted = true;
+    const fetchProvinces = async () => {
+      try {
+        const provinces = await getProvincesList();
+        if (isMounted && provinces && provinces.length > 0) {
+          const formatted = [
+            { label: 'All Provinces', value: 'all' },
+            ...provinces.map((p: any) => ({
+              label: p.metaInformation?.name || p.name || p.title || p.label,
+              value: p._id || p.id || p.value,
+            })),
+          ];
+          setProvinceOptions(formatted);
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Could not fetch dynamic provinces, using default', err);
+      }
     };
-  }, [trainings]);
-
-  // 2. Asset Distribution (Pie Chart Data)
-  const assetDistribution = useMemo(() => {
-    // Group assets by category/type or sector
-    const categoryTotals: Record<string, { count: number; value: number; color: string }> = {
-      Equipment: { count: 0, value: 2880000, color: '#800020' }, // Burgundy/Maroon
-      Inventory: { count: 0, value: 1730000, color: '#3B82F6' }, // Blue
-      Technology: { count: 0, value: 865000, color: '#10B981' }, // Green
-      Furniture: { count: 0, value: 285000, color: '#F59E0B' }, // Amber/Yellow
+    fetchProvinces();
+    return () => {
+      isMounted = false;
     };
-
-    // If assets are provided in mock, accumulate by sector/title or use exact reference proportions
-    let totalVal = 0;
-    Object.values(categoryTotals).forEach((item) => {
-      totalVal += item.value;
-    });
-
-    const pieData = Object.entries(categoryTotals).map(([label, item]) => ({
-      label,
-      value: item.value,
-      color: item.color,
-    }));
-
-    const listData = Object.entries(categoryTotals).map(([label, item]) => ({
-      label,
-      value: item.value,
-      color: item.color,
-      pct: Math.round((item.value / totalVal) * 100),
-    }));
-
-    return { pieData, listData, totalVal };
-  }, [assets]);
-
-  // 3. Session & Participant Trends (Grouped Bar Chart Data)
-  // Matching reference month bars: May, Jun, Jul, Aug, Sep, Oct, Nov, Dec
-  const trendsData = useMemo(() => {
-    return [
-      { label: 'May', value: 36, color: '#3B82F6' },
-      { label: 'Jun', value: 36, color: '#3B82F6' },
-      { label: 'Jul', value: 55, color: '#3B82F6' },
-      { label: 'Aug', value: 47, color: '#3B82F6' },
-      { label: 'Sep', value: 40, color: '#3B82F6' },
-      { label: 'Oct', value: 36, color: '#3B82F6' },
-      { label: 'Nov', value: 28, color: '#3B82F6' },
-      { label: 'Dec', value: 11, color: '#3B82F6' },
-    ];
   }, []);
 
-  // 4. Sessions by Province (Horizontal Bar Chart Data)
-  const provinceData = useMemo(() => {
-    return [
-      { label: 'KwaZulu-Natal', value: 1100000, color: '#800020' },
-      { label: 'Gauteng', value: 930000, color: '#800020' },
-      { label: 'Western Cape', value: 800000, color: '#800020' },
-    ];
+  // 2. Fetch Dynamic Sites based on selected Province
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSites = async () => {
+      if (!selectedProvince || selectedProvince === 'all') {
+        setSiteOptions([{ label: 'All Sites', value: 'all' }]);
+        return;
+      }
+      try {
+        const res = await getSitesByProvince({
+          provinceId: selectedProvince,
+          page: 1,
+          limit: 100,
+        });
+        const sites = res?.result?.data || [];
+        if (isMounted) {
+          if (sites.length > 0) {
+            setSiteOptions([
+              { label: 'All Sites', value: 'all' },
+              ...sites.map((s: any) => ({
+                label: s.name || s.title || s.label,
+                value: s._id || s.id || s.value,
+              })),
+            ]);
+          } else {
+            setSiteOptions([{ label: 'All Sites', value: 'all' }]);
+          }
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Could not fetch dynamic sites, using default', err);
+        setSiteOptions([{ label: 'All Sites', value: 'all' }]);
+      }
+    };
+    fetchSites();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedProvince]);
+
+  // 3. Fetch Real Upcoming Sessions from Mentor/Training Sessions API & generate Activity Logs
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSessions = async () => {
+      try {
+        setLoadingSessions(true);
+        // Fetch sessions without restrictive status filter so all available sessions are received
+        const res = await getTrainingSessions({
+          page: 1,
+          limit: 20,
+        });
+        const apiData = res?.result?.data || [];
+        if (isMounted && apiData.length > 0) {
+          const nowMs = Date.now();
+
+          // Map items and compute start timestamp
+          const parsedSessions = apiData.map((item: any, idx: number) => {
+            const rawStart = item.start_date;
+            const startMs = rawStart
+              ? (typeof rawStart === 'number' || !isNaN(Number(rawStart)))
+                ? Number(rawStart) * (Number(rawStart) < 10000000000 ? 1000 : 1)
+                : new Date(rawStart).getTime()
+              : null;
+
+            const rawEnd = item.end_date;
+            const endMs = rawEnd
+              ? (typeof rawEnd === 'number' || !isNaN(Number(rawEnd)))
+                ? Number(rawEnd) * (Number(rawEnd) < 10000000000 ? 1000 : 1)
+                : new Date(rawEnd).getTime()
+              : null;
+
+            let formattedDate = 'TBD';
+            let formattedTime = item.meeting_info?.time || '09:00 - 12:00';
+            if (startMs) {
+              const d = new Date(startMs);
+              formattedDate = d.toLocaleDateString('en-GB', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              });
+              const startHours = String(d.getHours()).padStart(2, '0');
+              const startMinutes = String(d.getMinutes()).padStart(2, '0');
+              if (endMs) {
+                const endD = new Date(endMs);
+                const endHours = String(endD.getHours()).padStart(2, '0');
+                const endMinutes = String(endD.getMinutes()).padStart(2, '0');
+                formattedTime = `${startHours}:${startMinutes} - ${endHours}:${endMinutes}`;
+              } else {
+                formattedTime = `${startHours}:${startMinutes}`;
+              }
+            }
+
+            const rawStatus = String(item.status || '').toUpperCase();
+            const isCompleted = rawStatus === 'COMPLETED' || (endMs && nowMs > endMs);
+            const isCancelled = rawStatus === 'CANCELLED';
+            const isUpcoming = !isCancelled && !isCompleted;
+
+            const rawDeliveryMode =
+              typeof item.delivery_mode === 'object'
+                ? item.delivery_mode?.label || item.delivery_mode?.value || item.delivery_mode?.name || ''
+                : typeof item.delivery_mode === 'string'
+                ? item.delivery_mode
+                : '';
+
+            const rawLocation =
+              typeof item.location === 'object'
+                ? item.location?.name || item.location?.label || item.location?.value || ''
+                : typeof item.location === 'string'
+                ? item.location
+                : '';
+
+            const meetingLocation =
+              item.meeting_info?.location ||
+              (item as any).meeting_info_details?.location ||
+              '';
+
+            const resolvedLocation =
+              rawLocation ||
+              meetingLocation ||
+              (rawDeliveryMode ? rawDeliveryMode.charAt(0).toUpperCase() + rawDeliveryMode.slice(1) : 'Offline');
+
+            return {
+              id: item.id || item._id || `SES-${idx + 1}`,
+              title: item.title || item.name || 'Training Session',
+              date: formattedDate,
+              time: formattedTime,
+              participants: item.seats_limit || item.seats || 25,
+              location: resolvedLocation,
+              startMs: startMs || 0,
+              isUpcoming,
+              status: rawStatus,
+              createdDate: formattedDate,
+            };
+          });
+
+          // Filter for upcoming sessions (future/active), sort by date ascending
+          const upcoming = parsedSessions
+            .filter((s: any) => s.isUpcoming)
+            .sort((a: any, b: any) => (a.startMs || 0) - (b.startMs || 0));
+
+          // If no upcoming found, take the most recent available sessions as fallback
+          const displaySessions = (upcoming.length > 0 ? upcoming : parsedSessions).slice(0, 5);
+          setUpcomingSessions(displaySessions);
+
+          // Populate Recent Activity & System Logs from latest sessions
+          const logs = parsedSessions.slice(0, 5).map((s: any, idx: number) => ({
+            id: `LOG-${s.id}-${idx}`,
+            title: `Session scheduled: ${s.title}`,
+            timestamp: s.date !== 'TBD' ? s.date : 'Recently',
+            description: `Session scheduled for ${s.participants} participants • ${s.location}`,
+          }));
+          setRecentLogs(logs);
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Could not fetch real upcoming sessions', err);
+      } finally {
+        if (isMounted) setLoadingSessions(false);
+      }
+    };
+    fetchSessions();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // 5. Upcoming Sessions (Filtered from trainings data where status === 'Upcoming')
-  const upcomingSessions = useMemo(() => {
-    const list = trainings.filter((item) => item.status === 'Upcoming');
-    return list;
-  }, [trainings]);
+  // 4. Fetch Real Assets from SupportOfferings / Assets API
+  useEffect(() => {
+    let isMounted = true;
+    const fetchAssetData = async () => {
+      try {
+        setLoadingAssets(true);
+        const res = await getAssets({ page: 1, limit: 100 });
+        const apiData = res?.result?.data || [];
+        if (isMounted && apiData.length > 0) {
+          // Real values of the asset; missing ones stay null and are shown as "-" in the table.
+          // Approved and delivered value per asset are not available (requests are not linked to an asset).
+          const mapped = apiData
+            .filter((item: any) => String(item.status).toUpperCase() !== 'CANCELLED')
+            .map((item: any) => ({
+              id: item.id,
+              datePublished: item.createdAt ? String(item.createdAt).slice(0, 10) : '-',
+              assetTitle: item.title || '-',
+              subCategory: item.type || '-',
+              unitValue: item.estimatedValuePerParticipant ?? null,
+              availableQuantity: item.quantity ?? null,
+              adminStatus: item.status === 'Pending' ? 'pending' : 'approved',
+            }));
+          setPublishedAssets(mapped);
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Could not fetch real assets, keeping fallback', err);
+      } finally {
+        if (isMounted) setLoadingAssets(false);
+      }
+    };
+    fetchAssetData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 5. Fetch Real Coach Support Requests from API
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCoachReqs = async () => {
+      try {
+        const res = await getSupportRequests({ tab: 'assets' as any });
+        const apiReqs = res?.data || [];
+        if (isMounted && apiReqs.length > 0) {
+          const mapped = apiReqs.map((r: any, idx: number) => ({
+            id: String(r.id || `CAR-${500 + idx}`),
+            coachName: r.coach || 'Coach',
+            coachOrg: r.site || r.location || 'Community Hub',
+            requestedItem: r.title || 'Physical Asset Request',
+            quantity: r.participantsCount || r.participants || 2,
+            unitValue: 3500,
+            totalValue: (r.participantsCount || 2) * 3500,
+            requestDate: r.requestedDate || r.preferredDate || '2026-05-02',
+            status: (r.status === 'accepted' || r.status === 'approved' ? 'approved' : r.status === 'declined' ? 'declined' : 'pending') as 'pending' | 'approved' | 'declined',
+            // Kept for Approve: the accept API needs the request's own title/province/sites/category
+            source: r,
+          }));
+          setCoachRequests(mapped);
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Could not fetch real coach requests, keeping fallback', err);
+      }
+    };
+    fetchCoachReqs();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const subCategoryOptions = useMemo(() => {
+    if (selectedSupportType === 'all') {
+      const allSubs = Array.from(new Set(Object.values(SUB_CATEGORIES_MAP).flat()));
+      return [{ label: 'All Sub-Categories', value: 'all' }, ...allSubs.map((s) => ({ label: s, value: s }))];
+    }
+    const subs = SUB_CATEGORIES_MAP[selectedSupportType] || [];
+    return [{ label: 'All Sub-Categories', value: 'all' }, ...subs.map((s) => ({ label: s, value: s }))];
+  }, [selectedSupportType]);
+
+  // Asset Financial Totals - approved asset requests from scope API (value of a request = estimated value x quantity)
+  // Delivered value is not calculated yet and is shown as "-"
+  const approvedAssetsValue = scope.assets?.approved.value || 0;
+  // const deliveredAssetsValue = scope.assets?.delivered.value || 0;
+  const pendingRequestsValue = scope.assets?.pending.value || 0;
+
+  // Total Asset Pool = Published Assets Value - (Approved + Pending Requests Value) (delivered not counted yet)
+  // TODO: Total pool is shown as "-" until delivered value is calculated
+  // const totalFundPool = scope.assets?.pool || 0;
+  const publishedAssetsCount = scope.assets?.published.count || 0;
 
   return (
     <VStack {...styles.rootContainer}>
-      {/* 1. Support Impact Overview Section */}
-      <Box {...styles.cardDashboardWrapper}>
-        <VStack {...styles.overviewVStack}>
-          <VStack {...styles.titleVStack}>
-            <HStack {...styles.headerHStack}>
-              <LucideIcon name="TrendingUp" {...styles.sectionTitleIcon} />
-              <Heading {...styles.sectionTitle}>
-                {t('supportProvider.dashboard.supportImpactOverview', 'Support Impact Overview')}
-              </Heading>
-            </HStack>
-            <Text {...styles.sectionSubTitle}>
-              {t(
-                'supportProvider.dashboard.trackingParticipants',
-                'Tracking participants across the support pipeline'
-              )}
+      {/* 1. Dashboard View Tabs (if not rendered in header) */}
+      {!hideHeaderTabs && (
+        <HStack {...styles.tabContainer}>
+          <Pressable
+            {...styles.tabButton}
+            {...(activeTab === 'overview' ? styles.tabButtonActive : styles.tabButtonInactive)}
+            onPress={() => setActiveTab('overview')}
+          >
+            <LucideIcon
+              name="TrendingUp"
+              {...(activeTab === 'overview' ? styles.tabTrendingIconActive : styles.tabTrendingIconInactive)}
+            />
+            <Text {...(activeTab === 'overview' ? styles.tabTextActive : styles.tabTextInactive)}>
+              Interventions Overview
             </Text>
-          </VStack>
+          </Pressable>
 
-          {/* 3 KPI Columns */}
-          <HStack {...styles.kpiRow}>
-            {/* Column 1: ACTUALLY NEEDED */}
-            <Box {...styles.kpiCardContainer}>
-              <HStack {...styles.kpiHeaderRow}>
-                <Box {...styles.iconCircleOrange}>
-                  <LucideIcon name="Users" {...styles.kpiIconOrange} />
-                </Box>
-                <VStack {...styles.kpiTextVStack}>
-                  <Text {...styles.kpiHeaderOrange}>
-                    {t('supportProvider.dashboard.actuallyNeeded', 'ACTUALLY NEEDED')}
-                  </Text>
-                  <Text {...styles.kpiSubHeader}>
-                    {t('supportProvider.dashboard.onboardedParticipants', 'Onboarded participants')}
-                  </Text>
-                </VStack>
-              </HStack>
+          <Pressable
+            {...styles.tabButton}
+            {...(activeTab === 'assets' ? styles.tabButtonActive : styles.tabButtonInactive)}
+            onPress={() => setActiveTab('assets')}
+          >
+            <LucideIcon
+              name="ShieldCheck"
+              {...(activeTab === 'assets' ? styles.tabShieldIconActive : styles.tabShieldIconInactive)}
+            />
+            <Text {...(activeTab === 'assets' ? styles.tabTextActive : styles.tabTextInactive)}>
+              Asset Provider Approvals & Financials
+            </Text>
+          </Pressable>
+        </HStack>
+      )}
 
-              <HStack {...styles.kpiValueRow}>
-                <Text {...styles.kpiValueLarge}>{stats.neededParticipants}</Text>
-                <Text {...styles.kpiUnitText}>
-                  {t('supportProvider.dashboard.participants', 'participants')}
-                </Text>
-              </HStack>
-
-              <Text {...styles.kpiMetaText}>
-                {t('supportProvider.dashboard.sessionsPlannedToServe', {
-                  defaultValue: '{{count}} sessions planned to serve them',
-                  count: stats.totalSessionsPlanned,
-                })}
-              </Text>
-              <Text {...styles.kpiValueBoldText}>
-                {t('supportProvider.dashboard.valueLabel', {
-                  defaultValue: 'Value: R {{value}}',
-                  value: formatNumberWithCommas(stats.neededValueNumber),
-                })}
-              </Text>
-
-              {/* Progress Bar Accent */}
-              <Box {...styles.progressBarTrack}>
-                <Box {...styles.progressBarOrange} />
+      {/* ========================================================================= */}
+      {/* TAB 1: INTERVENTIONS OVERVIEW                                             */}
+      {/* ========================================================================= */}
+      {activeTab === 'overview' && (
+        <VStack {...styles.overviewMainVStack}>
+          {/* Filter Bar */}
+          <Box {...styles.filterCard}>
+            <HStack {...styles.filterRow}>
+              {/* Province Filter */}
+              <Box {...styles.filterCol}>
+                <Select
+                  options={provinceOptions}
+                  value={selectedProvince}
+                  onChange={(val) => {
+                    setSelectedProvince(val);
+                    setSelectedSite('all');
+                  }}
+                  placeholder="All Provinces"
+                />
               </Box>
+
+              {/* Site Filter */}
+              <Box {...styles.filterCol}>
+                <Select
+                  options={siteOptions}
+                  value={selectedSite}
+                  onChange={setSelectedSite}
+                  placeholder="All Sites"
+                />
+              </Box>
+
+              {/* Support Type Filter */}
+              <Box {...styles.filterCol}>
+                <Select
+                  options={[
+                    { label: 'All Support Types', value: 'all' },
+                    { label: 'Training / Sessions', value: 'training' },
+                    { label: 'Additional Services', value: 'service' },
+                    { label: 'Assets & Equipment', value: 'asset' },
+                  ]}
+                  value={selectedSupportType}
+                  onChange={(val) => {
+                    setSelectedSupportType(val);
+                    setSelectedSubCategory('all');
+                  }}
+                  placeholder="All Support Types"
+                />
+              </Box>
+
+              {/* Sub-Category Filter */}
+              <Box {...styles.filterCol}>
+                <Select
+                  options={subCategoryOptions}
+                  value={selectedSubCategory}
+                  onChange={setSelectedSubCategory}
+                  placeholder="All Sub-Categories"
+                  disabled={selectedSupportType === 'asset'}
+                />
+              </Box>
+            </HStack>
+          </Box>
+
+          {/* 5 KPI Metric Cards */}
+          <Box {...styles.kpiGrid}>
+            {/* 1. NEEDED */}
+            <Box {...styles.kpiCard}>
+              <HStack {...styles.kpiHeaderHStack}>
+                <LucideIcon name="Users" {...styles.kpiIconNeeded} />
+                <Text {...styles.kpiLabelNeeded}>NEEDED</Text>
+              </HStack>
+              <VStack>
+                <Text {...styles.kpiValueTextDefault}>{formatCurrency(scope.needed)}</Text>
+                <Text {...styles.kpiSubText}>Required for your portfolio</Text>
+              </VStack>
             </Box>
 
-            <Box w={1} bg="#e4e4e4ff" alignSelf="stretch" my="$2" />
-
-            {/* Column 2: COMMITTED */}
-            <Box {...styles.kpiCardContainer}>
-              <HStack {...styles.kpiHeaderRow}>
-                <Box {...styles.iconCircleBlue}>
-                  <LucideIcon name="Calendar" {...styles.kpiIconBlue} />
-                </Box>
-                <VStack {...styles.kpiTextVStack}>
-                  <Text {...styles.kpiHeaderBlue}>
-                    {t('supportProvider.dashboard.committed', 'COMMITTED')}
-                  </Text>
-                  <Text {...styles.kpiSubHeader}>
-                    {t('supportProvider.dashboard.scheduledYetToDeliver', 'Scheduled — yet to deliver')}
-                  </Text>
-                </VStack>
+            {/* 2. COMMITTED */}
+            <Box {...styles.kpiCard}>
+              <HStack {...styles.kpiHeaderHStack}>
+                <LucideIcon name="BookOpen" {...styles.kpiIconCommitted} />
+                <Text {...styles.kpiLabelCommitted}>COMMITTED</Text>
               </HStack>
-
-              <HStack {...styles.kpiValueRow}>
-                <Text {...styles.kpiValueLarge}>{stats.committedParticipants}</Text>
-                <Text {...styles.kpiUnitText}>
-                  {t('supportProvider.dashboard.participants', 'participants')}
-                </Text>
-              </HStack>
-
-              <Text {...styles.kpiMetaText}>
-                {t('supportProvider.dashboard.sessionsScheduled', {
-                  defaultValue: '{{count}} sessions scheduled',
-                  count: stats.committedCount,
-                })}
-              </Text>
-              <Text {...styles.kpiValueBlueBoldText}>
-                {t('supportProvider.dashboard.valueLabel', {
-                  defaultValue: 'Value: R {{value}}',
-                  value: formatNumberWithCommas(stats.committedValueNumber),
-                })}
-              </Text>
-
-              {/* Progress Bar Accent */}
-              <Box {...styles.progressBarTrack}>
-                <Box {...styles.progressBarBlue} w={`${stats.committedPct}%`} />
-              </Box>
-              <Text {...styles.kpiPctTextBlue}>
-                {t('supportProvider.dashboard.pctOfNeeded', {
-                  defaultValue: '{{pct}}% of needed',
-                  pct: stats.committedPct,
-                })}
-              </Text>
+              <VStack>
+                <Text {...styles.kpiValueTextCommitted}>{formatCurrency(scope.committed)}</Text>
+                <Text {...styles.kpiSubText}>{coveragePct}% of your needed target</Text>
+              </VStack>
             </Box>
 
-            <Box w={1} bg="#e4e4e4ff" alignSelf="stretch" my="$2" />
+            {/* 3. APPROVED */}
+            <Box {...styles.kpiCard}>
+              <HStack {...styles.kpiHeaderHStack}>
+                <LucideIcon name="CheckCircle2" {...styles.kpiIconApproved} />
+                <Text {...styles.kpiLabelApproved}>APPROVED</Text>
+              </HStack>
+              <VStack>
+                <Text {...styles.kpiValueTextApproved}>{formatCurrency(scope.approved)}</Text>
+                <Text {...styles.kpiSubText}>
+                  {getPercent(scope.approved, scope.committed)}% of your committed
+                </Text>
+              </VStack>
+            </Box>
 
-            {/* Column 3: DELIVERED */}
-            <Box {...styles.kpiCardContainer}>
-              <HStack {...styles.kpiHeaderRow}>
-                <Box {...styles.iconCircleGreen}>
-                  <LucideIcon name="CircleCheckBig" {...styles.kpiIconGreen} />
-                </Box>
-                <VStack {...styles.kpiTextVStack}>
-                  <HStack {...styles.kpiHeaderGreenRow}>
-                    <Text {...styles.kpiHeaderGreen}>
-                      {t('supportProvider.dashboard.delivered', 'DELIVERED')}
-                    </Text>
-                    <Box {...styles.badgeGreen}>
-                      <Text {...styles.badgeGreenText}>↑ 12%</Text>
-                    </Box>
+            {/* 4. DELIVERED */}
+            <Box {...styles.kpiCard}>
+              <HStack {...styles.kpiHeaderHStack}>
+                <LucideIcon name="Check" {...styles.kpiIconDelivered} />
+                <Text {...styles.kpiLabelDelivered}>DELIVERED</Text>
+              </HStack>
+              <VStack>
+                <Text {...styles.kpiValueTextDelivered}>{formatCurrency(scope.delivered)}</Text>
+                <Text {...styles.kpiSubText}>
+                  {getPercent(scope.delivered, scope.approved)}% of your approved
+                </Text>
+              </VStack>
+            </Box>
+
+            {/* 5. DELIVERY STATUS */}
+            <Box {...styles.kpiCard}>
+              <HStack {...styles.kpiHeaderHStack}>
+                <LucideIcon name="BarChart2" {...styles.kpiIconStatus} />
+                <Text {...styles.kpiLabelStatus}>DELIVERY STATUS</Text>
+              </HStack>
+              <VStack {...styles.deliveryStatusBarContainer}>
+                {/* Coverage Bar */}
+                <VStack>
+                  <HStack {...styles.statusMiniBarRow}>
+                    <Text {...styles.statusMiniBarLabel}>Coverage</Text>
+                    <Text {...styles.statusMiniBarValueGreen}>{coveragePct}%</Text>
                   </HStack>
-                  <Text {...styles.kpiSubHeader}>
-                    {t('supportProvider.dashboard.completedSessions', 'Completed sessions')}
-                  </Text>
+                  <Box {...styles.trackBar}>
+                    <Box {...styles.fillBarGreen100} w={`${Math.min(coveragePct, 100)}%`} />
+                  </Box>
                 </VStack>
-              </HStack>
 
-              <HStack {...styles.kpiValueRow}>
-                <Text {...styles.kpiValueLarge}>{stats.deliveredParticipants}</Text>
-                <Text {...styles.kpiUnitText}>
-                  {t('supportProvider.dashboard.participants', 'participants')}
+                {/* Delivery Bar */}
+                <VStack {...styles.statusDeliveryItemVStack}>
+                  <HStack {...styles.statusMiniBarRow}>
+                    <Text {...styles.statusMiniBarLabel}>Delivery</Text>
+                    <Text {...styles.statusMiniBarValueMaroon}>{deliveryPct}%</Text>
+                  </HStack>
+                  <Box {...styles.trackBar}>
+                    <Box {...styles.fillBarMaroon75} w={`${Math.min(deliveryPct, 100)}%`} />
+                  </Box>
+                </VStack>
+              </VStack>
+            </Box>
+          </Box>
+
+          {/* DISAGGREGATED DELIVERY SUMMARY Table */}
+          <Box {...styles.summaryTableCard}>
+            <HStack {...styles.summaryHeaderWrapper}>
+              <VStack>
+                <Heading {...styles.tableTitle}>DISAGGREGATED DELIVERY SUMMARY</Heading>
+                <Text {...styles.tableFormulaText}>
+                  <Text {...styles.tableFormulaBold}>Formulas: </Text>
+                  Coverage = (Committed / Needed) × 100% · Delivery Rate = (Delivered / Committed) × 100%
                 </Text>
+              </VStack>
+              <Box {...styles.targetBadge}>
+                <Text {...styles.targetBadgeText}>
+                  Coverage Target: <Text {...styles.targetBadgeBold}>100%</Text> · Delivery Rate Target:{' '}
+                  <Text {...styles.targetBadgeBold}>100%</Text>
+                </Text>
+              </Box>
+            </HStack>
+
+            {/* Styled React Native Horizontal Scroll Table */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} {...styles.tableScrollView} contentContainerStyle={styles.summaryScrollContent}>
+              <VStack {...styles.summaryTableContainer}>
+                {/* Table Header */}
+                <HStack {...styles.summaryHeaderRow}>
+                  <Box {...styles.colSummaryCategory}>
+                    <Text {...styles.summaryThText}>Support Category</Text>
+                  </Box>
+                  <Box {...styles.colSummaryNeeded}>
+                    <Text {...styles.summaryThText}>Needed</Text>
+                  </Box>
+                  <Box {...styles.colSummaryCommitted}>
+                    <Text {...styles.summaryThText}>Committed</Text>
+                  </Box>
+                  <Box {...styles.colSummaryApproved}>
+                    <Text {...styles.summaryThText}>Approved</Text>
+                  </Box>
+                  <Box {...styles.colSummaryDelivered}>
+                    <Text {...styles.summaryThText}>Delivered</Text>
+                  </Box>
+                  <Box {...styles.colSummaryCoverage}>
+                    <Text {...styles.summaryThText}>Coverage</Text>
+                  </Box>
+                  <Box {...styles.summaryColRate}>
+                    <Text {...styles.summaryThText}>Delivery Rate</Text>
+                  </Box>
+                </HStack>
+
+                {/* Category rows from scope API */}
+                {SUMMARY_CATEGORY_ROWS.map((row) => {
+                  const counts = scope.categories?.[row.key] || {
+                    needed: 0,
+                    committed: 0,
+                    approved: 0,
+                    delivered: 0,
+                  };
+                  return (
+                    <HStack key={row.key} {...styles[row.rowStyle]}>
+                      <HStack {...styles.colSummaryCategory}>
+                        <Box {...styles[row.dotStyle]} />
+                        <Text {...styles.tdCategoryText}>{row.label}</Text>
+                      </HStack>
+                      <Box {...styles.colSummaryNeeded}>
+                        <Text {...styles.tdNeededText}>{formatCurrency(counts.needed)}</Text>
+                      </Box>
+                      <Box {...styles.colSummaryCommitted}>
+                        <Text {...styles.summaryCommittedText}>{formatCurrency(counts.committed)}</Text>
+                      </Box>
+                      <Box {...styles.colSummaryApproved}>
+                        <Text {...styles.summaryApprovedText}>{formatCurrency(counts.approved)}</Text>
+                      </Box>
+                      <Box {...styles.colSummaryDelivered}>
+                        <Text {...styles.summaryDeliveredText}>{formatCurrency(counts.delivered)}</Text>
+                      </Box>
+                      <Box {...styles.colSummaryCoverage}>
+                        <Box {...styles.summaryBadge}>
+                          <Text {...styles.summaryBadgeText} numberOfLines={1}>
+                            {formatCoverage(getPercent(counts.committed, counts.needed))}
+                          </Text>
+                        </Box>
+                      </Box>
+                      <Box {...styles.summaryColRate}>
+                        <Text {...styles.tdRateText}>{getPercent(counts.delivered, counts.committed)}%</Text>
+                      </Box>
+                    </HStack>
+                  );
+                })}
+
+                {/* Cumulative Total - same totals as the KPI cards */}
+                <HStack {...styles.summaryCumulativeRow}>
+                  <Box {...styles.colSummaryCategory}>
+                    <Text {...styles.tdCategoryCumulativeText}>Cumulative Total</Text>
+                  </Box>
+                  <Box {...styles.colSummaryNeeded}>
+                    <Text {...styles.tdCumulativeCellText}>{formatCurrency(scope.needed)}</Text>
+                  </Box>
+                  <Box {...styles.colSummaryCommitted}>
+                    <Text {...styles.summaryCommittedText}>{formatCurrency(scope.committed)}</Text>
+                  </Box>
+                  <Box {...styles.colSummaryApproved}>
+                    <Text {...styles.summaryApprovedText}>{formatCurrency(scope.approved)}</Text>
+                  </Box>
+                  <Box {...styles.colSummaryDelivered}>
+                    <Text {...styles.summaryDeliveredText}>{formatCurrency(scope.delivered)}</Text>
+                  </Box>
+                  <Box {...styles.colSummaryCoverage}>
+                    <Box {...styles.summaryBadgeCumulative}>
+                      <Text {...styles.summaryBadgeCumulativeText} numberOfLines={1}>
+                        {formatCoverage(coveragePct)}
+                      </Text>
+                    </Box>
+                  </Box>
+                  <Box {...styles.summaryColRate}>
+                    <Text {...styles.tdRateText}>{deliveryPct}%</Text>
+                  </Box>
+                </HStack>
+              </VStack>
+            </ScrollView>
+          </Box>
+
+          {/* Mid Row: Approved vs. Delivered Benchmark + Fulfillment by Province */}
+          <HStack {...styles.midRow}>
+            {/* Benchmark Chart */}
+            <Box {...styles.benchmarkCard}>
+              <HStack {...styles.cardTitleRow}>
+                <VStack>
+                  <HStack {...styles.chartTitleHStack}>
+                    <LucideIcon name="BarChart2" {...styles.chartBenchmarkIcon} />
+                    <Heading {...styles.chartTitle}>Approved vs. Delivered Interventions Benchmark</Heading>
+                  </HStack>
+                  <Text {...styles.chartSubtitle}>Side-by-side comparative volume (Month-on-Month)</Text>
+                </VStack>
+
+                <HStack {...styles.chartLegendHStack}>
+                  <HStack {...styles.chartLegendItem}>
+                    <Box {...styles.legendColorSquareApproved} />
+                    <Text {...styles.legendLabel}>Approved</Text>
+                  </HStack>
+                  <HStack {...styles.chartLegendItem}>
+                    <Box {...styles.legendColorSquareDelivered} />
+                    <Text {...styles.legendLabel}>Delivered</Text>
+                  </HStack>
+                </HStack>
               </HStack>
 
-              <Text {...styles.kpiMetaText}>
-                {t('supportProvider.dashboard.sessionsCompleted', {
-                  defaultValue: '{{count}} sessions completed',
-                  count: stats.deliveredCount,
-                })}
-              </Text>
-              <Text {...styles.kpiValueGreenBoldText}>
-                {t('supportProvider.dashboard.valueLabel', {
-                  defaultValue: 'Value: R {{value}}',
-                  value: formatNumberWithCommas(stats.deliveredValueNumber),
-                })}
-              </Text>
+              <SimpleGroupedBarChart
+                height={290}
+                categories={BENCHMARK_MONTHS}
+                series={[
+                  {
+                    id: 'approved',
+                    label: 'Approved',
+                    color: '#E5BAC5', // Light maroon tone
+                    data: BENCHMARK_APPROVED,
+                  },
+                  {
+                    id: 'delivered',
+                    label: 'Delivered',
+                    color: '#8B2842', // Dark maroon tone
+                    data: BENCHMARK_DELIVERED,
+                  },
+                ]}
+              />
+            </Box>
 
-              {/* Progress Bar Accent */}
-              <Box {...styles.progressBarTrack}>
-                <Box {...styles.progressBarGreen} w={`${stats.deliveredPct}%`} />
-              </Box>
-              <Text {...styles.kpiPctTextGreen}>
-                {t('supportProvider.dashboard.pctOfNeeded', {
-                  defaultValue: '{{pct}}% of needed',
-                  pct: stats.deliveredPct,
-                })}
-              </Text>
+            {/* Fulfillment by Province Horizontal Bar */}
+            <Box {...styles.provinceCard}>
+              <VStack {...styles.provinceHeaderVStack}>
+                <HStack {...styles.chartTitleHStack}>
+                  <LucideIcon name="MapPin" {...styles.chartProvinceIcon} />
+                  <Heading {...styles.chartTitle}>Fulfillment by Province</Heading>
+                </HStack>
+                <Text {...styles.chartSubtitle}>Delivered interventions unit volume</Text>
+              </VStack>
+
+              <SimpleBarChart
+                data={provinceFulfillment.map((p) => ({
+                  label: p.province,
+                  value: p.delivered,
+                  color: '#8B2842',
+                }))}
+                orientation="horizontal"
+                height={210}
+                defaultColor="#8B2842"
+                showGrid={true}
+                showAxes={true}
+                valueFormat="number"
+              />
+
+              {/* Province stats summary list */}
+              <VStack {...styles.provinceListWrapper}>
+                {provinceFulfillment.map((p) => (
+                  <HStack key={p.province} {...styles.provinceListRow}>
+                    <Text {...styles.provinceListName}>{p.province}</Text>
+                    <Text {...styles.provinceListStats}>
+                      {p.delivered} delivered / {p.committed} committed
+                    </Text>
+                  </HStack>
+                ))}
+              </VStack>
+            </Box>
+          </HStack>
+
+          {/* Bottom Row: Upcoming Scheduled Sessions + Recent Activity */}
+          <HStack {...styles.bottomRow}>
+            {/* Upcoming Scheduled Sessions */}
+            <Box {...styles.bottomCard}>
+              <HStack {...styles.cardTitleRow}>
+                <HStack {...styles.chartTitleHStack}>
+                  <LucideIcon name="Clock" {...styles.sessionClockIcon} />
+                  <Heading {...styles.chartTitle}>Upcoming Scheduled Sessions</Heading>
+                </HStack>
+                <Pressable onPress={() => navigation.navigate('opportunities' as never)}>
+                  <Text {...styles.viewCatalogBtnText}>View Catalog</Text>
+                </Pressable>
+              </HStack>
+
+              <VStack {...styles.sessionListVStack}>
+                {loadingSessions ? (
+                  <Box py="$6" alignItems="center" justifyContent="center">
+                    <ActivityIndicator size="small" color="#8B2842" />
+                  </Box>
+                ) : upcomingSessions.length === 0 ? (
+                  <Box py="$6" alignItems="center" justifyContent="center">
+                    <Text {...styles.textMuted}>No upcoming scheduled sessions.</Text>
+                  </Box>
+                ) : (
+                  upcomingSessions.map((session) => (
+                    <Pressable
+                      key={session.id}
+                      {...styles.sessionItemCard}
+                      onPress={() => navigation.navigate('opportunities' as never)}
+                    >
+                      <HStack {...styles.sessionItemHeaderRow}>
+                        <Text {...styles.sessionItemTitle}>{session.title}</Text>
+                        <Box {...styles.scheduledBadge}>
+                          <Text {...styles.scheduledBadgeText}>Scheduled</Text>
+                        </Box>
+                      </HStack>
+                      <HStack {...styles.sessionItemMetaRow}>
+                        <HStack {...styles.sessionItemMetaGroup}>
+                          <LucideIcon name="Calendar" {...styles.sessionCalendarIcon} />
+                          <Text {...styles.sessionItemMeta}>
+                            {session.date} • {session.time}
+                          </Text>
+                        </HStack>
+                        <HStack {...styles.sessionItemMetaGroup}>
+                          <LucideIcon name="Users" {...styles.sessionUsersIcon} />
+                          <Text {...styles.sessionItemMeta}>{session.participants} spots</Text>
+                        </HStack>
+                      </HStack>
+                    </Pressable>
+                  ))
+                )}
+              </VStack>
+            </Box>
+
+            {/* Recent Activity & System Logs */}
+            <Box {...styles.bottomCard}>
+              <VStack {...styles.logHeaderVStack}>
+                <HStack {...styles.chartTitleHStack}>
+                  <LucideIcon name="FileText" {...styles.logFileIcon} />
+                  <Heading {...styles.chartTitle}>Recent Activity & System Logs</Heading>
+                </HStack>
+              </VStack>
+
+              <VStack {...styles.logListVStack}>
+                {recentLogs.length === 0 ? (
+                  <Box py="$6" alignItems="center" justifyContent="center">
+                    <Text {...styles.textMuted}>No recent activity logs.</Text>
+                  </Box>
+                ) : (
+                  recentLogs.map((log) => (
+                    <HStack key={log.id} {...styles.logItemRow}>
+                      <Box {...styles.logIconCircle}>
+                        <LucideIcon name="CheckCircle2" {...styles.logCheckIcon} />
+                      </Box>
+                      <VStack {...styles.logContentVStack}>
+                        <HStack {...styles.logItemHeaderRow}>
+                          <Text {...styles.logTitle}>{log.title}</Text>
+                          <Text {...styles.logTime}>{log.timestamp}</Text>
+                        </HStack>
+                        <Text {...styles.logDesc}>{log.description}</Text>
+                      </VStack>
+                    </HStack>
+                  ))
+                )}
+              </VStack>
             </Box>
           </HStack>
         </VStack>
-      </Box>
+      )}
 
-      {/* 2. Middle Row: Session & Participant Trends + Asset Distribution */}
-      <HStack {...styles.contentRow}>
-        {/* Left: Session & Participant Trends */}
-        <Box {...styles.cardLeftWrapper}>
-          <VStack {...styles.chartVStack}>
-            <HStack {...styles.chartHeaderRow}>
-              <LucideIcon name="TrendingUp" {...styles.headerIcon} />
-              <Heading {...styles.sectionTitle}>
-                {t('supportProvider.dashboard.sessionParticipantTrends', 'Session & Participant Trends')}
-              </Heading>
-            </HStack>
-
-            <SimpleGroupedBarChart
-              height={360}
-              categories={['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
-              series={[
-                {
-                  id: 'sessions',
-                  label: 'Sessions',
-                  color: '#800020', // primary500 / maroon
-                  data: [2, 2, 3, 3, 4, 5, 2, 30],
-                },
-                {
-                  id: 'participants',
-                  label: 'Participants',
-                  color: '#3B82F6', // blue
-                  data: [36, 36, 55, 47, 40, 36, 28, 11],
-                },
-              ]}
-            />
-          </VStack>
-        </Box>
-
-        {/* Right: Asset Distribution */}
-        <Box {...styles.cardRightWrapper}>
-          <VStack {...styles.chartVStack}>
-            <HStack {...styles.chartHeaderRow}>
-              <LucideIcon name="ChartColumn" {...styles.headerIcon} />
-              <Heading {...styles.sectionTitle}>
-                {t('supportProvider.dashboard.assetDistribution', 'Asset Distribution')}
-              </Heading>
-            </HStack>
-
-            <SimplePieChart
-              data={assetDistribution.pieData}
-              variant="pie"
-              showLabels={true}
-              showLegend={false}
-            />
-
-            {/* Asset Breakdown Legend / List */}
-            <VStack {...styles.legendVStack}>
-              {assetDistribution.listData.map((item) => (
-                <HStack key={item.label} {...styles.legendRow}>
-                  <HStack {...styles.legendLabelRow}>
-                    <Box {...styles.legendDot} bg={item.color} />
-                    <Text {...styles.legendLabelText}>
-                      {item.label}
-                    </Text>
-                  </HStack>
-                  <Text {...styles.legendValueText}>
-                    R {formatNumberWithCommas(item.value)}
-                  </Text>
-                </HStack>
-              ))}
-            </VStack>
-          </VStack>
-        </Box>
-      </HStack>
-
-      {/* 3. Bottom Row: Sessions by Province + Upcoming Sessions */}
-      <HStack {...styles.contentRow}>
-        {/* Left: Sessions by Province */}
-        <Box {...styles.cardLeftWrapper}>
-          <VStack {...styles.chartVStack}>
-            <HStack {...styles.chartHeaderRow}>
-              <LucideIcon name="MapPin" {...styles.headerIcon} />
-              <Heading {...styles.sectionTitle}>
-                {t('supportProvider.dashboard.sessionsByProvince', 'Sessions by Province')}
-              </Heading>
-            </HStack>
-
-            <SimpleBarChart
-              data={provinceData}
-              orientation="horizontal"
-              height={220}
-              defaultColor="#800020"
-              showGrid={true}
-              showAxes={true}
-              valueFormat="currencyM"
-            />
-          </VStack>
-        </Box>
-
-        {/* Right: Upcoming Sessions */}
-        <Box {...styles.cardRightWrapper}>
-          <VStack {...styles.upcomingVStack}>
-            <VStack {...styles.chartVStack}>
-              <HStack {...styles.upcomingHeaderRow}>
-                <HStack {...styles.chartHeaderRow}>
-                  <LucideIcon name="Clock" {...styles.headerIcon} />
-                  <Heading {...styles.sectionTitle}>
-                    {t('supportProvider.dashboard.upcomingSessions', 'Upcoming Sessions')}
+      {/* ========================================================================= */}
+      {/* TAB 2: ASSET PROVIDER APPROVALS & FINANCIALS                             */}
+      {/* ========================================================================= */}
+      {activeTab === 'assets' && (
+        <VStack {...styles.tabContentVStack}>
+          {/* Green Valuation & Fund Pool Header Card */}
+          <Box {...styles.assetBannerCard}>
+            <HStack {...styles.assetBannerHeaderRow}>
+              <VStack>
+                <HStack {...styles.assetBannerTitleHStack}>
+                  <LucideIcon name="Coins" {...styles.assetCoinsIcon} />
+                  <Heading {...styles.assetBannerTitle}>
+                    Asset Financial Valuation & Fund Pool Dashboard
                   </Heading>
                 </HStack>
+                <Text {...styles.assetBannerSubtitle}>
+                  Monetary valuation ($/Rand) is tracked exclusively for physical and in-kind Assets (1:1 participant ratio)
+                </Text>
+              </VStack>
+              <Box {...styles.assetPoolBadge}>
+                <Text {...styles.assetPoolBadgeText}>
+                  Total Fund Pool: -
+                  {/* Total Fund Pool: R {formatCurrency(totalFundPool)} */}
+                </Text>
+              </Box>
+            </HStack>
 
-                <Box {...styles.badgeCount}>
-                  <Text {...styles.badgeCountText}>{upcomingSessions.length}</Text>
-                </Box>
+            {/* Formula Clarification Callout */}
+            <Box {...styles.clarificationBox}>
+              <LucideIcon name="Info" {...styles.assetInfoIcon} />
+              <VStack {...styles.clarificationTextVStack}>
+                <Text {...styles.clarificationTitle}>Asset Financial Formula Clarification</Text>
+                <Text {...styles.clarificationText}>
+                  <Text {...styles.clarificationFormulaBoldGreen}>Total Asset Pool </Text>
+                  = Published Assets Value by Support Provider − (
+                  <Text {...styles.clarificationFormulaBlue}>Delivered Assets Value </Text>
+                  + <Text {...styles.clarificationFormulaEmerald}>Approved Assets Value </Text>
+                  + <Text {...styles.clarificationFormulaAmber}>Pending Requests Value</Text>
+                  )
+                </Text>
+              </VStack>
+            </Box>
+
+            {/* 4 Financial KPI Cards */}
+            <Box {...styles.assetKpiGrid}>
+              <Box {...styles.assetKpiCard}>
+                <Text {...styles.assetKpiLabelTotal}>Total Available Fund Pool</Text>
+                <Text {...styles.assetKpiValueTotal}>-</Text>
+                {/* <Text {...styles.assetKpiValueTotal}>R {formatCurrency(totalFundPool)}</Text> */}
+                <Text {...styles.assetKpiSubtextTotal}>
+                  {publishedAssetsCount > 0 ? `Across ${publishedAssetsCount} active asset offerings` : 'No active asset offerings'}
+                </Text>
+              </Box>
+
+              <Box {...styles.assetKpiCard}>
+                <Text {...styles.assetKpiLabelApproved}>Approved Assets Value</Text>
+                <Text {...styles.assetKpiValueApproved}>R {formatCurrency(approvedAssetsValue)}</Text>
+                <Text {...styles.assetKpiSubtextApproved}>
+                  {scope.assets?.approved.count || 0} approved allocations
+                </Text>
+              </Box>
+
+              <Box {...styles.assetKpiCard}>
+                <Text {...styles.assetKpiLabelDelivered}>Delivered Assets Value</Text>
+                {/* TODO: Delivered assets value is not calculated yet */}
+                <Text {...styles.assetKpiValueDelivered}>-</Text>
+                <Text {...styles.assetKpiSubtextDelivered}>- delivered items</Text>
+                {/* <Text {...styles.assetKpiValueDelivered}>R {formatCurrency(deliveredAssetsValue)}</Text>
+                <Text {...styles.assetKpiSubtextDelivered}>
+                  {scope.assets?.delivered.count || 0} delivered items
+                </Text> */}
+              </Box>
+
+              <Box {...styles.assetKpiCard}>
+                <Text {...styles.assetKpiLabelPending}>Pending Requests Value</Text>
+                <Text {...styles.assetKpiValuePending}>R {formatCurrency(pendingRequestsValue)}</Text>
+                <Text {...styles.assetKpiSubtextPending}>
+                  {scope.assets?.pending.count || 0} unapproved participant requests
+                </Text>
+              </Box>
+            </Box>
+
+            {/* Delivered vs. Approved Progress Bar */}
+            <Box {...styles.assetProgressCard}>
+              <HStack {...styles.assetProgressHeaderRow}>
+                <Text {...styles.assetProgressTitle}>Delivered Assets Value vs. Approved Allocation</Text>
+                <Text {...styles.assetProgressRatioText}>
+                  - / R {formatCurrency(approvedAssetsValue)}
+                  {/* R {formatCurrency(deliveredAssetsValue)} / R {formatCurrency(approvedAssetsValue)} (
+                  {Math.round((deliveredAssetsValue / (approvedAssetsValue || 1)) * 100)}%) */}
+                </Text>
               </HStack>
+              {/* TODO: Fill the bar once delivered assets value is calculated */}
+              <Box {...styles.assetProgressBarTrack}>
+                <Box {...styles.assetProgressBarFill} style={{ width: '0%' }} />
+                {/* <Box
+                  {...styles.assetProgressBarFill}
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.round((deliveredAssetsValue / (approvedAssetsValue || 1)) * 100)
+                    )}%`,
+                  }}
+                /> */}
+              </Box>
+            </Box>
+          </Box>
 
-              {/* Sessions List */}
-              <VStack {...styles.upcomingListVStack}>
-                {upcomingSessions.slice(0, 3).map((session) => {
-                  const sDate = session.start_date
-                    ? new Date(
-                        typeof session.start_date === 'number' || !isNaN(Number(session.start_date))
-                          ? Number(session.start_date) * 1000
-                          : session.start_date
-                      ).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
-                    : '--';
-                  const sLimit = session.seats_limit || 0;
-                  const sRemaining = session.seats_remaining || 0;
-                  const sPresent = Math.max(0, sLimit - sRemaining);
-                  const loc = session.meeting_info?.location || (session.provinces && session.provinces[0]) || '-';
-
-                  return (
-                    <Box key={session.id} {...styles.sessionCardd}>
-                      <VStack {...styles.titleVStack}>
-                        <Text {...styles.sessionTitle}>{session.title}</Text>
-
-                        <HStack {...styles.legendLabelRow}>
-                          <LucideIcon name="Calendar" {...styles.sessionIcon} />
-                          <Text {...styles.sessionMeta}>{sDate}</Text>
-                        </HStack>
-
-                        <HStack {...styles.legendLabelRow}>
-                          <LucideIcon name="Users" {...styles.sessionIcon} />
-                          <Text {...styles.sessionMeta}>{`${sPresent} / ${sLimit} participants`}</Text>
-                        </HStack>
-
-                        <HStack {...styles.legendLabelRow}>
-                          <LucideIcon name="MapPin" {...styles.sessionIcon} />
-                          <Text {...styles.sessionMeta}>{loc}</Text>
-                        </HStack>
-                      </VStack>
-                    </Box>
-                  );
-                })}
+          {/* Asset Request Approvals & Offering Catalog Card */}
+          <Box {...styles.summaryTableCard}>
+            <HStack {...styles.assetCatalogHeaderWrapper}>
+              <VStack>
+                <HStack {...styles.assetCatalogTitleHStack}>
+                  <LucideIcon name="Package" {...styles.assetShieldIcon} />
+                  <Heading {...styles.assetCatalogTitle}>Asset Request Approvals & Offering Catalog</Heading>
+                </HStack>
+                <Text {...styles.assetCatalogSubtitle}>Review published assets and approve coach requests</Text>
               </VStack>
 
-              {/* View All Sessions Button */}
-              <Button
-                {...styles.viewAllBtn}
-                onPress={() => navigation.navigate('opportunities' as never)}
-              >
-                <ButtonText {...styles.viewAllBtnText}>
-                  {t('supportProvider.dashboard.viewAllSessions', 'View All Sessions')}
-                </ButtonText>
-              </Button>
-            </VStack>
+              {/* Sub tabs: Published Assets vs Coach Asset Requests */}
+              <HStack {...styles.subTabContainer}>
+                <Pressable
+                  {...styles.subTabBtn}
+                  {...(assetViewTab === 'published' ? styles.subTabBtnActive : {})}
+                  onPress={() => setAssetViewTab('published')}
+                >
+                  <Text {...(assetViewTab === 'published' ? styles.subTabTextActive : styles.subTabTextInactive)}>
+                    My Published Assets (Provider View)
+                  </Text>
+                </Pressable>
+                <Pressable
+                  {...styles.subTabBtn}
+                  {...(assetViewTab === 'coach-requests' ? styles.subTabBtnActive : {})}
+                  onPress={() => setAssetViewTab('coach-requests')}
+                >
+                  <Text {...(assetViewTab === 'coach-requests' ? styles.subTabTextActive : styles.subTabTextInactive)}>
+                    Coach Asset Requests (Coach View)
+                  </Text>
+                </Pressable>
+              </HStack>
+            </HStack>
 
-          </VStack>
-        </Box>
-      </HStack>
+            {/* Table 1: My Published Assets */}
+            {assetViewTab === 'published' && (
+              <>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} {...styles.tableScrollView} contentContainerStyle={styles.summaryScrollContent}>
+                <VStack {...styles.summaryTableContainer}>
+                  {/* Table Header */}
+                  <HStack {...styles.summaryHeaderRow}>
+                    <Box {...styles.colAssetId}>
+                      <Text {...styles.summaryThText}>Asset ID</Text>
+                    </Box>
+                    <Box {...styles.colAssetDate}>
+                      <Text {...styles.summaryThText}>Published Date</Text>
+                    </Box>
+                    <Box {...styles.colAssetTitle}>
+                      <Text {...styles.summaryThText}>Published Asset Item</Text>
+                    </Box>
+                    <Box {...styles.colAssetSubCat}>
+                      <Text {...styles.summaryThText}>Sub-Category</Text>
+                    </Box>
+                    <Box {...styles.colAssetUnitVal}>
+                      <Text {...styles.summaryThText}>Unit Value (1:1 Ratio)</Text>
+                    </Box>
+                    <Box {...styles.colAssetQty}>
+                      <Text {...styles.summaryThText}>Available Qty</Text>
+                    </Box>
+                    <Box {...styles.colAssetApprovedVal}>
+                      <Text {...styles.summaryThText}>Approved Value</Text>
+                    </Box>
+                    <Box {...styles.colAssetDeliveredVal}>
+                      <Text {...styles.summaryThText}>Delivered Value</Text>
+                    </Box>
+                    <Box {...styles.colAssetAdminStatus}>
+                      <Text {...styles.summaryThText}>Admin Approval</Text>
+                    </Box>
+                  </HStack>
+
+                  {/* Table Body */}
+                  {loadingAssets ? (
+                    <Box py="$6" alignItems="center" justifyContent="center">
+                      <ActivityIndicator size="small" color="#8B2842" />
+                    </Box>
+                  ) : publishedAssets.length === 0 ? (
+                    <Box py="$6" alignItems="center" justifyContent="center">
+                      <Text {...styles.assetTableMutedText}>No published assets found.</Text>
+                    </Box>
+                  ) : (
+                    publishedAssets.slice(0, assetVisibleCount).map((item) => (
+                    <HStack key={item.id} {...styles.summaryBodyRow}>
+                      <Box {...styles.colAssetId}>
+                        <Text {...styles.assetTableCellText}>{item.id}</Text>
+                      </Box>
+                      <Box {...styles.colAssetDate}>
+                        <Text {...styles.assetTableMutedText}>{item.datePublished}</Text>
+                      </Box>
+                      <Box {...styles.colAssetTitle}>
+                        <Text {...styles.assetTableCellText}>{item.assetTitle}</Text>
+                      </Box>
+                      <Box {...styles.colAssetSubCat}>
+                        <Box {...styles.subCatBadge}>
+                          <Text {...styles.subCatBadgeText} numberOfLines={1} ellipsizeMode="tail">{item.subCategory}</Text>
+                        </Box>
+                      </Box>
+                      <Box {...styles.colAssetUnitVal}>
+                        <Text {...styles.assetTableCellText}>
+                          {item.unitValue !== null ? `R ${formatCurrency(item.unitValue)} / participant` : '-'}
+                        </Text>
+                      </Box>
+                      <Box {...styles.colAssetQty}>
+                        <Text {...styles.assetTableCellText}>
+                          {item.availableQuantity !== null ? `${item.availableQuantity} units` : '-'}
+                        </Text>
+                      </Box>
+                      {/* TODO: Approved and delivered value per asset need requests linked to the asset */}
+                      <Box {...styles.colAssetApprovedVal}>
+                        <Text {...styles.valApprovedText}>-</Text>
+                        {/* <Text {...styles.valApprovedText}>
+                          R {formatCurrency(item.approvedQuantity * item.unitValue)}
+                        </Text> */}
+                      </Box>
+                      <Box {...styles.colAssetDeliveredVal}>
+                        <Text {...styles.valDeliveredText}>-</Text>
+                        {/* <Text {...styles.valDeliveredText}>
+                          R {formatCurrency(item.deliveredQuantity * item.unitValue)}
+                        </Text> */}
+                      </Box>
+                      <Box {...styles.colAssetAdminStatus}>
+                        {item.adminStatus === 'approved' ? (
+                          <Box {...styles.statusBadgeActive}>
+                            <Text {...styles.statusBadgeActiveText}>✓ Published & Active</Text>
+                          </Box>
+                        ) : (
+                          <Box {...styles.statusBadgePendingAdmin}>
+                            <Text {...styles.statusBadgePendingAdminText}>⏳ Pending Admin Review</Text>
+                          </Box>
+                        )}
+                      </Box>
+                    </HStack>
+                  )))}
+                </VStack>
+              </ScrollView>
+              {publishedAssets.length > assetVisibleCount && (
+                <Box alignItems="center" mt="$4" width="100%">
+                  <Button onPress={() => setAssetVisibleCount((prev) => prev + ASSET_TABLE_PAGE_SIZE)}>
+                    <ButtonText>Load More</ButtonText>
+                  </Button>
+                </Box>
+              )}
+              </>
+            )}
+
+            {/* Table 2: Coach Asset Requests */}
+            {assetViewTab === 'coach-requests' && (
+              <>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} {...styles.tableScrollView} contentContainerStyle={styles.summaryScrollContent}>
+                <VStack {...styles.summaryTableContainer}>
+                  {/* Table Header */}
+                  <HStack {...styles.summaryHeaderRow}>
+                    <Box {...styles.colReqId}>
+                      <Text {...styles.summaryThText}>Request ID</Text>
+                    </Box>
+                    <Box {...styles.colReqCoach}>
+                      <Text {...styles.summaryThText}>Coach Name & Hub</Text>
+                    </Box>
+                    <Box {...styles.colReqItem}>
+                      <Text {...styles.summaryThText}>Requested Asset Item</Text>
+                    </Box>
+                    <Box {...styles.colReqQty}>
+                      <Text {...styles.summaryThText}>Quantity Requested</Text>
+                    </Box>
+                    <Box {...styles.colReqTotalVal}>
+                      <Text {...styles.summaryThText}>Total Rand Value</Text>
+                    </Box>
+                    <Box {...styles.colReqDate}>
+                      <Text {...styles.summaryThText}>Request Date</Text>
+                    </Box>
+                    <Box {...styles.colReqStatus}>
+                      <Text {...styles.summaryThText}>Status</Text>
+                    </Box>
+                  </HStack>
+
+                  {/* Table Body */}
+                  {coachRequests.length === 0 ? (
+                    <Box py="$6" alignItems="center" justifyContent="center">
+                      <Text {...styles.assetTableMutedText}>No coach requests found.</Text>
+                    </Box>
+                  ) : (
+                    coachRequests.slice(0, coachVisibleCount).map((req) => (
+                    <HStack key={req.id} {...styles.summaryBodyRow}>
+                      <Box {...styles.colReqId}>
+                        <Text {...styles.assetTableCellText}>{req.id}</Text>
+                      </Box>
+                      <Box {...styles.colReqCoach}>
+                        <Text {...styles.assetTableCellText}>{req.coachName}</Text>
+                        <Text {...styles.textSmallMuted}>{req.coachOrg}</Text>
+                      </Box>
+                      <Box {...styles.colReqItem}>
+                        <Text {...styles.textDarkMedium}>{req.requestedItem}</Text>
+                      </Box>
+                      <Box {...styles.colReqQty}>
+                        <Text {...styles.assetTableCellText}>{req.quantity} participant(s)</Text>
+                      </Box>
+                      <Box {...styles.colReqTotalVal}>
+                        <Text {...styles.valApprovedText}>R {formatCurrency(req.totalValue)}</Text>
+                      </Box>
+                      <Box {...styles.colReqDate}>
+                        <Text {...styles.assetTableMutedText}>{req.requestDate}</Text>
+                      </Box>
+                      <Box {...styles.colReqStatus}>
+                        {req.status === 'approved' ? (
+                          <Box {...styles.statusBadgeApprovedLocked}>
+                            <Text {...styles.statusBadgeApprovedLockedText}> Approved (Locked)</Text>
+                          </Box>
+                        ) : req.status === 'declined' ? (
+                          <Box {...styles.statusBadgeDeclinedLocked}>
+                            <Text {...styles.statusBadgeDeclinedLockedText}> Declined (Locked)</Text>
+                          </Box>
+                        ) : (
+                          <Box {...styles.statusBadgePendingAction}>
+                            <Text {...styles.statusBadgePendingActionText}> Pending Action</Text>
+                          </Box>
+                        )}
+                      </Box>
+                    </HStack>
+                  )))}
+                </VStack>
+              </ScrollView>
+              {coachRequests.length > coachVisibleCount && (
+                <Box alignItems="center" mt="$4" width="100%">
+                  <Button onPress={() => setCoachVisibleCount((prev) => prev + ASSET_TABLE_PAGE_SIZE)}>
+                    <ButtonText>Load More</ButtonText>
+                  </Button>
+                </Box>
+              )}
+              </>
+            )}
+          </Box>
+        </VStack>
+      )}
     </VStack>
   );
 };

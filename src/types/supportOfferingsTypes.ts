@@ -105,6 +105,7 @@ export interface AssetItem {
   meeting_info_details?: any;
   quantity?: number;
   estimatedValuePerParticipant?: number;
+  createdAt?: string;
 }
 
 export interface FilterParams {
