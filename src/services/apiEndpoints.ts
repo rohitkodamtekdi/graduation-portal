@@ -65,7 +65,6 @@ export const API_ENDPOINTS = {
   RESOURCE_DELETE: (resourceId: string | number, sessionId: string | number) =>
     `${prefix}/mentoring/v1/resources/delete/${resourceId}?sessionId=${sessionId}`,
   SESSION_ENROLLED_MENTEES: (sessionId: string | number) => `${prefix}/mentoring/v1/sessions/enrolledMentees/${sessionId}`,
-  MENTEE_ATTENDED_SESSIONS: `${prefix}/mentoring/v1/mentees/attendedSessions`,
-  MENTEE_SESSIONS: `${prefix}/mentoring/v1/mentees/sessions`,
+  SESSION_MENTEES_SESSIONS: `${prefix}/mentoring/v1/mentees/sessions`,
   SESSION_DETAILS: (sessionId: string) => `${prefix}/mentoring/v1/sessions/details/${sessionId}`,
 };

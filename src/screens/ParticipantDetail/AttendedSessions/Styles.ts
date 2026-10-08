@@ -5,7 +5,7 @@ export const attendedSessionsStyles = {
   },
   container: {
     flex: 1,
-    width: '100%' as const,
+    width: '100%' as const
   },
   content: {
     flex: 1,
@@ -23,6 +23,35 @@ export const attendedSessionsStyles = {
     color: '$textMutedForeground',
     textAlign: 'center' as const,
   },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+    py: '$12',
+  },
+  emptyStateVStack: {
+    space: 'md' as const,
+    alignItems: 'center' as const,
+  },
+  emptyStateIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: '$full' as const,
+    bg: '$backgroundLight50',
+    justifyContent: 'center' as const,
+    alignItems: 'center' as const,
+  },
+  emptyStateTitle: {
+    fontSize: '$lg',
+    fontWeight: '$bold' as const,
+    color: '$textPrimary',
+    textAlign: 'center' as const,
+  },
+  emptyStateDescription: {
+    fontSize: '$sm',
+    color: '$textSecondary',
+    textAlign: 'center' as const,
+  },
   loadingContainer: {
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
@@ -36,10 +65,27 @@ export const attendedSessionsStyles = {
     mb: '$4' as const,
   },
   headerTitleText: {
-    fontSize: '$md' as const,
+    fontSize: '$sm' as const,
     fontWeight: '$bold' as const,
     color: '$textPrimary' as const,
   },
+  toggleHStack: {
+    borderWidth: 1,
+    borderColor: '$borderLight300',
+    borderRadius: '$full' as const,
+    p: '$0.5' as const,
+  },
+  toggleButton: (active: boolean) => ({
+    bg: active ? '$primary500' : 'transparent',
+    borderRadius: '$full' as const,
+    px: '$4' as const,
+    py: '$1.5' as const,
+  }),
+  toggleButtonText: (active: boolean) => ({
+    fontSize: '$sm' as const,
+    fontWeight: '$medium' as const,
+    color: active ? '$white' : '$textSecondary',
+  }),
   filterSelectBox: {
     width: 140 as const,
   },
@@ -48,12 +94,11 @@ export const attendedSessionsStyles = {
     width: '100%' as const,
   },
   card: (isAttended: boolean) => ({
-    bg: isAttended ? '#F5FBF7' : '$white',
+    bg: isAttended ? '$success50' : '$white',
     borderWidth: 1,
-    borderColor: isAttended ? '#BBF7D0' : '$borderLight200',
-    borderRadius: 12,
-    px: '$4' as const,
-    py: '$4' as const,
+    borderColor: isAttended ? '#a7f3d0' : '$borderLight200',
+    borderRadius: 16,
+    p: '$4' as const,
     width: '100%' as const,
   }),
   cardHeaderHStack: {
@@ -87,7 +132,6 @@ export const attendedSessionsStyles = {
     fontSize: 12 as const,
     color: isAttended ? '$success600' : '$textMuted',
     fontWeight: '$medium' as const,
-    textTransform: 'none' as const,
   }),
   chevronIconProps: {
     size: 18,
@@ -96,30 +140,46 @@ export const attendedSessionsStyles = {
   subtitleText: {
     fontSize: '$xs' as const,
     color: '$textSecondary' as const,
-    mt: '$1' as const,
+    mt: '$0.5' as const,
   },
   metaRowHStack: {
     alignItems: 'center' as const,
-    width: '100%' as const,
+    flexWrap: 'wrap' as const,
+    columnGap: 32 as const,
+    rowGap: 8 as const,
     mt: '$3' as const,
   },
   metaItemHStack: {
-    flex: 1,
     alignItems: 'center' as const,
-    space: 'sm' as const,
-  },
-  metaIconProps: {
-    size: 14,
-    color: '$success600',
-  },
-  loadMoreContainer: {
-    alignItems: 'center' as const,
-    mt: '$4' as const,
-    width: '100%' as const,
+    space: 'xs' as const,
   },
   metaText: {
     fontSize: '$xs' as const,
     color: '$textSecondary' as const,
+  },
+  deliveryText: {
+    fontSize: '$xs' as const,
+    color: '$success600' as const,
+    fontWeight: '$medium' as const,
     textTransform: 'capitalize' as const,
   },
+  tagsRowHStack: {
+    flexWrap: 'wrap' as const,
+    columnGap: 8 as const,
+    rowGap: 8 as const,
+    mt: '$3' as const,
+  },
+  tagBadge: (isPrimary: boolean) => ({
+    bg: isPrimary ? '#FFEDD5' : '$backgroundLight100',
+    borderRadius: '$full' as const,
+    paddingLeft: 10 as const,
+    paddingRight: 10 as const,
+    paddingTop: 2 as const,
+    paddingBottom: 2 as const,
+  }),
+  tagBadgeText: (isPrimary: boolean) => ({
+    fontSize: 11 as const,
+    color: isPrimary ? '#C2410C' : '$textSecondary',
+    fontWeight: '$medium' as const,
+  }),
 } as const;
