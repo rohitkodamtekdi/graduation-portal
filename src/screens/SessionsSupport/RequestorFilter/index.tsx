@@ -10,7 +10,6 @@ interface RequestorFilterProps {
   onFilterChange: (filters: Record<string, any>) => void;
   provinceOptions: any[];
   siteOptions: any[];
-  pathwayOptions: any[];
   pillarOptions?: any[];
   typeOptions?: any[];
   statusOptions?: any[];
@@ -24,7 +23,6 @@ export const RequestorFilter: React.FC<RequestorFilterProps> = ({
   onFilterChange,
   provinceOptions,
   siteOptions,
-  pathwayOptions,
   pillarOptions,
   typeOptions,
   statusOptions,
@@ -45,9 +43,6 @@ export const RequestorFilter: React.FC<RequestorFilterProps> = ({
       if (item.attr === 'site') {
         return { ...item, data: siteOptions, disabled: shouldDisableSite };
       }
-      if (item.attr === 'pathway') {
-        return { ...item, data: pathwayOptions };
-      }
       if (item.attr === 'pillar') {
         return { ...item, data: pillarOptions || item.data };
       }
@@ -62,7 +57,7 @@ export const RequestorFilter: React.FC<RequestorFilterProps> = ({
       }
       return item;
     });
-  }, [provinceOptions, siteOptions, pathwayOptions, pillarOptions, typeOptions, statusOptions, formatOptions, shouldDisableSite, shouldDisableType,]);
+  }, [provinceOptions, siteOptions, pillarOptions, typeOptions, statusOptions, formatOptions, shouldDisableSite, shouldDisableType,]);
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);

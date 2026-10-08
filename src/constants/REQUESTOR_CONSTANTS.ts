@@ -1,9 +1,5 @@
 import { DEFAULT_PROVINCE_OPTIONS, DEFAULT_SITE_OPTIONS } from './SUPPORT_PROVIDER_CARDS';
 
-export const PATHWAY_TAGS = [
-  { label: 'All Pathways', value: 'all-pathways' }
-];
-
 export const DEFAULT_PILLAR_OPTIONS = [
   { label: 'All Pillars', value: 'all-pillars' }
 ];
@@ -12,27 +8,17 @@ export const DEFAULT_TYPE_OPTIONS = [
   { label: 'All Types', value: 'all-types' }
 ];
 
+// Real status options are the SP "My Support Interventions" ones, set in the Sessions & Support screen
 export const DEFAULT_STATUS_OPTIONS = [
   { label: 'All Statuses', value: 'all-statuses' },
-  { label: 'Upcoming', value: 'Upcoming' },
-  { label: 'In Progress', value: 'In progress' },
-  { label: 'Draft', value: 'Draft' }
 ];
 
+// Real delivery modes come from the delivery_mode entity API; only the "All" option is static
 export const DEFAULT_FORMAT_OPTIONS = [
   { label: 'All Formats', value: 'all-formats' },
-  { label: 'Online', value: 'online' },
-  { label: 'Offline', value: 'offline' },
-  { label: 'Hybrid', value: 'hybrid' }
 ];
 
 export const REQUESTOR_FILTERS = [
-  {
-    attr: 'pathway',
-    type: 'select' as const,
-    placeholder: 'All Pathways',
-    data: PATHWAY_TAGS,
-  },
   {
     attr: 'pillar',
     type: 'select' as const,

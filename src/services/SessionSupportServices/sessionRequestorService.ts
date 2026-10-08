@@ -8,7 +8,7 @@ import { MENTORING_ENTITY_TYPES } from '@constants/SP_MENU_OPTIONS';
 
 export const getRequestSessionsList = async (params: any): Promise<any> => {
   try {
-    const { page, limit, status, search, provinces, sites, pathway, pillar, type, format } = params;
+    const { page, limit, status, search, provinces, sites, pillar, type, format } = params;
     const queryParams = new URLSearchParams();
 
     if (status && status !== FILTER_ALL.ALL_STATUSES && status !== FILTER_ALL.ALL_STATUS) {
@@ -33,10 +33,6 @@ export const getRequestSessionsList = async (params: any): Promise<any> => {
 
     if (sites && sites !== FILTER_ALL.ALL_SITES) {
       queryParams.append(QUERY_PARAM.SITES, sites);
-    }
-
-    if (pathway && pathway !== FILTER_ALL.ALL_PATHWAYS) {
-      queryParams.append(QUERY_PARAM.CATEGORIES, pathway);
     }
 
     if (pillar && pillar !== FILTER_ALL.ALL_PILLARS) {
@@ -55,6 +51,11 @@ export const getRequestSessionsList = async (params: any): Promise<any> => {
       queryParams.append(MENTORING_ENTITY_TYPES.SUPPORT_OFFERING_TYPE, params.support_offering_type);
     }
 
+    // Comma-separated training types; the backend matches any of them
+    if (params.idp_training_task) {
+      queryParams.append(QUERY_PARAM.IDP_TRAINING_TASK, params.idp_training_task);
+    }
+
     const endpoint = `${API_ENDPOINTS.USER_SESSIONS_LIST}?${queryParams.toString()}`;
     const response = await api.get(endpoint);
     return response.data;
@@ -66,7 +67,7 @@ export const getRequestSessionsList = async (params: any): Promise<any> => {
 
 export const getMyRequestsList = async (params: any): Promise<any> => {
   try {
-    const { page, limit, status, search, provinces, sites, pathway, pillar, type, format } = params;
+    const { page, limit, status, search, provinces, sites, pillar, type, format } = params;
     const queryParams = new URLSearchParams();
 
     if (status && status !== FILTER_ALL.ALL_STATUSES && status !== FILTER_ALL.ALL_STATUS) {
@@ -91,10 +92,6 @@ export const getMyRequestsList = async (params: any): Promise<any> => {
 
     if (sites && sites !== FILTER_ALL.ALL_SITES) {
       queryParams.append(QUERY_PARAM.SITES, sites);
-    }
-
-    if (pathway && pathway !== FILTER_ALL.ALL_PATHWAYS) {
-      queryParams.append(QUERY_PARAM.CATEGORIES, pathway);
     }
 
     if (pillar && pillar !== FILTER_ALL.ALL_PILLARS) {

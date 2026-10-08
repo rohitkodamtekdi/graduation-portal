@@ -15,7 +15,6 @@ import {
   SUPPORT_OFFERING_SUB_TABS,
   SUPPORT_OFFERING_TYPE_VALUES,
   REQUEST_STATUS,
-  SESSION_STATUS,
   SESSION_STATUS_LABEL,
   OFFERING_FILTER_FIELDS as FILTER_FIELDS,
   OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL,
@@ -32,15 +31,15 @@ import { getRequestSessionsList, requestorAssignMenteesToSession, getMyRequestsL
 import type { ProvinceEntity } from '@app-types/Users';
 import type { AssetItem } from '../../types/supportOfferingsTypes';
 import { getSessionCategories, getDeliveryModes, getSessionTypesByPillar, requestSession } from '../../services/mentoringService';
-import { getProjectCategoryList } from '../../services/projectService';
 import { requestAssetPayloadMapping } from '@utils/supportProvider';
-import { PATHWAY_TAGS, DEFAULT_FORMAT_OPTIONS, DEFAULT_PILLAR_OPTIONS, DEFAULT_TYPE_OPTIONS, DEFAULT_STATUS_OPTIONS } from '../../constants/REQUESTOR_CONSTANTS';
+import { DEFAULT_FORMAT_OPTIONS, DEFAULT_PILLAR_OPTIONS, DEFAULT_TYPE_OPTIONS } from '../../constants/REQUESTOR_CONSTANTS';
+import { STATUS_OPTIONS as SP_STATUS_OPTIONS } from '../ServiceProvider/SupportOfferings';
 import { RequestorFilter } from './RequestorFilter';
 import styles from './styles';
 import supportOfferingsStyles from '../ServiceProvider/SupportOfferings/styles';
 import { RequestFooter } from './RequestorFooter';
 import AssignParticipantsModal from './modals/AssignParticipantsModal';
-import LcMySessionTab from './MyTraining&Sessions/LcMySessionTab';
+import LcMySessionTab, { getSessionBadgeLabel } from './MyTraining&Sessions/LcMySessionTab';
 
 // Fallback filter if the backend doesn't apply `support_offering_type`; normalizes both string
 // and `{ value, label }` shapes across APIs (missing type = assume it belongs).
@@ -50,6 +49,15 @@ const HISTORY_FETCH_LIMIT = 100;
 // Browse tabs only list offerings that can still be joined: Upcoming or In Progress (completed ones live in History)
 const BROWSE_VISIBLE_STATUSES: string[] = [SESSION_STATUS_LABEL.UPCOMING, SESSION_STATUS_LABEL.IN_PROGRESS];
 const isBrowsable = (item: any) => BROWSE_VISIBLE_STATUSES.includes(deriveStatusLabel(item));
+// LC status filter: All Statuses, Upcoming and In Progress (values as in the SP status options)
+const LC_STATUS_FILTER_VALUES = ['all-statuses', 'Upcoming', 'live'];
+// sessions/list ignores the status param, so each filter value is also matched against the card's status badge
+const LC_STATUS_FILTER_TO_BADGE: Record<string, string> = {
+  Upcoming: SESSION_STATUS_LABEL.UPCOMING,
+  live: SESSION_STATUS_LABEL.IN_PROGRESS,
+};
+// History tab only lists sessions whose card badge is Completed or Expired
+const HISTORY_BADGES: string[] = [SESSION_STATUS_LABEL.COMPLETED, SESSION_STATUS_LABEL.EXPIRED];
 const matchesOfferingType = (item: any, expectedType: string): boolean => {
   const rawType = item?.support_offering_type || item?.type || item?.session?.support_offering_type;
   const itemType = rawType && typeof rawType === 'object' ? rawType.value : rawType;
@@ -178,10 +186,12 @@ const SessionsSupportScreen: React.FC = () => {
   const [provinceOptions, setProvinceOptions] = useState(DEFAULT_PROVINCE_OPTIONS);
   const [allSiteOptions, setAllSiteOptions] = useState<any[]>([]);
   const [siteOptions, setSiteOptions] = useState(DEFAULT_SITE_OPTIONS);
-  const [pathwayOptions, setPathwayOptions] = useState(PATHWAY_TAGS);
   const [pillarOptions, setPillarOptions] = useState(DEFAULT_PILLAR_OPTIONS);
   const [typeOptions, setTypeOptions] = useState(DEFAULT_TYPE_OPTIONS);
-  const [statusOptions, setStatusOptions] = useState(DEFAULT_STATUS_OPTIONS);
+  // SP "My Support Interventions" status options, limited to the two statuses LC needs (plus "All Statuses")
+  const [statusOptions, setStatusOptions] = useState<any[]>(
+    SP_STATUS_OPTIONS.filter((option) => LC_STATUS_FILTER_VALUES.includes(option.value)),
+  );
   const [formatOptions, setFormatOptions] = useState(DEFAULT_FORMAT_OPTIONS);
 
   const [items, setItems] = useState<any[]>([]);
@@ -189,6 +199,7 @@ const SessionsSupportScreen: React.FC = () => {
   const [limit] = useState<number>(5);
   const [total, setTotal] = useState<number>(0);
   const browseHiddenCountRef = useRef(0);
+  const historyLoadedCountRef = useRef(0);
   const [_loading, setLoading] = useState<boolean>(false);
   const [counts, setCounts] = useState({
     sessions: 0,
@@ -206,6 +217,11 @@ const SessionsSupportScreen: React.FC = () => {
   const subTabs = tabs.find((tab) => tab.key === activeTab)?.children || [];
 
   const handleTabChange = (key: string) => {
+    if (key === activeTab) return;
+    // Every tab's Browse sub-tab shares the same key, so filters are cleared here or they would carry over to the new tab
+    setFilters({});
+    setPage(1);
+    setItems([]);
     setActiveTab(key);
     const newTab = tabs.find((tab) => tab.key === key);
     if (newTab && newTab.children && newTab.children.length > 0) {
@@ -215,7 +231,18 @@ const SessionsSupportScreen: React.FC = () => {
     }
   };
 
+  // Clears the previous sub-tab's filters and page in the same update, so the new sub-tab is never fetched with them
+  const handleSubTabChange = (key: string) => {
+    if (key === activeSubTab) return;
+    setFilters({});
+    setPage(1);
+    setItems([]);
+    setActiveSubTab(key);
+  };
+
   const handleFilterChange = (newFilters: Record<string, any>) => {
+    // Reset the page in the same update, so the list is fetched once (page 1) instead of first with the old page
+    setPage(1);
     setFilters(newFilters);
   };
 
@@ -239,16 +266,15 @@ const SessionsSupportScreen: React.FC = () => {
     },
   ];
 
-  // Fetch dynamic provinces, pathways/pillars, and formats/delivery modes from API
+  // Fetch dynamic provinces, pillars, and formats/delivery modes from API
   useEffect(() => {
     let isMounted = true;
     const fetchFilterData = async () => {
       try {
-        const [provincesData, categoriesData, deliveryModesData, projectCategoriesData] = await Promise.all([
+        const [provincesData, categoriesData, deliveryModesData] = await Promise.all([
           getProvincesList().catch(() => []),
           getSessionCategories().catch(() => []),
           getDeliveryModes().catch(() => []),
-          getProjectCategoryList().catch(() => []),
         ]);
 
         if (isMounted) {
@@ -264,23 +290,6 @@ const SessionsSupportScreen: React.FC = () => {
               })),
             ];
             setProvinceOptions(dynamicProvinces);
-          }
-
-          if (projectCategoriesData && projectCategoriesData.length > 0) {
-            const uniquePathwaysMap = new Map<string, { label: string; value: string }>();
-            projectCategoriesData.forEach((c: any) => {
-              const label = String(c.name || c.label || c.title || c.value || '').trim();
-              const value = c.value || c._id || c.id || c.externalId || label;
-              if (label && !uniquePathwaysMap.has(label)) {
-                uniquePathwaysMap.set(label, { label, value });
-              }
-            });
-
-            const dynamicPathways = [
-              { label: 'All Pathways', value: FILTER_ALL.ALL_PATHWAYS },
-              ...Array.from(uniquePathwaysMap.values()),
-            ];
-            setPathwayOptions(dynamicPathways);
           }
 
           if (categoriesData && categoriesData.length > 0) {
@@ -415,7 +424,7 @@ const SessionsSupportScreen: React.FC = () => {
   // Reset page when tab or filters change
   useEffect(() => {
     setPage(1);
-  }, [activeTab, filters.search, filters.status, filters.province, filters.site, filters.pathway, filters.pillar, filters.type, filters.format]);
+  }, [activeTab, filters.search, filters.status, filters.province, filters.site, filters.pillar, filters.type, filters.format]);
 
   // Reset page and filters when active sub-tab changes
   useEffect(() => {
@@ -438,14 +447,23 @@ const SessionsSupportScreen: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        // Sessions store the training type in idp_training_task, so Pillar = any type of that pillar and Type = that one type
+        const selectedPillar = filters[FILTER_FIELDS.PILLAR];
+        const selectedType = filters[FILTER_FIELDS.TYPE];
+        const pillarTypeValues = typeOptions
+          .map((option: any) => option.value)
+          .filter((value: string) => value && value !== FILTER_ALL.ALL_TYPES);
+        let idpTrainingTask: string | undefined;
+        if (selectedPillar && selectedPillar !== FILTER_ALL.ALL_PILLARS && pillarTypeValues.length > 0) {
+          idpTrainingTask = pillarTypeValues.includes(selectedType) ? selectedType : pillarTypeValues.join(',');
+        }
+
         const params: any = {
           page,
           limit,
           search: filters[FILTER_FIELDS.SEARCH],
           status: filters[FILTER_FIELDS.STATUS],
-          pathway: filters[FILTER_FIELDS.PATHWAY],
-          pillar: filters[FILTER_FIELDS.PILLAR],
-          type: filters[FILTER_FIELDS.TYPE],
+          idp_training_task: idpTrainingTask,
           format: filters[FILTER_FIELDS.FORMAT],
           isSessionsSupport: true,
         };
@@ -461,23 +479,33 @@ const SessionsSupportScreen: React.FC = () => {
         let fetchedData: any[] = [];
         const isBrowseSubTab = activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS;
         if (page === 1) browseHiddenCountRef.current = 0;
+        const selectedStatusBadge = LC_STATUS_FILTER_TO_BADGE[filters[FILTER_FIELDS.STATUS]];
         const keepBrowsable = (list: any[]) => {
           if (!isBrowseSubTab) return list;
-          const visible = list.filter(isBrowsable);
-          browseHiddenCountRef.current += list.length - visible.length;
+          const visible = list.filter(
+            (item) => isBrowsable(item) && (!selectedStatusBadge || deriveStatusLabel(item) === selectedStatusBadge),
+          );
+          // A superseded request must not add to the shared hidden count, or "sessions found" is reduced twice
+          if (isMounted) browseHiddenCountRef.current += list.length - visible.length;
           return visible;
         };
         let totalCount = 0;
 
         if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY && activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
-          // Server-side paginated: only sessions marked COMPLETED in DB (attendance confirmed)
+          // sessions/list ignores a status filter and also returns upcoming sessions, so only cards whose badge is Completed/Expired are kept
           const result = await getRequestSessionsList({
             ...params,
-            status: SESSION_STATUS.COMPLETED,
             support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
           });
-          fetchedData = result?.result?.data || [];
-          totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
+          const rawSessions = result?.result?.data || [];
+          fetchedData = rawSessions.filter((item: any) => HISTORY_BADGES.includes(getSessionBadgeLabel(item)));
+          if (page === 1) historyLoadedCountRef.current = 0;
+          if (isMounted) historyLoadedCountRef.current += fetchedData.length;
+          // Results are sorted by start date, so a page without any ended session means only upcoming ones remain
+          const hasReachedUpcoming = fetchedData.length === 0 || rawSessions.length < limit;
+          totalCount = hasReachedUpcoming
+            ? historyLoadedCountRef.current
+            : result?.result?.count ?? result?.total ?? result?.count ?? rawSessions.length;
         } else if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY) {
           const historyParams = { ...params, page: 1, limit: HISTORY_FETCH_LIMIT };
           const offeringType = activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES
@@ -626,7 +654,7 @@ const SessionsSupportScreen: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [activeTab, activeSubTab, filters.search, filters.status, filters.province, filters.site, filters.pathway, filters.format, page, limit, refreshRequests]);
+  }, [activeTab, activeSubTab, filters.search, filters.status, filters.province, filters.site, filters.pillar, filters.type, typeOptions, filters.format, page, limit, refreshRequests]);
 
   const handleSelectOption = (route: string) => {
     setIsDropdownOpen(false);
@@ -742,7 +770,7 @@ const SessionsSupportScreen: React.FC = () => {
                     key={tab.key}
                     tab={tab}
                     isActive={activeSubTab === tab.key}
-                    onPress={(key) => setActiveSubTab(key)}
+                    onPress={handleSubTabChange}
                     _text={supportOfferingsStyles.tabTextProps}
                     _container={styles.subTabButtonContainer}
                     iconSize={16}
@@ -759,11 +787,11 @@ const SessionsSupportScreen: React.FC = () => {
           {activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS ? (
             <>
               <RequestorFilter
+                key={activeTab}
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 provinceOptions={provinceOptions}
                 siteOptions={siteOptions}
-                pathwayOptions={pathwayOptions}
                 pillarOptions={pillarOptions}
                 typeOptions={typeOptions}
                 statusOptions={statusOptions}

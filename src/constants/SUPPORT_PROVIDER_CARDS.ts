@@ -213,6 +213,7 @@ export const OFFERING_QUERY_PARAM_KEYS = {
   PILLAR: 'pillar',
   TYPE: 'type',
   DELIVERY_MODE: 'delivery_mode',
+  IDP_TRAINING_TASK: 'idp_training_task',
 } as const;
 
 export const OFFERING_FILTER_ALL_OPTIONS = {

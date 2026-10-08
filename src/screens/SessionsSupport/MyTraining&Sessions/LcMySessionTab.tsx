@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, HStack, VStack, Text, Button, ButtonText, Badge, BadgeText, Spinner, LucideIcon } from '@ui';
 import moment from 'moment';
 import { useLanguage } from '@contexts/LanguageContext';
-import { useSessionStatus } from '@hooks/useSessionStatus';
+import { useSessionStatus, deriveStatusLabel } from '@hooks/useSessionStatus';
 import { SESSION_STATUS, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
 import styles from '../styles';
 
@@ -27,6 +27,19 @@ interface LcMySessionTabProps {
   isLoadingMore?: boolean;
   hideSchedule?: boolean;
 }
+
+/**
+ * Badge shown on the session card. A session whose time is over but whose attendance is not
+ * confirmed in the DB shows "Expired"; one marked COMPLETED in the DB shows "Completed".
+ * Also used by the History tab to keep only Completed/Expired sessions.
+ */
+export const getSessionBadgeLabel = (item: any): string => {
+  const derivedStatusLabel = deriveStatusLabel(item);
+  const isExpired =
+    derivedStatusLabel === SESSION_STATUS_LABEL.COMPLETED &&
+    String(item?.status || '').toUpperCase() !== SESSION_STATUS.COMPLETED;
+  return isExpired ? SESSION_STATUS_LABEL.EXPIRED : derivedStatusLabel;
+};
 
 export const getStatusColors = (status: string) => {
   const s = (status || '').toUpperCase();
@@ -60,12 +73,8 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
 }) => {
   const { t } = useLanguage();
   const { statusTag: derivedStatusLabel } = useSessionStatus(item);
-  // Session time is over but attendance not yet confirmed in DB (assets don't have attendance)
-  const isExpired =
-    !hideSchedule &&
-    derivedStatusLabel === SESSION_STATUS_LABEL.COMPLETED &&
-    String(item.status || '').toUpperCase() !== SESSION_STATUS.COMPLETED;
-  const statusLabel = isExpired ? SESSION_STATUS_LABEL.EXPIRED : derivedStatusLabel;
+  const statusLabel = hideSchedule ? derivedStatusLabel : getSessionBadgeLabel(item);
+  const isExpired = statusLabel === SESSION_STATUS_LABEL.EXPIRED;
   const statusColors = getStatusColors(statusLabel);
 
   // Date & Time display matching Browse Trainings & Sessions card format
