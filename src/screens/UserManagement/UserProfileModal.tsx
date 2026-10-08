@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
+import moment from 'moment';
 import { VStack, HStack, Button, ButtonText, Modal, Text } from '@ui';
 import { useAlert } from '@components/ui';
 import { TYPOGRAPHY } from '@constants/TYPOGRAPHY';
@@ -121,6 +122,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const initialValuesRef = useRef<Record<string, string>>({});
+  const firstNameRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (isOpen && mode === 'edit') {
+      const timer = setTimeout(() => {
+        firstNameRef.current?.focus?.();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, mode]);
 
   const editSchema = useMemo(
     () =>
@@ -178,7 +189,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         if (val.value === 'other') {
           return val.label != null ? String(val.label) : '';
         }
-        const res = val.value ?? val.metaInformation?.name ?? val.name ?? val.label ?? val.id ?? val._id;
+        const valValue = (val.value !== undefined && val.value !== null && val.value !== '') ? val.value : undefined;
+        const res = valValue ?? val.metaInformation?.name ?? val.name ?? val.label ?? val.id ?? val._id;
         return res != null ? String(res) : '';
       }
       return String(val);
@@ -191,6 +203,9 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       if (!keys.includes(snake)) keys.push(snake);
       if (!keys.includes(camel)) keys.push(camel);
 
+      if (fieldName === 'dob') {
+        keys.push('date_of_birth', 'dateOfBirth', 'birth_date', 'birthDate');
+      }
       if (fieldName === 'countryCode') {
         keys.push('phone_code', 'phoneCode');
       }
@@ -293,7 +308,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     const alternativePhoneCode = formatPhoneCode(getFieldVal('alternativePhoneCode'));
     const alternativePhone = getFieldVal('alternativePhone');
     const gender = getFieldIdVal('gender');
-    const dob = getFieldVal('dob');
+    const rawDob = getFieldVal('dob');
+    const dob = (() => {
+      if (!rawDob) return '';
+      const clean = rawDob.replace(/[\/\-]/g, '_');
+      if (/^\d{4}_\d{2}_\d{2}$/.test(clean)) return clean;
+      const parsed = moment(rawDob, ['YYYY_MM_DD', 'YYYY-MM-DD', 'YYYY/MM/DD', 'DD/MM/YYYY', 'DD-MM-YYYY', 'DD_MM_YYYY']);
+      return parsed.isValid() ? parsed.format('YYYY_MM_DD') : clean;
+    })();
 
     const employee_id = getFieldVal('employee_id');
     let organisationId = getFieldVal('organization');
@@ -410,8 +432,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   );
 
   const handleFieldChange = (name: string, value: string) => {
+    let nextValues: Record<string, string> = {};
     setValues(prev => {
       const updated = { ...prev, [name]: value };
+      nextValues = updated;
 
       // Clear site if province changes
       if (name === 'provinceId') {
@@ -436,10 +460,20 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     });
 
     setErrors(prev => {
-      const next = { ...prev, [name]: '' };
+      const next = { ...prev };
+      const validationErrs = validateSchema(
+        CREATE_USER_FORM_SCHEMA,
+        nextValues,
+        optionsMap,
+      );
+      if (validationErrs[name]) {
+        next[name] = validationErrs[name];
+      } else {
+        delete next[name];
+      }
       if (name === 'roleId') {
-        next.provinceId = '';
-        next.siteId = '';
+        delete next.provinceId;
+        delete next.siteId;
       }
       return next;
     });
@@ -469,7 +503,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
       optionsMap,
     );
     if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+      setErrors({});
+      setTimeout(() => {
+        setErrors(validationErrors);
+      }, 0);
       return;
     }
 
@@ -541,6 +578,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               mode={mode}
               t={t}
               _input={INPUT_STYLE}
+              firstNameRef={firstNameRef}
             />
           </VStack>
         )}
