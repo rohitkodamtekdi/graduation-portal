@@ -41,7 +41,6 @@ export const useProfileCompletion = () => {
         let profileData: any = {};
         try {
           const mentoringProfileRes = await getMentoringProfile();
-          console.log('mentoringProfileRes', mentoringProfileRes);
           if (mentoringProfileRes?.result) {
             profileData = mentoringProfileRes.result;
           }

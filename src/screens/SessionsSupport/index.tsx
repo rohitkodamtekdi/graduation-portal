@@ -262,6 +262,8 @@ const SessionsSupportScreen: React.FC = () => {
           if (provincesData && provincesData.length > 0) {
             setProvincesList(provincesData);
             const { result: { data } } = await getSitesByProvince();
+            // Profile may have changed while the request was pending; drop the stale result
+            if (!isMounted) return;
             setAllSiteOptions(data || []);
             const mappedProvinces = provincesData.map((p: any) => ({
               label: p.metaInformation?.name || p.name || p.title || p.label,
