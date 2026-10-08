@@ -231,13 +231,16 @@ export interface AttendedSessionItem {
  */
 export const getMenteeSessions = async (
   menteeId: string | number,
-  scope: 'attended' | 'missed'
-): Promise<any[]> => {
+  scope: 'attended' | 'missed',
+  page = 1,
+  limit = 10
+): Promise<{ data: any[]; count: number }> => {
   const response = await api.get(API_ENDPOINTS.SESSION_MENTEES_SESSIONS, {
-    params: { menteeId, scope },
+    params: { menteeId, scope, page, limit },
   });
-  const data = response?.data?.result?.data;
-  return Array.isArray(data) ? data : [];
+  const result = response?.data?.result;
+  const data = Array.isArray(result?.data) ? result.data : [];
+  return { data, count: Number(result?.count ?? result?.total ?? data.length) };
 };
 
 

@@ -5,6 +5,8 @@ import {
   HStack,
   Text,
   Spinner,
+  Button,
+  ButtonText,
   Pressable,
   LucideIcon,
 } from '@ui';
@@ -13,6 +15,8 @@ import type { ParticipantData } from '@app-types/participant';
 import { getMenteeSessions } from '../../../services/SupportOfferingsServices/supportOfferingsService';
 import { formatDateString } from '@utils/helper';
 import { attendedSessionsStyles as styles } from './Styles';
+
+const PAGE_LIMIT = 10;
 
 interface AttendedSessionsProps {
   participant?: ParticipantData;
@@ -30,21 +34,36 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
   const participantName = participant?.name ?? '';
   const isAttended = filterType === 'ATTENDED';
   const [sessions, setSessions] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+
+  // Restart from the first page when the participant or tab changes
+  useEffect(() => {
+    setPage(1);
+    setSessions([]);
+    setTotalCount(0);
+  }, [participant?.userId, isAttended]);
 
   useEffect(() => {
     const menteeId = participant?.userId;
     if (!menteeId) return;
     let cancelled = false;
     setLoading(true);
-    getMenteeSessions(menteeId, isAttended ? 'attended' : 'missed')
-      .then((data: any[]) => !cancelled && setSessions(data))
-      .catch(() => !cancelled && setSessions([]))
+    getMenteeSessions(menteeId, isAttended ? 'attended' : 'missed', page, PAGE_LIMIT)
+      .then(({ data, count }) => {
+        if (cancelled) return;
+        setSessions(prev => (page === 1 ? data : [...prev, ...data]));
+        setTotalCount(count);
+      })
+      .catch(() => !cancelled && page === 1 && setSessions([]))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [participant?.userId, isAttended]);
+  }, [participant?.userId, isAttended, page]);
+
+  const hasMore = sessions.length < totalCount;
 
   const formatEpoch = (value?: string) =>
     value ? formatDateString(new Date(Number(value) * 1000).toISOString()) : '';
@@ -57,7 +76,7 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
           {isAttended
             ? t('participantDetail.attendedSessions.sectionTitle')
             : t('participantDetail.attendedSessions.missedSectionTitle')}{' '}
-          ({sessions.length})
+          ({totalCount || sessions.length})
         </Text>
         <HStack {...styles.toggleHStack}>
           {filterOptions.map(opt => {
@@ -74,7 +93,7 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
         </HStack>
       </HStack>
 
-      {loading ? (
+      {loading && sessions.length === 0 ? (
         <Box {...styles.loadingContainer}>
           <Spinner size="large" color="$primary500" />
         </Box>
@@ -134,6 +153,22 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
               </HStack>
             </Box>
           ))}
+          {hasMore && (
+            <Box alignItems="center" mt="$4" width="100%">
+              {loading ? (
+                <Spinner />
+              ) : (
+                <Button onPress={() => setPage(prev => prev + 1)}>
+                  <ButtonText>
+                    {t(
+                      'supportProvider.supportOfferings.buttonTexts.loadMoreSessions',
+                      'Load More Sessions'
+                    )}
+                  </ButtonText>
+                </Button>
+              )}
+            </Box>
+          )}
         </VStack>
       )}
     </Box>
