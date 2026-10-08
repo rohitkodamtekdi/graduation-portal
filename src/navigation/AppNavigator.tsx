@@ -52,6 +52,11 @@ const ReviewRequestsScreen = lazyScreen(() => import('../screens/ReviewRequests'
 const AdminDashboard = lazyScreen(() => import('../screens/AdminDashboard'));
 const ProfilePermissions = lazyScreen(() => import('../screens/ProfilePermissions'));
 const ForgotPasswordScreen = lazyScreen(() => import('../screens/Auth/ForgotPasswordScreen'));
+const ParticipantJourneyScreen = lazyScreen(() => import('../screens/ParticipantJourney'));
+const IdpProgressScreen = lazyScreen(() => import('../screens/ParticipantJourney/IdpProgress'));
+const MySessionsScreen = lazyScreen(() => import('../screens/ParticipantJourney/MySessions'));
+const SessionDetailsScreen = lazyScreen(() => import('../screens/ParticipantJourney/SessionDetails'));
+const MyGraduation = lazyScreen(() => import('../screens/ParticipantJourney/MyGraduation'));
 
 // Service provider UI components
 const SPDashboardScreen = lazyScreen(() => import('../screens/ServiceProvider/Dashboard'));
@@ -221,6 +226,14 @@ const getAccessPages = (
         { name: 'session-details', path: '/sessions-support/:sessionId', component: SessionDetailsScreen },
         { name: 'request-details', path: '/sessions-support/:requestId', component: RequestDetailsScreen },
         { name: 'project', path: '/project', component: ProjectPlayer },
+      ];
+    case 'participant':
+      return [
+        { name: 'participant-portal', path: '/', component: ParticipantJourneyScreen },
+        { name: 'idp-progress', path: '/idp-progress', component: IdpProgressScreen },
+        { name: 'my-sessions', path: '/my-sessions', component: MySessionsScreen },
+        { name: 'session-details', path: '/sessions-details/:sessionId', component: SessionDetailsScreen },
+        { name: 'my-graduation', path: '/my-graduation', component: MyGraduation },
       ];
     default:
       return []; // Always return an array even if empty
