@@ -70,7 +70,6 @@ const LayoutWrapper: React.FC<LayoutWrapperProps> = ({
       break;
     case 'mentor':
       SelectedLayout = MentorLayout as LayoutComponent;
-      break;
     case 'participant':
       SelectedLayout = ParticipantJourneyLayout as LayoutComponent;
       break;
