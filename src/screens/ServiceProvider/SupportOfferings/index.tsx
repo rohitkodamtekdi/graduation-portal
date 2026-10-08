@@ -4,6 +4,8 @@ import styles from './styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useAuth } from '@contexts/AuthContext';
+import { useProfileCompletion } from '@hooks';
 import { TabButton } from '@components/Tabs';
 import FilterButton from '@components/Filter';
 import TrainingCard from './components/Cards/TrainingCard';
@@ -58,6 +60,12 @@ const App = (): React.JSX.Element => {
     }
   }, [route?.params?.activeTab]);
   const [filters, setFilters] = useState<Record<string, any>>({});
+  const { user } = useAuth() || {};
+  const { allowedProvinces, allowedSites, isProfileLoading } = useProfileCompletion();
+  // Mentors only see the provinces/sites from their mentoring profile (empty list = no restriction)
+  const isMentor = user?.role === 'mentor';
+  const restrictProvinces = isMentor && allowedProvinces.length > 0;
+  const restrictSites = isMentor && allowedSites.length > 0;
   const [provincesList, setProvincesList] = useState<ProvinceEntity[]>([]);
   const [provinceOptions, setProvinceOptions] = useState(DEFAULT_PROVINCE_OPTIONS);
   const [allSiteOptions, setAllSiteOptions] = useState();
@@ -119,13 +127,16 @@ const App = (): React.JSX.Element => {
         if (isMounted && provincesData && provincesData.length > 0) {
           setProvincesList(provincesData);
           const { result: { data } } = await getSitesByProvince();
+          // Profile may have changed while the request was pending; drop the stale result
+          if (!isMounted) return;
           setAllSiteOptions(data || []);
+          const mappedProvinces = provincesData.map((p: any) => ({
+            label: p.metaInformation?.name || p.name || p.title || p.label,
+            value: p._id || p.id || p.value,
+          }));
           const dynamicProvinces = [
             { label: 'All Provinces', value: 'all-provinces' },
-            ...provincesData.map((p: any) => ({
-              label: p.metaInformation?.name || p.name || p.title || p.label,
-              value: p._id || p.id || p.value,
-            })),
+            ...(restrictProvinces ? mappedProvinces.filter((p: any) => allowedProvinces.includes(p.value)) : mappedProvinces),
           ];
           setProvinceOptions(dynamicProvinces);
         }
@@ -133,11 +144,12 @@ const App = (): React.JSX.Element => {
         console.error('Error fetching dynamic provinces:', err);
       }
     };
+    if (isProfileLoading) return;
     fetchFilterData();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isProfileLoading, restrictProvinces]);
 
   // Fetch dynamic sites based on selected province filter
   useEffect(() => {
@@ -165,7 +177,7 @@ const App = (): React.JSX.Element => {
         if (isMounted) {
           const dynamicSites = [
             { label: 'All Sites', value: 'all-sites' },
-            ...fetchedSites.map((s: any) => ({
+            ...(restrictSites ? fetchedSites.filter((s: any) => allowedSites.includes(s._id || s.id || s.value)) : fetchedSites).map((s: any) => ({
               label:
                 s.metaInformation?.name ||
                 s.name ||
@@ -192,7 +204,26 @@ const App = (): React.JSX.Element => {
     return () => {
       isMounted = false;
     };
-  }, [filters.province, provincesList]);
+  }, [filters.province, provincesList, restrictSites, allowedSites]);
+
+  // Drop selected province/site values the profile no longer allows so they aren't sent to the listing API
+  useEffect(() => {
+    if (isProfileLoading) return;
+    setFilters((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      if (restrictProvinces && prev.province && prev.province !== 'all-provinces' && !allowedProvinces.includes(prev.province)) {
+        delete next.province;
+        delete next.site;
+        changed = true;
+      }
+      if (restrictSites && next.site && next.site !== 'all-sites' && !allowedSites.includes(next.site)) {
+        delete next.site;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [isProfileLoading, restrictProvinces, restrictSites, allowedProvinces, allowedSites]);
 
   // Reset page when tab or filters change
   useEffect(() => {

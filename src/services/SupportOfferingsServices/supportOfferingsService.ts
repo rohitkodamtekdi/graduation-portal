@@ -224,31 +224,26 @@ export interface AttendedSessionItem {
 }
 
 /**
- * Fetches the sessions a participant actually joined, for the "Attended Sessions" tab on the
- * Participant Detail screen.
- * Endpoint: GET /mentoring/v1/mentees/attendedSessions?userId=:participantId
+ * Get the sessions a mentee has attended or missed.
+ * Endpoint: GET /mentoring/v1/mentees/sessions?menteeId=&scope=attended|missed
+ *
+ * @param menteeId - Mentee (participant) user id
+ * @param scope - 'attended' or 'missed'
  */
-export const getAttendedSessions = async (
-  userId: string | number,
-  params?: { page?: number; limit?: number }
-): Promise<{ data: AttendedSessionItem[]; count: number }> => {
-  try {
-    const response = await api.get(API_ENDPOINTS.MENTEE_ATTENDED_SESSIONS, {
-      params: {
-        userId,
-        page: params?.page ?? 1,
-        limit: params?.limit ?? 20,
-      },
-    });
-    const data = response?.data?.result?.data || [];
-    const count = response?.data?.result?.count ?? data.length;
-
-    return { data, count };
-  } catch (error) {
-    console.error('Error fetching attended sessions:', error);
-    return { data: [], count: 0 };
-  }
+export const getMenteeSessions = async (
+  menteeId: string | number,
+  scope: 'attended' | 'missed',
+  page = 1,
+  limit = 10
+): Promise<{ data: any[]; count: number }> => {
+  const response = await api.get(API_ENDPOINTS.SESSION_MENTEES_SESSIONS, {
+    params: { menteeId, scope, page, limit },
+  });
+  const result = response?.data?.result;
+  const data = Array.isArray(result?.data) ? result.data : [];
+  return { data, count: Number(result?.count ?? result?.total ?? data.length) };
 };
+
 
 /**
  * Complete Training Session API

@@ -55,7 +55,7 @@ const ForgotPasswordScreen = lazyScreen(() => import('../screens/Auth/ForgotPass
 const ParticipantJourneyScreen = lazyScreen(() => import('../screens/ParticipantJourney'));
 const IdpProgressScreen = lazyScreen(() => import('../screens/ParticipantJourney/IdpProgress'));
 const MySessionsScreen = lazyScreen(() => import('../screens/ParticipantJourney/MySessions'));
-const SessionDetailsScreen = lazyScreen(() => import('../screens/ParticipantJourney/SessionDetails'));
+const ParticipantSessionDetailsScreen = lazyScreen(() => import('../screens/ParticipantJourney/SessionDetails'));
 const MyGraduation = lazyScreen(() => import('../screens/ParticipantJourney/MyGraduation'));
 
 // Service provider UI components
@@ -232,7 +232,7 @@ const getAccessPages = (
         { name: 'participant-portal', path: '/', component: ParticipantJourneyScreen },
         { name: 'idp-progress', path: '/idp-progress', component: IdpProgressScreen },
         { name: 'my-sessions', path: '/my-sessions', component: MySessionsScreen },
-        { name: 'session-details', path: '/sessions-details/:sessionId', component: SessionDetailsScreen },
+        { name: 'session-details', path: '/sessions-details/:sessionId', component: ParticipantSessionDetailsScreen },
         { name: 'my-graduation', path: '/my-graduation', component: MyGraduation },
       ];
     default:
