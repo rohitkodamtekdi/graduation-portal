@@ -476,7 +476,8 @@ export const getRequestSessionDetails = async (requestId: string | number): Prom
 
 export interface DashboardScopeCounts {
   needed: number;
-  committed: number;
+  // null when a province or site filter is applied, commitments are not captured per location
+  committed: number | null;
   approved: number;
   delivered: number;
 }
@@ -498,13 +499,21 @@ export interface DashboardScope extends DashboardScopeCounts {
   };
 }
 
+export interface DashboardScopeFilters {
+  province?: string;
+  site?: string;
+  type?: string;
+}
+
 /**
  * Fetch the dashboard scope numbers (needed, committed, approved, delivered) of the logged in
  * Service Provider. Returns null when the request fails so the dashboard can show a fallback.
  */
-export const getDashboardScope = async (): Promise<DashboardScope | null> => {
+export const getDashboardScope = async (
+  filters: DashboardScopeFilters = {}
+): Promise<DashboardScope | null> => {
   try {
-    const response = await api.get(API_ENDPOINTS.SP_DASHBOARD_SCOPE);
+    const response = await api.get(API_ENDPOINTS.SP_DASHBOARD_SCOPE, { params: filters });
     return response.data?.result ?? null;
   } catch (error) {
     console.warn('[getDashboardScope] Failed to fetch dashboard scope:', error);

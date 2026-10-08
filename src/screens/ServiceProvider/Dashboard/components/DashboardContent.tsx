@@ -25,30 +25,21 @@ import {
   getDashboardScope,
   type DashboardScope,
 } from '../../../../services/serviceProvider/serviceProviderService';
+import {
+  getSupportCategories,
+  getSessionCategories,
+  getAdditionalServiceCategories,
+  getLivelihoodsOptions,
+  type MentoringOption,
+} from '../../../../services/mentoringService';
 import { SUPPORT_CATEGORIES } from '@constants/SUPPORT_PROVIDER_CARDS';
 import styles from '../styles';
 
-const SUB_CATEGORIES_MAP: Record<string, string[]> = {
-  training: [
-    'Personal Mastery Training',
-    'Financial Literacy Training',
-    'Generate Your Business Idea',
-    'Start Your Business',
-    'Technical & Vocational Training',
-    'Job Readiness Training',
-  ],
-  service: [
-    'Legal Compliance & Advisory',
-    'GBV & Mental Health Support',
-    'Substance Abuse Referral',
-    'Childcare & Family Support',
-  ],
-  asset: [
-    'Manufacturing & Textiles',
-    'Agriculture & Farming',
-    'Solar & Renewable Equipment',
-    'Tools & Hardware Kits',
-  ],
+// Sub-categories of each support type: Pillars (trainings), service categories and livelihood categories (assets)
+const SUB_CATEGORY_FETCHERS: Record<string, () => Promise<MentoringOption[]>> = {
+  [SUPPORT_CATEGORIES.TRAINING]: getSessionCategories,
+  [SUPPORT_CATEGORIES.ADDITIONAL_SERVICE]: getAdditionalServiceCategories,
+  [SUPPORT_CATEGORIES.ASSET]: getLivelihoodsOptions,
 };
 
 const BENCHMARK_MONTHS = ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'];
@@ -68,13 +59,24 @@ const formatCurrency = (val: number): string => {
   return Number(val || 0).toLocaleString('en-ZA');
 };
 
-// Percentage of value against base, 0 when base is empty e.g. getPercent(87, 100) -> 87
-const getPercent = (value: number, base: number): number => {
+// Committed is null when a province or site filter is applied, shown as "-"
+const formatCommitted = (val: number | null): string => {
+  return val === null ? '-' : formatCurrency(val);
+};
+
+// Percentage of value against base, 0 when base is empty, null when either is null e.g. getPercent(87, 100) -> 87
+const getPercent = (value: number | null, base: number | null): number | null => {
+  if (value === null || base === null) return null;
   return base > 0 ? Math.round((value / base) * 100) : 0;
 };
 
+const formatPercent = (pct: number | null): string => {
+  return pct === null ? '-' : `${pct}%`;
+};
+
 // Coverage badge text, capped at 100% with the extra shown as surplus e.g. 120 -> "100% (+20% Surplus)"
-const formatCoverage = (coverage: number): string => {
+const formatCoverage = (coverage: number | null): string => {
+  if (coverage === null) return '-';
   return coverage > 100 ? `100% (+${coverage - 100}% Surplus)` : `${coverage}%`;
 };
 
@@ -116,6 +118,12 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   const [siteOptions, setSiteOptions] = useState<{ label: string; value: string }[]>([
     { label: 'All Sites', value: 'all' },
   ]);
+  const [supportTypeOptions, setSupportTypeOptions] = useState<{ label: string; value: string }[]>([
+    { label: 'All Support Types', value: 'all' },
+  ]);
+  const [subCategoryOptions, setSubCategoryOptions] = useState<{ label: string; value: string }[]>([
+    { label: 'All Sub-Categories', value: 'all' },
+  ]);
 
   // Asset View Tab: 'published' | 'coach-requests'
   const [assetViewTab, setAssetViewTab] = useState<'published' | 'coach-requests'>('published');
@@ -142,14 +150,18 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   useEffect(() => {
     let isMounted = true;
     const fetchScope = async () => {
-      const result = await getDashboardScope();
+      const result = await getDashboardScope({
+        province: selectedProvince === 'all' ? undefined : selectedProvince,
+        site: selectedSite === 'all' ? undefined : selectedSite,
+        type: selectedSupportType === 'all' ? undefined : selectedSupportType,
+      });
       if (isMounted && result) setScope(result);
     };
     fetchScope();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [selectedProvince, selectedSite, selectedSupportType]);
 
   const coveragePct = getPercent(scope.committed, scope.needed);
   const deliveryPct = getPercent(scope.delivered, scope.committed);
@@ -191,17 +203,13 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
     };
   }, []);
 
-  // 2. Fetch Dynamic Sites based on selected Province
+  // 2. Fetch Dynamic Sites based on selected Province, all sites when no province is selected
   useEffect(() => {
     let isMounted = true;
     const fetchSites = async () => {
-      if (!selectedProvince || selectedProvince === 'all') {
-        setSiteOptions([{ label: 'All Sites', value: 'all' }]);
-        return;
-      }
       try {
         const res = await getSitesByProvince({
-          provinceId: selectedProvince,
+          provinceId: selectedProvince === 'all' ? undefined : selectedProvince,
           page: 1,
           limit: 100,
         });
@@ -229,6 +237,46 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
       isMounted = false;
     };
   }, [selectedProvince]);
+
+  // Support types from the support_offering_type entity type
+  useEffect(() => {
+    let isMounted = true;
+    getSupportCategories()
+      .then((types) => {
+        if (!isMounted || !types?.length) return;
+        setSupportTypeOptions([
+          { label: 'All Support Types', value: 'all' },
+          ...types.map((type) => ({ label: type.label, value: type.value })),
+        ]);
+      })
+      .catch((err) => console.warn('[Dashboard] Could not fetch support types', err));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Sub-categories of the selected support type, of every support type when none is selected
+  useEffect(() => {
+    let isMounted = true;
+    const fetchers =
+      selectedSupportType === 'all'
+        ? Object.values(SUB_CATEGORY_FETCHERS)
+        : [SUB_CATEGORY_FETCHERS[selectedSupportType]].filter(Boolean);
+    Promise.all(fetchers.map((fetcher) => fetcher().catch(() => [] as MentoringOption[]))).then((results) => {
+      if (!isMounted) return;
+      const seen = new Set<string>();
+      const subCategories = results
+        .flat()
+        .filter((c) => (c?.value && !seen.has(c.value) ? (seen.add(c.value), true) : false));
+      setSubCategoryOptions([
+        { label: 'All Sub-Categories', value: 'all' },
+        ...subCategories.map((c) => ({ label: c.label, value: c.value })),
+      ]);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedSupportType]);
 
   // 3. Fetch Real Upcoming Sessions from Mentor/Training Sessions API & generate Activity Logs
   useEffect(() => {
@@ -425,15 +473,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
     };
   }, []);
 
-  const subCategoryOptions = useMemo(() => {
-    if (selectedSupportType === 'all') {
-      const allSubs = Array.from(new Set(Object.values(SUB_CATEGORIES_MAP).flat()));
-      return [{ label: 'All Sub-Categories', value: 'all' }, ...allSubs.map((s) => ({ label: s, value: s }))];
-    }
-    const subs = SUB_CATEGORIES_MAP[selectedSupportType] || [];
-    return [{ label: 'All Sub-Categories', value: 'all' }, ...subs.map((s) => ({ label: s, value: s }))];
-  }, [selectedSupportType]);
-
   // Asset Financial Totals - approved asset requests from scope API (value of a request = estimated value x quantity)
   // Delivered value is not calculated yet and is shown as "-"
   const approvedAssetsValue = scope.assets?.approved.value || 0;
@@ -514,12 +553,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
               {/* Support Type Filter */}
               <Box {...styles.filterCol}>
                 <Select
-                  options={[
-                    { label: 'All Support Types', value: 'all' },
-                    { label: 'Training / Sessions', value: 'training' },
-                    { label: 'Additional Services', value: 'service' },
-                    { label: 'Assets & Equipment', value: 'asset' },
-                  ]}
+                  options={supportTypeOptions}
                   value={selectedSupportType}
                   onChange={(val) => {
                     setSelectedSupportType(val);
@@ -536,7 +570,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                   value={selectedSubCategory}
                   onChange={setSelectedSubCategory}
                   placeholder="All Sub-Categories"
-                  disabled={selectedSupportType === 'asset'}
                 />
               </Box>
             </HStack>
@@ -563,8 +596,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                 <Text {...styles.kpiLabelCommitted}>COMMITTED</Text>
               </HStack>
               <VStack>
-                <Text {...styles.kpiValueTextCommitted}>{formatCurrency(scope.committed)}</Text>
-                <Text {...styles.kpiSubText}>{coveragePct}% of your needed target</Text>
+                <Text {...styles.kpiValueTextCommitted}>{formatCommitted(scope.committed)}</Text>
+                <Text {...styles.kpiSubText}>{formatPercent(coveragePct)} of your needed target</Text>
               </VStack>
             </Box>
 
@@ -577,7 +610,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
               <VStack>
                 <Text {...styles.kpiValueTextApproved}>{formatCurrency(scope.approved)}</Text>
                 <Text {...styles.kpiSubText}>
-                  {getPercent(scope.approved, scope.committed)}% of your committed
+                  {formatPercent(getPercent(scope.approved, scope.committed))} of your committed
                 </Text>
               </VStack>
             </Box>
@@ -591,7 +624,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
               <VStack>
                 <Text {...styles.kpiValueTextDelivered}>{formatCurrency(scope.delivered)}</Text>
                 <Text {...styles.kpiSubText}>
-                  {getPercent(scope.delivered, scope.approved)}% of your approved
+                  {formatPercent(getPercent(scope.delivered, scope.approved))} of your approved
                 </Text>
               </VStack>
             </Box>
@@ -607,10 +640,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                 <VStack>
                   <HStack {...styles.statusMiniBarRow}>
                     <Text {...styles.statusMiniBarLabel}>Coverage</Text>
-                    <Text {...styles.statusMiniBarValueGreen}>{coveragePct}%</Text>
+                    <Text {...styles.statusMiniBarValueGreen}>{formatPercent(coveragePct)}</Text>
                   </HStack>
                   <Box {...styles.trackBar}>
-                    <Box {...styles.fillBarGreen100} w={`${Math.min(coveragePct, 100)}%`} />
+                    <Box {...styles.fillBarGreen100} w={`${Math.min(coveragePct ?? 0, 100)}%`} />
                   </Box>
                 </VStack>
 
@@ -618,10 +651,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                 <VStack {...styles.statusDeliveryItemVStack}>
                   <HStack {...styles.statusMiniBarRow}>
                     <Text {...styles.statusMiniBarLabel}>Delivery</Text>
-                    <Text {...styles.statusMiniBarValueMaroon}>{deliveryPct}%</Text>
+                    <Text {...styles.statusMiniBarValueMaroon}>{formatPercent(deliveryPct)}</Text>
                   </HStack>
                   <Box {...styles.trackBar}>
-                    <Box {...styles.fillBarMaroon75} w={`${Math.min(deliveryPct, 100)}%`} />
+                    <Box {...styles.fillBarMaroon75} w={`${Math.min(deliveryPct ?? 0, 100)}%`} />
                   </Box>
                 </VStack>
               </VStack>
@@ -674,8 +707,10 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                   </Box>
                 </HStack>
 
-                {/* Category rows from scope API */}
-                {SUMMARY_CATEGORY_ROWS.map((row) => {
+                {/* Category rows from scope API, only the selected support type when filtered */}
+                {SUMMARY_CATEGORY_ROWS.filter(
+                  (row) => selectedSupportType === 'all' || row.key === selectedSupportType
+                ).map((row) => {
                   const counts = scope.categories?.[row.key] || {
                     needed: 0,
                     committed: 0,
@@ -692,7 +727,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                         <Text {...styles.tdNeededText}>{formatCurrency(counts.needed)}</Text>
                       </Box>
                       <Box {...styles.colSummaryCommitted}>
-                        <Text {...styles.summaryCommittedText}>{formatCurrency(counts.committed)}</Text>
+                        <Text {...styles.summaryCommittedText}>{formatCommitted(counts.committed)}</Text>
                       </Box>
                       <Box {...styles.colSummaryApproved}>
                         <Text {...styles.summaryApprovedText}>{formatCurrency(counts.approved)}</Text>
@@ -708,7 +743,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                         </Box>
                       </Box>
                       <Box {...styles.summaryColRate}>
-                        <Text {...styles.tdRateText}>{getPercent(counts.delivered, counts.committed)}%</Text>
+                        <Text {...styles.tdRateText}>{formatPercent(getPercent(counts.delivered, counts.committed))}</Text>
                       </Box>
                     </HStack>
                   );
@@ -723,7 +758,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                     <Text {...styles.tdCumulativeCellText}>{formatCurrency(scope.needed)}</Text>
                   </Box>
                   <Box {...styles.colSummaryCommitted}>
-                    <Text {...styles.summaryCommittedText}>{formatCurrency(scope.committed)}</Text>
+                    <Text {...styles.summaryCommittedText}>{formatCommitted(scope.committed)}</Text>
                   </Box>
                   <Box {...styles.colSummaryApproved}>
                     <Text {...styles.summaryApprovedText}>{formatCurrency(scope.approved)}</Text>
@@ -739,7 +774,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
                     </Box>
                   </Box>
                   <Box {...styles.summaryColRate}>
-                    <Text {...styles.tdRateText}>{deliveryPct}%</Text>
+                    <Text {...styles.tdRateText}>{formatPercent(deliveryPct)}</Text>
                   </Box>
                 </HStack>
               </VStack>
