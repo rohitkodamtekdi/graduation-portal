@@ -5,13 +5,13 @@ FROM node:22.21.1-alpine AS builder
 
 WORKDIR /app
 
-# Enable Corepack for Yarn
+# Enable Corepack/Yarn
 RUN corepack enable
 
-# Copy dependency manifests first for better layer caching
+# Copy dependency files first for Docker layer caching
 COPY package.json yarn.lock ./
 
-# Install dependencies
+# Install all dependencies required for the build
 RUN yarn install --frozen-lockfile
 
 # Copy application source
@@ -22,7 +22,7 @@ RUN yarn build:web
 
 
 # ============================================================
-# Stage 2: Runtime
+# Stage 2: Production Runtime
 # ============================================================
 FROM node:22.21.1-alpine AS runtime
 
@@ -35,25 +35,27 @@ RUN addgroup -S appgroup && \
 # Enable Corepack
 RUN corepack enable
 
-# Copy only dependency manifests
+# Copy dependency files
 COPY --from=builder /app/package.json /app/yarn.lock ./
 
 # Install only production dependencies
 RUN yarn install --frozen-lockfile --production && \
     yarn cache clean
 
-# Copy only the build output
-# IMPORTANT:
-# Change "/app/<build-output>" to whatever directory
-# yarn build:web actually generates.
-COPY --from=builder /app/dist /app/dist
+# Copy server
+COPY --from=builder /app/server.js ./server.js
+
+# Copy frontend build
+COPY --from=builder /app/dist ./dist
 
 # Copy entrypoint
 COPY --from=builder /app/entrypoint.sh /entrypoint.sh
 
+# Set permissions
 RUN chmod 755 /entrypoint.sh && \
     chown -R appuser:appgroup /app /entrypoint.sh
 
+# Don't run application as root
 USER appuser
 
 EXPOSE 3000
