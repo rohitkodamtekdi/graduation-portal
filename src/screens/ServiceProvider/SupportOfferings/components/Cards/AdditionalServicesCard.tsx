@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Box,
   HStack,
@@ -86,10 +86,13 @@ const Card: React.FC<CardProps> = ({ item, provinces, sites, footer }) => {
   // requestsCount falls back to capacity (seats_limit), so the cancel warning uses the actually assigned count
   const seatsLimit = (item as any)?.seats_limit;
   const seatsRemaining = (item as any)?.seats_remaining;
-  const assignedCount =
-    seatsLimit !== undefined && seatsRemaining !== undefined
-      ? Math.max(0, Number(seatsLimit || 0) - Number(seatsRemaining || 0))
-      : undefined;
+  const assignedCount = useMemo(
+    () =>
+      seatsLimit !== undefined && seatsRemaining !== undefined
+        ? Math.max(0, Number(seatsLimit || 0) - Number(seatsRemaining || 0))
+        : undefined,
+    [seatsLimit, seatsRemaining]
+  );
 
   const { requesterName, requesterOrgName } = useRequesterInfo(item as any);
 
