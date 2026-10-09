@@ -85,7 +85,7 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
       ? (startNum < 10000000000 ? startNum * 1000 : startNum)
       : new Date(item.start_date).getTime();
 
-    const startFormatted = moment(startMs).format('ddd, D MMM YYYY HH:mm');
+    const startFormatted = moment(startMs).format('ddd, D MMM YYYY hh:mm A');
 
     if (item.end_date) {
       const endNum = Number(item.end_date);
@@ -93,7 +93,7 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
         ? (endNum < 10000000000 ? endNum * 1000 : endNum)
         : new Date(item.end_date).getTime();
 
-      const endFormatted = moment(endMs).format('HH:mm');
+      const endFormatted = moment(endMs).format('hh:mm A');
       return `${startFormatted} - ${endFormatted}`;
     }
 

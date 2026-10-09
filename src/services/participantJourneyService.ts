@@ -12,7 +12,7 @@ export interface MenteeSessionsParams {
  */
 export const getMenteeSessions = async (params?: MenteeSessionsParams): Promise<any> => {
   try {
-    const response = await api.get(API_ENDPOINTS.MENTEE_SESSIONS, { params });
+    const response = await api.get(API_ENDPOINTS.SESSION_MENTEES_SESSIONS, { params });
     return response?.data;
   } catch (error) {
     console.error('Error fetching mentee sessions:', error);

@@ -14,6 +14,8 @@ interface RequestorFilterProps {
   typeOptions?: any[];
   statusOptions?: any[];
   formatOptions: any[];
+  hideProvince?: boolean;
+  initialValue?: Record<string, any>;
   shouldDisableSite?: boolean;
   shouldDisableType?: boolean;
 }
@@ -27,6 +29,8 @@ export const RequestorFilter: React.FC<RequestorFilterProps> = ({
   typeOptions,
   statusOptions,
   formatOptions,
+  hideProvince,
+  initialValue,
   shouldDisableSite,
   shouldDisableType,
 }) => {
@@ -36,7 +40,7 @@ export const RequestorFilter: React.FC<RequestorFilterProps> = ({
 
   // Map dynamic data into static filter configuration
   const configData = useMemo(() => {
-    return REQUESTOR_FILTERS.map((item) => {
+    return REQUESTOR_FILTERS.filter((item) => !(hideProvince && item.attr === 'province')).map((item) => {
       if (item.attr === 'province') {
         return { ...item, data: provinceOptions };
       }
@@ -57,7 +61,7 @@ export const RequestorFilter: React.FC<RequestorFilterProps> = ({
       }
       return item;
     });
-  }, [provinceOptions, siteOptions, pillarOptions, typeOptions, statusOptions, formatOptions, shouldDisableSite, shouldDisableType,]);
+  }, [provinceOptions, siteOptions, pillarOptions, typeOptions, statusOptions, formatOptions, hideProvince, shouldDisableSite, shouldDisableType,]);
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
@@ -91,6 +95,7 @@ export const RequestorFilter: React.FC<RequestorFilterProps> = ({
       <FilterButton
         data={configData}
         onFilterChange={handleDropdownChange}
+        initialValue={initialValue}
         hideTitleHeader={true}
         showClearButton={false}
         _container={styles.requestorFilterButton}

@@ -68,7 +68,7 @@ const parseMoment = (val: any) => {
 
 const formatDateTime = (val: any, t: any) => {
   const m = parseMoment(val);
-  return m ? t('lc.sessionsSupport.requestDetails.dateTimeFormat', '{{date}} at {{time}}', { date: m.format('YYYY-MM-DD'), time: m.format('HH:mm') }) : '-';
+  return m ? t('lc.sessionsSupport.requestDetails.dateTimeFormat', '{{date}} at {{time}}', { date: m.format('YYYY-MM-DD'), time: m.format('hh:mm A') }) : '-';
 };
 
 const formatDate = (val: any) => {

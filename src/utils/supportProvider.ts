@@ -56,12 +56,19 @@ export function valueMapping(
     const rawDeliveryMode = formValues?.delivery_mode;
     const deliveryModeVal = typeof rawDeliveryMode === 'object' ? rawDeliveryMode?.value : rawDeliveryMode;
 
+    // Details API may return entity values as { value, label } objects
+    const rawServiceTasks = formValues?.idp_additional_services_tasks;
+    const serviceTasksVal: string[] = (Array.isArray(rawServiceTasks) ? rawServiceTasks : rawServiceTasks ? [rawServiceTasks] : [])
+      .map((item: any) => item?.value ?? item)
+      .filter(Boolean);
+
     return {
       title: formValues?.title,
       provinces: provinceVal || '',
       sites: sitesVal,
       categories: categoryVal || '',
       idp_training_task: formValues.idp_training_task,
+      idp_additional_services_tasks: serviceTasksVal,
       sessionTypeOther: formValues.idp_training_task === "custom" ? formValues?.title : "",
       description: formValues?.description,
       learning_objectives: formValues?.learning_objectives,

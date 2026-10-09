@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Button, ButtonIcon, ButtonText, Container, HStack, LucideIcon, Text, VStack } from '@ui';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Box, Button, ButtonIcon, ButtonText, Container, HStack, LucideIcon, Spinner, Text, VStack } from '@ui';
 import styles from './styles';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useLanguage } from '@contexts/LanguageContext';
+import { useAuth } from '@contexts/AuthContext';
+import { useProfileCompletion } from '@hooks';
 import { TabButton } from '@components/Tabs';
 import FilterButton from '@components/Filter';
 import TrainingCard from './components/Cards/TrainingCard';
@@ -47,6 +49,12 @@ const App = (): React.JSX.Element => {
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('sessions');
   const [filters, setFilters] = useState<Record<string, any>>({});
+  const { user } = useAuth() || {};
+  const { allowedProvinces, allowedSites, isProfileLoading } = useProfileCompletion();
+  // Mentors only see the provinces/sites from their mentoring profile (empty list = no restriction)
+  const isMentor = user?.role === 'mentor';
+  const restrictProvinces = isMentor && allowedProvinces.length > 0;
+  const restrictSites = isMentor && allowedSites.length > 0;
   const [provincesList, setProvincesList] = useState<ProvinceEntity[]>([]);
   const [provinceOptions, setProvinceOptions] = useState(DEFAULT_PROVINCE_OPTIONS);
   const [allSiteOptions, setAllSiteOptions] = useState();
@@ -65,6 +73,12 @@ const App = (): React.JSX.Element => {
   ];
 
   const handleTabChange = (key: string) => {
+    if (key === activeTab) return;
+    // Clear the previous tab's list so it is never rendered inside the new tab's cards while loading
+    setItems([]);
+    setTotal(0);
+    setPage(1);
+    setLoading(true);
     setActiveTab(key);
   };
 
@@ -108,13 +122,16 @@ const App = (): React.JSX.Element => {
         if (isMounted && provincesData && provincesData.length > 0) {
           setProvincesList(provincesData);
           const { result: { data } } = await getSitesByProvince();
+          // Profile may have changed while the request was pending; drop the stale result
+          if (!isMounted) return;
           setAllSiteOptions(data || []);
+          const mappedProvinces = provincesData.map((p: any) => ({
+            label: p.metaInformation?.name || p.name || p.title || p.label,
+            value: p._id || p.id || p.value,
+          }));
           const dynamicProvinces = [
             { label: 'All Provinces', value: 'all-provinces' },
-            ...provincesData.map((p: any) => ({
-              label: p.metaInformation?.name || p.name || p.title || p.label,
-              value: p._id || p.id || p.value,
-            })),
+            ...(restrictProvinces ? mappedProvinces.filter((p: any) => allowedProvinces.includes(p.value)) : mappedProvinces),
           ];
           setProvinceOptions(dynamicProvinces);
         }
@@ -122,11 +139,12 @@ const App = (): React.JSX.Element => {
         console.error('Error fetching dynamic provinces:', err);
       }
     };
+    if (isProfileLoading) return;
     fetchFilterData();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isProfileLoading, restrictProvinces]);
 
   // Fetch dynamic sites based on selected province filter
   useEffect(() => {
@@ -154,7 +172,7 @@ const App = (): React.JSX.Element => {
         if (isMounted) {
           const dynamicSites = [
             { label: 'All Sites', value: 'all-sites' },
-            ...fetchedSites.map((s: any) => ({
+            ...(restrictSites ? fetchedSites.filter((s: any) => allowedSites.includes(s._id || s.id || s.value)) : fetchedSites).map((s: any) => ({
               label:
                 s.metaInformation?.name ||
                 s.name ||
@@ -181,15 +199,39 @@ const App = (): React.JSX.Element => {
     return () => {
       isMounted = false;
     };
-  }, [filters.province, provincesList]);
+  }, [filters.province, provincesList, restrictSites, allowedSites]);
+
+  // Drop selected province/site values the profile no longer allows so they aren't sent to the listing API
+  useEffect(() => {
+    if (isProfileLoading) return;
+    setFilters((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      if (restrictProvinces && prev.province && prev.province !== 'all-provinces' && !allowedProvinces.includes(prev.province)) {
+        delete next.province;
+        delete next.site;
+        changed = true;
+      }
+      if (restrictSites && next.site && next.site !== 'all-sites' && !allowedSites.includes(next.site)) {
+        delete next.site;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [isProfileLoading, restrictProvinces, restrictSites, allowedProvinces, allowedSites]);
 
   // Reset page when tab or filters change
   useEffect(() => {
     setPage(1);
   }, [activeTab, filters.search, filters.status, filters.province, filters.site]);
 
+  // Only the latest request may update the list, so a slow response from a previous tab/filter is ignored
+  const latestRequestIdRef = useRef(0);
+
   // Fetch listing data
   const fetchData = useCallback(async () => {
+    const requestId = ++latestRequestIdRef.current;
+    const isStale = () => requestId !== latestRequestIdRef.current;
     try {
       setLoading(true);
       const params = {
@@ -217,6 +259,7 @@ const App = (): React.JSX.Element => {
         fetchedData = Array.isArray(res) ? res : (res as any)?.result?.data || [];
         totalCount = (res as any)?.result?.count ?? (res as any)?.total ?? (res as any)?.count ?? fetchedData.length;
       }
+      if (isStale()) return;
       if (page === 1) {
         setItems(fetchedData);
       } else {
@@ -224,13 +267,14 @@ const App = (): React.JSX.Element => {
       }
       setTotal(totalCount);
     } catch (err) {
+      if (isStale()) return;
       logger.error('Error fetching offerings list:', err);
       if (page === 1) {
         setItems([]);
         setTotal(0);
       }
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   }, [activeTab, filters.search, filters.status, filters.province, filters.site, page, limit]);
 
@@ -299,6 +343,12 @@ const App = (): React.JSX.Element => {
             _container={styles.filterContainer}
             _input={styles.filterInputProps}
           />
+
+          {_loading && page === 1 && items.length === 0 && (
+            <Box {...styles.emptyStateBox}>
+              <Spinner />
+            </Box>
+          )}
 
           {!_loading && items.length === 0 && (
             <Box {...styles.emptyStateBox}>
