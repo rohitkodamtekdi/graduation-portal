@@ -205,6 +205,8 @@ export const OFFERING_FILTER_FIELDS = {
 export const OFFERING_QUERY_PARAM_KEYS = {
   PAGE: 'page',
   LIMIT: 'limit',
+  PAGE_NO: 'pageNo',
+  PAGE_SIZE: 'pageSize',
   SEARCH: 'search',
   STATUS: 'status',
   PROVINCES: 'provinces',

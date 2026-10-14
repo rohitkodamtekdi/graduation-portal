@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, HStack, VStack, Text, Button, ButtonText, Badge, BadgeText, Spinner, LucideIcon } from '@ui';
 import moment from 'moment';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useSessionStatus, deriveStatusLabel } from '@hooks/useSessionStatus';
+import { useSessionAttendance } from '@hooks/useSessionAttendance';
+import SessionCompleteModal from '../../ServiceProvider/SupportOfferings/components/modals/SessionCompleteModal';
 import { SESSION_STATUS, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
 import styles from '../styles';
 
@@ -62,7 +64,7 @@ export const getStatusColors = (status: string) => {
 };
 
 const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
-  item,
+  item: initialItem,
   isFirst,
   onAssignParticipants,
   onEditSession,
@@ -72,6 +74,8 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
   hideSchedule = false,
 }) => {
   const { t } = useLanguage();
+  const [item, setItem] = useState(initialItem);
+  useEffect(() => setItem(initialItem), [initialItem]);
   const { statusTag: derivedStatusLabel } = useSessionStatus(item);
   const statusLabel = hideSchedule ? derivedStatusLabel : getSessionBadgeLabel(item);
   const isExpired = statusLabel === SESSION_STATUS_LABEL.EXPIRED;
@@ -136,8 +140,30 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
   const seatsRemaining = item.seats_remaining ?? maxParticipants;
   const assignedCount = maxParticipants - seatsRemaining;
 
-  // Editing is only allowed for upcoming sessions that have no participants assigned yet.
-  const canEditSession = statusLabel === 'Upcoming' && assignedCount <= 0;
+  const {
+    isModalOpen: isAttendanceModalOpen,
+    openModal: openAttendanceModal,
+    closeModal: closeAttendanceModal,
+    participants: enrolledParticipants,
+    isLoadingParticipants,
+    confirmAttendance,
+  } = useSessionAttendance(item.id || item._id, (selectedParticipantIds) => {
+    setItem((prev) => ({
+      ...prev,
+      status: SESSION_STATUS.COMPLETED,
+      seats_remaining: selectedParticipantIds.length > 0
+        ? Math.max(0, maxParticipants - selectedParticipantIds.length)
+        : prev.seats_remaining,
+    }));
+  });
+
+  // Actions only on the LC's own sessions (History passes no assign handler and stays read-only):
+  // Upcoming -> Assign Participants, plus Edit until someone is assigned; Expired -> Confirm Attendance only
+  const isActionable = !!onAssignParticipants;
+  const isUpcoming = statusLabel === SESSION_STATUS_LABEL.UPCOMING;
+  const canAssignParticipants = isActionable && isUpcoming;
+  const canEditSession = isActionable && isUpcoming && assignedCount <= 0;
+  const canConfirmAttendance = isActionable && isExpired;
 
   // Delivery mode display
   const rawMode = ((typeof item.delivery_mode === 'object' ? (item.delivery_mode as any)?.value : item.delivery_mode) || '').toLowerCase();
@@ -207,12 +233,20 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
           </HStack>
 
           {/* FOOTER: Action Buttons */}
+          {(canAssignParticipants || canConfirmAttendance || canEditSession) && (
           <HStack {...styles.mySessionCardFooter}>
-            {/* Only shown when an assign handler is passed (History renders these cards read-only) */}
-            {onAssignParticipants && (
-              <Button variant="outlineghost" {...styles.mySessionCardAssignBtn} onPress={() => onAssignParticipants(item)}>
+            {canAssignParticipants && (
+              <Button variant="outlineghost" {...styles.mySessionCardAssignBtn} onPress={() => onAssignParticipants?.(item)}>
                 <ButtonText {...styles.mySessionCardAssignBtnText}>
                   {t('lc.sessionsSupport.mySessionCard.assignParticipants')}
+                </ButtonText>
+              </Button>
+            )}
+
+            {canConfirmAttendance && (
+              <Button {...styles.mySessionCardManageBtn} variant="solid" onPress={openAttendanceModal}>
+                <ButtonText {...styles.mySessionCardManageBtnText}>
+                  {t('supportProvider.supportOfferings.cards.confirmAttendance', 'Confirm Attendance')}
                 </ButtonText>
               </Button>
             )}
@@ -230,8 +264,19 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
               </Button>
             )}
           </HStack>
+          )}
         </VStack>
       </Box>
+
+      <SessionCompleteModal
+        isOpen={isAttendanceModalOpen}
+        onClose={closeAttendanceModal}
+        sessionTitle={item.title || ''}
+        expectedParticipantsCount={maxParticipants}
+        initialParticipants={enrolledParticipants ?? undefined}
+        isLoadingParticipants={isLoadingParticipants}
+        onConfirmComplete={confirmAttendance}
+      />
 
       {isShowLoadMore && (
         <Box alignItems="center" mt="$4" width="100%">

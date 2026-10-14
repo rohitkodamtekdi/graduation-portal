@@ -8,7 +8,6 @@ import {
   LucideIcon,
   Badge,
   BadgeText,
-  useAlert,
   Button,
   ButtonText,
   ButtonIcon,
@@ -17,16 +16,15 @@ import {
 import moment from 'moment';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useNavigation } from '@react-navigation/native';
-import { completeTrainingSession, getSessionEnrolledParticipants } from '../../../../../services/SupportOfferingsServices/supportOfferingsService';
-import { getEnrolledMentees } from '../../../../../services/mentoringService';
 // import { uploadFiles } from '../../../../../project-player/services/projectPlayerService';
 // import { openFilePicker } from '../../../../../project-player/components/Task/FileEvidence/file-picker';
-import type { MaterialItem, TrainingSessionItem, ParticipantAttendanceItem } from '../../../../../types/supportOfferingsTypes';
+import type { MaterialItem, TrainingSessionItem } from '../../../../../types/supportOfferingsTypes';
 import SessionCompleteModal from '../modals/SessionCompleteModal';
 import openExternalLink from '@utils/openExternalLink';
 import styles from '../../styles';
 import { FORM_MODE, SESSION_STATUS, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
 import { useSessionStatus, useRequesterInfo } from '@hooks/useSessionStatus';
+import { useSessionAttendance } from '@hooks/useSessionAttendance';
 import { openDownload } from "@utils/helper";
 
 const getDeliveryMode = (item: TrainingSessionItem): 'offline' | 'online' | 'hybrid' => {
@@ -180,19 +178,10 @@ const Card: React.FC<CardProps> = ({
   footer
 }) => {
   const { t } = useLanguage();
-  const { showAlert } = useAlert();
   const navigation = useNavigation();
 
   const [item, setItem] = useState<TrainingSessionItem>(initialItem);
   const [files, setFiles] = useState<MaterialItem[] | null>(null);
-  const [isCompleteModalOpen, setIsCompleteModalOpen] = useState(false);
-  const [isCompleting, setIsCompleting] = useState(false);
-  // Real enrolled participants, fetched on demand when the Complete/Confirm Attendance modal is
-  // opened - `item.participantList` is never populated anywhere, so relying on it silently fell
-  // back to fabricated placeholder names that could never actually be marked complete.
-  const [enrolledParticipants, setEnrolledParticipants] = useState<ParticipantAttendanceItem[] | null>(null);
-  const [isLoadingParticipants, setIsLoadingParticipants] = useState(false);
-
   const deliveryMode = getDeliveryMode(item);
   const deliveryBadge = getDeliveryBadge(deliveryMode);
 
@@ -290,83 +279,29 @@ const Card: React.FC<CardProps> = ({
     (navigation as any).navigate('form-training-session', { type: FORM_MODE.COPY, id: item.id });
   };
 
-  const handleOpenCompleteModal = async () => {
-    setIsCompleteModalOpen(true);
-    if (enrolledParticipants || isLoadingParticipants) return;
-
-    setIsLoadingParticipants(true);
-    try {
-      const mentees = await getEnrolledMentees(item.id);
-      setEnrolledParticipants(
-        (mentees || []).map((mentee: any) => ({
-          id: String(mentee.id),
-          name: mentee.name || '',
-          lcName: mentee.organization?.name || '',
-          isPresent: !!mentee.is_attended,
-        }))
-      );
-    } finally {
-      setIsLoadingParticipants(false);
-    }
-  };
-
-  /*
-   * Keep participant ID based completion functionality.
-   */
-  const handleConfirmSessionComplete = async (
-    selectedParticipantIds: string[]
-  ) => {
-    if (isCompleting) return;
-
-    setIsCompleting(true);
-
-    try {
-      await completeTrainingSession(item.id, {
-        mentees: selectedParticipantIds,
-      });
-
-      const hasMarkedAttendance = selectedParticipantIds.length > 0;
-
-      // Keep the cached list in sync so reopening the modal shows the saved attendance
-      setEnrolledParticipants((prev) =>
-        prev ? prev.map((p) => ({ ...p, isPresent: selectedParticipantIds.includes(p.id) })) : prev
-      );
-
-      setItem((prev) => {
-        const prevLimit = prev.seats_limit || 0;
-        return {
-          ...prev,
-          status: SESSION_STATUS.COMPLETED,
-          seats_remaining: hasMarkedAttendance
-            ? Math.max(0, prevLimit - selectedParticipantIds.length)
-            : prev.seats_remaining,
-          completionNotes:
-            prev.completionNotes ||
-            t(
-              'supportProvider.supportOfferings.cards.alerts.sessionCompleted'
-            ),
-        };
-      });
-
-      setIsCompleteModalOpen(false);
-
-      showAlert(
-        'success',
-        t(
-          'supportProvider.supportOfferings.cards.alerts.sessionCompleted'
-        )
-      );
-    } catch (error) {
-      console.error('Error completing session via API:', error);
-
-      showAlert(
-        'error',
-        'Failed to complete session. Please try again.'
-      );
-    } finally {
-      setIsCompleting(false);
-    }
-  };
+  const {
+    isModalOpen: isCompleteModalOpen,
+    openModal: handleOpenCompleteModal,
+    closeModal: closeCompleteModal,
+    participants: enrolledParticipants,
+    isLoadingParticipants,
+    isCompleting,
+    confirmAttendance: handleConfirmSessionComplete,
+  } = useSessionAttendance(item.id, (selectedParticipantIds) => {
+    setItem((prev) => {
+      const prevLimit = prev.seats_limit || 0;
+      return {
+        ...prev,
+        status: SESSION_STATUS.COMPLETED,
+        seats_remaining: selectedParticipantIds.length > 0
+          ? Math.max(0, prevLimit - selectedParticipantIds.length)
+          : prev.seats_remaining,
+        completionNotes:
+          prev.completionNotes ||
+          t('supportProvider.supportOfferings.cards.alerts.sessionCompleted'),
+      };
+    });
+  });
 
   /*
    * Upload functionality via uploadFiles API
@@ -646,7 +581,7 @@ const Card: React.FC<CardProps> = ({
       {/* SESSION COMPLETE MODAL */}
       < SessionCompleteModal
         isOpen={isCompleteModalOpen}
-        onClose={() => setIsCompleteModalOpen(false)}
+        onClose={closeCompleteModal}
         sessionTitle={item.title}
         expectedParticipantsCount={expectedParticipants}
         initialParticipants={enrolledParticipants ?? undefined}

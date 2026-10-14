@@ -58,7 +58,7 @@ const LC_STATUS_FILTER_TO_BADGE: Record<string, string> = {
   Upcoming: SESSION_STATUS_LABEL.UPCOMING,
   live: SESSION_STATUS_LABEL.IN_PROGRESS,
 };
-// History tab only lists sessions whose card badge is Completed or Expired
+// Browse sessions shown in Training History: ones whose card badge is Completed or Expired
 const HISTORY_BADGES: string[] = [SESSION_STATUS_LABEL.COMPLETED, SESSION_STATUS_LABEL.EXPIRED];
 const matchesOfferingType = (item: any, expectedType: string): boolean => {
   const rawType = item?.support_offering_type || item?.type || item?.session?.support_offering_type;
@@ -205,6 +205,9 @@ const SessionsSupportScreen: React.FC = () => {
   const [limit] = useState<number>(5);
   const [total, setTotal] = useState<number>(0);
   const browseHiddenCountRef = useRef(0);
+  // Full filtered list for tabs that page on the client (My Training & Sessions, History)
+  const localListRef = useRef<any[]>([]);
+  // Unused since Training History lists only the LC's own Completed sessions
   const historyLoadedCountRef = useRef(0);
   const [_loading, setLoading] = useState<boolean>(false);
   const [counts, setCounts] = useState({
@@ -535,47 +538,72 @@ const SessionsSupportScreen: React.FC = () => {
           return visible;
         };
         let totalCount = 0;
+        // These lists are filtered on the client, so the full list is loaded on page 1 and shown `limit` at a time
+        const paginateLocally = async (loadAll: () => Promise<any[]>) => {
+          if (page === 1) localListRef.current = await loadAll();
+          return {
+            data: localListRef.current.slice((page - 1) * limit, page * limit),
+            total: localListRef.current.length,
+          };
+        };
 
         if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY && activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
-          // sessions/list ignores a status filter and also returns upcoming sessions, so only cards whose badge is Completed/Expired are kept
-          const result = await getRequestSessionsList({
-            ...params,
-            support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
+          // History = the LC's own Completed sessions + Browse sessions that have ended, newest first
+          const { data, total: listTotal } = await paginateLocally(async () => {
+            const [ownResult, browseResult] = await Promise.all([
+              getTrainingSessions({ page: 1, limit: HISTORY_FETCH_LIMIT }),
+              getRequestSessionsList({
+                ...params,
+                page: 1,
+                limit: HISTORY_FETCH_LIMIT,
+                support_offering_type: SUPPORT_OFFERING_TYPE_VALUES.TRAINING_SESSION,
+              }),
+            ]);
+            const allOwnSessions = ownResult?.result?.data || [];
+            const ownSessions = allOwnSessions.filter(
+              (item: any) => getSessionBadgeLabel(item) === SESSION_STATUS_LABEL.COMPLETED,
+            );
+            // The LC's own non-completed sessions belong to My Training & Sessions, so Browse skips all of them
+            const ownIds = new Set(allOwnSessions.map((item: any) => String(item.id)));
+            const browseSessions = (browseResult?.result?.data || []).filter(
+              (item: any) => !ownIds.has(String(item.id)) && HISTORY_BADGES.includes(getSessionBadgeLabel(item)),
+            );
+            return [...ownSessions, ...browseSessions].sort(
+              (a: any, b: any) => Number(b.end_date || 0) - Number(a.end_date || 0),
+            );
           });
-          const rawSessions = result?.result?.data || [];
-          fetchedData = rawSessions.filter((item: any) => HISTORY_BADGES.includes(getSessionBadgeLabel(item)));
-          if (page === 1) historyLoadedCountRef.current = 0;
-          if (isMounted) historyLoadedCountRef.current += fetchedData.length;
-          // Results are sorted by start date, so a page without any ended session means only upcoming ones remain
-          const hasReachedUpcoming = fetchedData.length === 0 || rawSessions.length < limit;
-          totalCount = hasReachedUpcoming
-            ? historyLoadedCountRef.current
-            : result?.result?.count ?? result?.total ?? result?.count ?? rawSessions.length;
+          fetchedData = data;
+          totalCount = listTotal;
+
         } else if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY) {
-          const historyParams = { ...params, page: 1, limit: HISTORY_FETCH_LIMIT };
-          const offeringType = activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES
-            ? SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE
-            : SUPPORT_OFFERING_TYPE_VALUES.ASSET;
-          const res = await getMyRequestsList({ ...historyParams, support_offering_type: offeringType });
-          const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
-            .filter((item: any) => matchesOfferingType(item, offeringType))
-            .map((item: any) => {
-              const session = item.session || item.session_details || {};
-              return {
-                ...item,
-                title: item.title || session.title || 'Untitled Request',
-                status: item.status || REQUEST_STATUS.REQUESTED,
-                start_date: item.start_date || session.start_date,
-                end_date: item.end_date || session.end_date,
-                delivery_mode: item.delivery_mode || session.delivery_mode,
-              };
-            });
-          fetchedData = rawList.filter((item: any) => deriveStatusLabel(item) === SESSION_STATUS_LABEL.COMPLETED);
-          // Additional Services History reuses the My Requests card, whose badge reads `status`
-          if (activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES) {
-            fetchedData = fetchedData.map((item: any) => ({ ...item, status: SESSION_STATUS_LABEL.COMPLETED }));
-          }
-          totalCount = fetchedData.length;
+          const { data, total: listTotal } = await paginateLocally(async () => {
+            const historyParams = { ...params, page: 1, limit: HISTORY_FETCH_LIMIT };
+            const offeringType = activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES
+              ? SUPPORT_OFFERING_TYPE_VALUES.ADDITIONAL_SERVICE
+              : SUPPORT_OFFERING_TYPE_VALUES.ASSET;
+            const res = await getMyRequestsList({ ...historyParams, support_offering_type: offeringType });
+            const rawList = (Array.isArray(res) ? res : (res as any)?.result?.data || (res as any)?.result || [])
+              .filter((item: any) => matchesOfferingType(item, offeringType))
+              .map((item: any) => {
+                const session = item.session || item.session_details || {};
+                return {
+                  ...item,
+                  title: item.title || session.title || 'Untitled Request',
+                  status: item.status || REQUEST_STATUS.REQUESTED,
+                  start_date: item.start_date || session.start_date,
+                  end_date: item.end_date || session.end_date,
+                  delivery_mode: item.delivery_mode || session.delivery_mode,
+                };
+              });
+            const completedList = rawList.filter((item: any) => deriveStatusLabel(item) === SESSION_STATUS_LABEL.COMPLETED);
+            // Additional Services History reuses the My Requests card, whose badge reads `status`
+            if (activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES) {
+              return completedList.map((item: any) => ({ ...item, status: SESSION_STATUS_LABEL.COMPLETED }));
+            }
+            return completedList;
+          });
+          fetchedData = data;
+          totalCount = listTotal;
         } else if (activeTab === SUPPORT_OFFERING_TABS.SESSIONS) {
           let result;
           if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS) {
@@ -603,9 +631,15 @@ const SessionsSupportScreen: React.FC = () => {
             });
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           } else {
-            result = await getTrainingSessions({});
-            fetchedData = result?.result?.data || [];
-            totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
+            // Completed sessions move to History; Upcoming, In progress and Expired stay here
+            const { data, total: listTotal } = await paginateLocally(async () => {
+              const res = await getTrainingSessions({ page: 1, limit: HISTORY_FETCH_LIMIT });
+              return (res?.result?.data || []).filter(
+                (item: any) => getSessionBadgeLabel(item) !== SESSION_STATUS_LABEL.COMPLETED,
+              );
+            });
+            fetchedData = data;
+            totalCount = listTotal;
           }
 
         } else if (activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES) {
@@ -926,8 +960,9 @@ const SessionsSupportScreen: React.FC = () => {
             <MyRequests
               items={items}
               _loading={_loading}
-              isShowLoadMore={false}
+              isShowLoadMore={isShowLoadMore}
               onLoadMoreItems={onLoadMoreItems}
+              isLoadingMore={_loading && page > 1}
             />
           ) : activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY ? (
             mySessions.length > 0 ? (

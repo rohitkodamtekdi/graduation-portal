@@ -76,10 +76,12 @@ export const getMyRequestsList = async (params: any): Promise<any> => {
 
     if (page != null) {
       queryParams.append(QUERY_PARAM.PAGE, page.toString());
+      queryParams.append(QUERY_PARAM.PAGE_NO, page.toString());
     }
 
     if (limit != null) {
       queryParams.append(QUERY_PARAM.LIMIT, limit.toString());
+      queryParams.append(QUERY_PARAM.PAGE_SIZE, limit.toString());
     }
 
     if (search?.trim()) {
