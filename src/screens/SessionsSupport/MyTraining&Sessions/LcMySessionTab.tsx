@@ -176,8 +176,10 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
     showAlert('success', t('supportProvider.supportOfferings.cards.alerts.sessionCompleted'));
   };
 
-  // Editing is only allowed for upcoming sessions that have no participants assigned yet.
-  const canEditSession = statusLabel === 'Upcoming' && assignedCount <= 0;
+  const isDraft = statusLabel === SESSION_STATUS_LABEL.DRAFT;
+  // Draft can always be edited; published only while upcoming with no participants assigned yet
+  // const canEditSession = statusLabel === 'Upcoming' && assignedCount <= 0;
+  const canEditSession = isDraft || (statusLabel === SESSION_STATUS_LABEL.UPCOMING && assignedCount <= 0);
 
   // Delivery mode display
   const rawMode = ((typeof item.delivery_mode === 'object' ? (item.delivery_mode as any)?.value : item.delivery_mode) || '').toLowerCase();
@@ -256,8 +258,8 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
 
           {/* FOOTER: Action Buttons */}
           <HStack {...styles.mySessionCardFooter}>
-            {/* Only shown when an assign handler is passed (History renders these cards read-only) */}
-            {onAssignParticipants && !hasEnded && (
+            {/* Only shown when an assign handler is passed (History renders these cards read-only); hidden for drafts */}
+            {onAssignParticipants && !hasEnded && !isDraft && (
               <Button variant="outlineghost" {...styles.mySessionCardAssignBtn} onPress={() => onAssignParticipants(item)}>
                 <ButtonText {...styles.mySessionCardAssignBtnText}>
                   {t('lc.sessionsSupport.mySessionCard.assignParticipants')}

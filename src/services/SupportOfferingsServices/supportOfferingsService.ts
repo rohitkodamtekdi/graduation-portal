@@ -122,7 +122,9 @@ export const getAdditionalServices = async (params?: any): Promise<any> => {
 };
 
 const ASSET_STATUS_LABEL: Record<string, AssetItem['status']> = {
-  DRAFT: 'Pending',
+  // Drafts were shown as Pending, which looked like a pending request
+  // DRAFT: 'Pending',
+  DRAFT: 'Draft',
   PUBLISHED: 'Upcoming',
   COMPLETED: 'Accepted',
 };

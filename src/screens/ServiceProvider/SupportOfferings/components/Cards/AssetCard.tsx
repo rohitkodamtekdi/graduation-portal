@@ -15,7 +15,8 @@ import {
 } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useRequesterInfo } from '@hooks/useSessionStatus';
-import { SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
+import { useNavigation } from '@react-navigation/native';
+import { FORM_MODE, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
 import type { AssetItem } from '../../../../../types/supportOfferingsTypes';
 import { cancelSession } from '../../../../../services/mentoringService';
 import CancelInterventionModal from '../modals/CancelInterventionModal';
@@ -38,6 +39,7 @@ const deliveryBadge = { label: 'Offline', icon: 'MapPin', bg: '$observationTaskB
 const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onViewRequests }) => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
+  const navigation = useNavigation();
 
   const [item, setItem] = useState<AssetItem>(initialItem);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -52,6 +54,8 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onView
         return { bg: '$success50', border: '#a7f3d0', text: '$success600', icon: 'CheckCircle' };
       case 'Pending':
         return { bg: '$observationTaskBg', border: '#fde68a', text: '$warningIconColor', icon: 'AlertCircle' };
+      case 'Draft':
+        return { bg: '$backgroundLight100', border: '$borderColor', text: '$textMuted', icon: 'FileText' };
       case 'Cancelled':
         return { bg: '$error50', border: '$red200', text: '$red600', icon: 'XCircle' };
       case 'Rejected':
@@ -80,6 +84,7 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onView
   const statusColors = getStatusColors(item.status);
   const isUpcoming = item.status === 'Upcoming';
   const isCancelled = String(item.status || '').toLowerCase() === 'cancelled';
+  const isDraft = item.status === SESSION_STATUS_LABEL.DRAFT;
 
   const { siteNames, locationValue } = getLocationValue(item, provinces, sites);
   const { requesterOrgName } = useRequesterInfo(item as any);
@@ -216,7 +221,23 @@ const Card: React.FC<CardProps> = ({ item: initialItem, provinces, sites, onView
               </Button>
             )}
 
-            {!isCancelled && (
+            {/* DRAFT: Edit */}
+            {isDraft && (
+              <Button
+                // @ts-ignore
+                variant="outlineghost" {...styles.outlineActionBtn}
+                onPress={() => (navigation as any).navigate('create-asset', { id: item.id, type: FORM_MODE.EDIT })}
+              >
+                <ButtonIcon as={LucideIcon} name="Pencil" {...styles.cardCopyIconProps} />
+                {/* @ts-ignore */}
+                <ButtonText {...styles.outlineActionBtnText}>
+                  {t('common.edit', 'Edit')}
+                </ButtonText>
+              </Button>
+            )}
+
+            {/* A draft is not visible to participants, so it has no requests to view */}
+            {!isCancelled && !isDraft && (
               <Button
                 variant="solid" {...styles.detailsBtn}
                 onPress={() => (onViewRequests ? onViewRequests(item) : setIsRequestsModalOpen(true))}

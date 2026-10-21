@@ -177,6 +177,7 @@ const RequestSessionScreen = (): React.JSX.Element => {
             _formContainer={FORM_CARD_PROPS}
             onSubmit={(formValues) => handleSave(formValues, false)}
             onSaveDraft={(formValues) => handleSave(formValues, true)}
+            showSaveDraftButton={false}
             uploadService={async (file) => {
               const entityId = `trainingSession-${Date.now()}`;
               const uploaded = await uploadFiles(entityId, [

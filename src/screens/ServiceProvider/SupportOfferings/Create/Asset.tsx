@@ -1,22 +1,23 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Card, Container, HStack, Text, VStack, useAlert, Loader } from '@ui';
 import styles from '../styles';
 import lcStyles from '../../../SessionsSupport/styles';
 import PageHeader from '@components/PageHeader';
 import SPTitleHeader from '@components/Header/SPTitleHeader';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import SchemaFormRenderer from '@components/SchemaFormRenderer';
 import { ASSET_FORM_SCHEMA, REQUEST_ASSET_HIDE_FIELDS } from '@constants/ASSET_SCHEMA';
 import type { FormSection, FormField } from '@components/SchemaFormRenderer/type';
 import { useLanguage } from '@contexts/LanguageContext';
 import { useAuth } from '@contexts/AuthContext';
 import { getSitesByProvince, getProvincesList } from '../../../../services/usersService';
-import { requestSession, getLivelihoodCategoriesOptions, getAssetTypesOptions, createSession } from '../../../../services/mentoringService';
-import { requestAssetPayloadMapping, toIdpTasksPayload, uploadService, applyDraftDefaults, ASSET_DRAFT_CONFIG } from '@utils/supportProvider';
+import { requestSession, getLivelihoodCategoriesOptions, getAssetTypesOptions, createSession, getSessionDetails, updateSessionWithResources } from '../../../../services/mentoringService';
+import { requestAssetPayloadMapping, toIdpTasksPayload, uploadService, applyDraftDefaults, ASSET_DRAFT_CONFIG, mapAssetApiToFormValues } from '@utils/supportProvider';
 import { useProfileCompletion } from '@hooks';
 import NotFound from '@components/NotFound';
 import {
   SUPPORT_CATEGORIES,
+  FORM_MODE,
   SUPPORT_PROVIDER_ROUTES as ROUTES,
   ASSET_FORM_FIELDS as FORM_FIELDS,
   ASSET_SESSIONS_SUPPORT_TABS as SESSIONS_SUPPORT_TABS,
@@ -44,10 +45,16 @@ const FORM_CARD_PROPS = { bg: '$white', borderRadius: '$2xl', p: '$6' };
 
 const App = (): React.JSX.Element => {
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const { t } = useLanguage();
   const { showAlert } = useAlert();
   const { user } = useAuth() || {};
   const isLc = user?.role === ROLE_NAMES.LC;
+  const sessionId = route.params?.id;
+  const isEdit = !isLc && Boolean(sessionId) && route.params?.type === FORM_MODE.EDIT;
+  // Resources as loaded in edit mode - needed to work out which ones the user removed
+  const originalResourcesRef = useRef<any[]>([]);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(isEdit);
 
   const hideFields = [
     ...(isLc ? REQUEST_ASSET_HIDE_FIELDS : []),
@@ -78,6 +85,26 @@ const App = (): React.JSX.Element => {
     }
     init();
   },[])
+
+  // Edit mode (draft asset): prefill the form from the saved session
+  useEffect(() => {
+    if (!isEdit) return;
+    const loadDetails = async () => {
+      try {
+        const rawResponse = await getSessionDetails(sessionId);
+        const rawData = rawResponse?.result;
+        if (!rawData) {
+          showAlert('error', rawResponse?.error?.message || t('common.somethingWentWrong'));
+          return;
+        }
+        originalResourcesRef.current = Array.isArray(rawData.resources) ? rawData.resources : [];
+        setValues(mapAssetApiToFormValues(rawData));
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    };
+    loadDetails();
+  }, [isEdit, sessionId]);
 
   useEffect(() => {
     if (!values[FORM_FIELDS.PROVINCE]) {
@@ -246,7 +273,11 @@ const App = (): React.JSX.Element => {
           delivery_mode: 'offline',
         };
 
-        await createSession(payload);
+        if (isEdit) {
+          await updateSessionWithResources(sessionId, payload, originalResourcesRef.current);
+        } else {
+          await createSession(payload);
+        }
 
         showAlert(
           'success',
@@ -263,7 +294,7 @@ const App = (): React.JSX.Element => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [isLc, navigation, showAlert, t]);
+  }, [isLc, isEdit, sessionId, navigation, showAlert, t]);
 
   const handleBackPress = () => {
     if (navigation.canGoBack && navigation.canGoBack()) {
@@ -274,7 +305,7 @@ const App = (): React.JSX.Element => {
     }
   }
 
-  if (isProfileLoading) {
+  if (isProfileLoading || isLoadingDetails) {
     return <Loader fullScreen message="Loading..." />;
   }
 
@@ -329,6 +360,8 @@ const App = (): React.JSX.Element => {
             onSubmit={(formValues) => handleSave(formValues, false)}
             onSaveDraft={(formValues) => handleSave(formValues, true)}
             draftRequiredFields={isLc ? undefined : ASSET_DRAFT_CONFIG.requiredFields}
+            // LC request goes to requestSessions/create, which has no draft support
+            showSaveDraftButton={!isLc}
             isSubmitting={isSubmitting}
             uploadService={uploadService}
           />

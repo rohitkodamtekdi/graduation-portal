@@ -70,6 +70,24 @@ function mapApiToFormValues(data: any, formType: SupportOfferingFormType): any {
   };
 }
 
+// Asset form uses its own field names (ASSET_SCHEMA), so it has a separate reverse mapping for edit
+export function mapAssetApiToFormValues(data: any): any {
+  const estimatedValue = data?.estimated_value ?? data?.meta?.estimated_value;
+  return {
+    province: unwrap(firstOf(data?.provinces)) || '',
+    site: toArray(data?.sites).map(unwrap).filter(Boolean).map(String),
+    assetType: unwrap(firstOf(data?.asset_types)) || '',
+    livelihoodCategory: unwrap(firstOf(data?.livelihood_categories ?? data?.livelihoods)) || '',
+    assetTitle: data?.title || '',
+    assetDescription: data?.description || '',
+    estimatedValue: estimatedValue !== undefined && estimatedValue !== null ? String(estimatedValue) : '',
+    availableQuantity: data?.seats_limit !== undefined && data?.seats_limit !== null ? String(data.seats_limit) : '',
+    startDate: toDateTimeValue(data?.start_date),
+    endDate: toDateTimeValue(data?.end_date),
+    assetDocuments: data?.resources,
+  };
+}
+
 // ---------- form -> API (create / update) ----------
 
 const toRecommendedForPayload = (value: any, formType: SupportOfferingFormType): string[] => {
