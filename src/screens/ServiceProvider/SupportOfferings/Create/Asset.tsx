@@ -329,6 +329,8 @@ const App = (): React.JSX.Element => {
             onSubmit={(formValues) => handleSave(formValues, false)}
             onSaveDraft={(formValues) => handleSave(formValues, true)}
             draftRequiredFields={isLc ? undefined : ASSET_DRAFT_CONFIG.requiredFields}
+            // LC request goes to requestSessions/create, which has no draft support
+            showSaveDraftButton={!isLc}
             isSubmitting={isSubmitting}
             uploadService={uploadService}
           />

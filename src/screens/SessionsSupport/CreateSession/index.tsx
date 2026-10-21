@@ -17,7 +17,7 @@ import {
   getSessionDetails,
   MentoringOption,
 } from '../../../services/mentoringService';
-import { valueMapping } from '@utils/supportProvider';
+import { valueMapping, applyDraftDefaults, TRAINING_DRAFT_CONFIG } from '@utils/supportProvider';
 import { CERTIFICATE_OPTIONS, RECURRING_OPTIONS, FORM_MODE, SESSION_STATUS } from '@constants/SUPPORT_PROVIDER_CARDS';
 
 const DELIVERY_MODE_ICONS: Record<string, string> = {
@@ -41,6 +41,7 @@ const CreateSessionScreen = (): React.JSX.Element => {
   const [livelihoodCategories, setLivelihoodCategories] = useState<MentoringOption[]>([]);
   const [values, setValues] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [lodingButton, setLodingButton] = useState<false | 'saveDraft' | 'submit'>(false);
   const { showAlert } = useAlert();
   // Saved start time in edit mode, so the min lead time check only runs when it is changed
   const originalStartDateRef = useRef<string | undefined>(undefined);
@@ -104,7 +105,7 @@ const CreateSessionScreen = (): React.JSX.Element => {
     (name: string, value: string, other?: any) => {
       setValues((prev: Record<string, any>) => {
         const next = { ...prev, [name]: value };
-        if (name === 'province') next.site = '';
+        if (name === 'provinces') next.sites = '';
         if (name === 'categories') {
           next.idp_tasks = '';
           next.livelihoodCategory = '';
@@ -120,9 +121,12 @@ const CreateSessionScreen = (): React.JSX.Element => {
     [pillers]
   );
 
-  const handleSave = async (formValues: any, isDraft: boolean) => {
+  const handleSave = async (submittedValues: any, isDraft: boolean) => {
     try {
+      // Same as SP: draft fills defaults for fields left empty so the backend accepts it
+      const formValues = isDraft ? applyDraftDefaults(submittedValues, TRAINING_DRAFT_CONFIG.defaults, optionsMap) : submittedValues;
       setValues(formValues);
+      setLodingButton(isDraft ? 'saveDraft' : 'submit');
       const payload: any = valueMapping({ ...formValues, isDraft , recommended_for: 'user'}, false, optionsMap);
       if (sessionId && modeType === FORM_MODE.EDIT) {
         payload.id = sessionId;
@@ -159,6 +163,8 @@ const CreateSessionScreen = (): React.JSX.Element => {
         error?.message ||
         t('supportProvider.createSupport.training.errors.saveFailed', 'Something went wrong while saving. Please try again.');
       showAlert('error', errMsg);
+    } finally {
+      setLodingButton(false);
     }
   };
 
@@ -204,6 +210,8 @@ const CreateSessionScreen = (): React.JSX.Element => {
             onFieldChange={handleFieldChange}
             onSubmit={(formValues) => handleSave(formValues, false)}
             onSaveDraft={(formValues) => handleSave(formValues, true)}
+            draftRequiredFields={TRAINING_DRAFT_CONFIG.requiredFields}
+            lodingButton={lodingButton}
             uploadService={async (file) => {
               const entityId = `trainingSession-${Date.now()}`;
               const uploaded = await uploadFiles(entityId, [
