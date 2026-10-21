@@ -19,7 +19,7 @@
  *   />
  */
 
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle, createContext, useContext } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import {
   VStack,
   HStack,
@@ -2351,9 +2351,6 @@ function useStableCallback<T extends (...args: any[]) => any>(fn: T): T {
 // Stable default so the errors-sync effect doesn't run (and wipe revealed errors) on every render
 const EMPTY_ERRORS: Record<string, string> = {};
 
-// Field names Save Draft needs; passed via context so labels can tag them without threading props through every memoized node
-const DraftRequiredFieldsContext = createContext<string[] | undefined>(undefined);
-
 const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
   schema,
   values = {},
@@ -2428,8 +2425,6 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
     {},
   );
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  // "Required for draft" tags only appear after the user has tried Save Draft
-  const [hasTriedSaveDraft, setHasTriedSaveDraft] = useState(false);
   const [popupIssues, setPopupIssues] = useState<ValidationIssue[]>([]);
   const [highlightedField, setHighlightedField] = useState<string | null>(null);
 
@@ -2656,7 +2651,6 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
   });
 
   const handleSaveDraft = useStableCallback(async () => {
-    setHasTriedSaveDraft(true);
     // Only the caller's draft fields are validated; the upload step is identical to Submit
     if (draftRequiredFields?.length) {
       const { errors: allErrors, issues: allIssues, visited } =
@@ -2776,10 +2770,7 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
       )
       : undefined;
 
-    const showDraftTags = hasTriedSaveDraft && !!onSaveDraft && (showSaveDraftButton ?? true);
-
     return (
-      <DraftRequiredFieldsContext.Provider value={showDraftTags ? draftRequiredFields : undefined}>
       <VStack space="md" width="100%">
         <VStack width="100%">
           <StepProgress
@@ -2843,7 +2834,6 @@ const SchemaFormRenderer: React.FC<SchemaFormRendererProps> = ({
           t={t}
         />
       </VStack>
-      </DraftRequiredFieldsContext.Provider>
     );
   }
 
@@ -3350,11 +3340,7 @@ const FieldContainer = memo(
       console.log(e);
     },
   }: FieldType) => {
-    const draftRequiredFields = useContext(DraftRequiredFieldsContext);
     const value = field.name ? values[field.name] ?? '' : '';
-    // Tag only while the field is still empty, so it goes away as soon as it is filled
-    const isValueEmpty = Array.isArray(value) ? value.length === 0 : String(value).trim() === '';
-    const isDraftRequired = !!field.name && !!draftRequiredFields?.includes(field.name) && isValueEmpty;
     const error = field.name ? errors[field.name] : undefined;
     const isHighlighted = !!field.name && highlightedField === field.name;
     const containerRef = (node: any) => {
@@ -3443,11 +3429,6 @@ const FieldContainer = memo(
                 field.label.fallback,
               )}
               <Text ml="$1" color={field.required ? "$red500" : "$blueGray400"} fontSize={"$sm"}>{field.required ? "*" : "(optional)"}</Text>
-              {isDraftRequired && (
-                <Text ml="$2" px="$1.5" borderRadius="$sm" bg="$primary50" color="$primary600" fontSize="$2xs" fontWeight="$medium">
-                  {t('common.requiredForDraft', 'Required for draft')}
-                </Text>
-              )}
             </Text>
             {!!field.subTitle && (
               <Text
