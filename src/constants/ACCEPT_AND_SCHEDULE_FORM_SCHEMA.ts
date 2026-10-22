@@ -351,7 +351,7 @@ export const ACCEPT_ASSET_REQUEST_FORM_SCHEMA: FormSection[] = [
             required: true,
             label: {
               key: 'supportProvider.supportRequests.labels.estimatedValue',
-              fallback: 'Estimated Asset Value per Participant (Rands)',
+              fallback: 'Estimated Asset Value per Participant',
             },
             placeholder: {
               key: 'supportProvider.supportRequests.placeholders.estimatedValue',

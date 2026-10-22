@@ -1493,7 +1493,7 @@
         "assetTitlePlaceholder": "Name of this asset...",
         "assetDescription": "Asset Description",
         "assetDescriptionPlaceholder": "Describe this asset, its purpose, and how it benefits the recipient...",
-        "estimatedValue": "Estimated Asset Value per Participant (Rands)",
+        "estimatedValue": "Estimated Asset Value per Participant",
         "estimatedValueRequest": "Estimated Asset Value (Rands)",
         "estimatedValuePlaceholder": "R 0.00",
         "estimatedValueReview": "Estimated Value per Participant",
