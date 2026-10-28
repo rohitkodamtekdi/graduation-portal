@@ -615,6 +615,17 @@ export const TRAINING_SESSION_SCHEMA = (hideFields: string[] = [], originalStart
                       fallback: 'Training / Session Type',
                     },
                     optionsSource: 'sessionTypes',
+                    visibleIf: [{ name: 'idp_tasks', value: 'custom', operator: '!=' }],
+                  }]),
+                  // Custom type: show the title the user typed instead of "Custom"
+                  ...(hideFields.includes('sessionTypeOther') ? [] : [{
+                    name: 'sessionTypeOther',
+                    type: 'view',
+                    label: {
+                      key: 'idp_training_task',
+                      fallback: 'Training / Session Type',
+                    },
+                    visibleIf: [{ name: 'idp_tasks', value: 'custom', operator: '===' }],
                   }]),
                 ],
               },
