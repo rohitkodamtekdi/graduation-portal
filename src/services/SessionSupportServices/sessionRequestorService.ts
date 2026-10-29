@@ -24,7 +24,8 @@ export const getRequestSessionsList = async (params: any): Promise<any> => {
     }
 
     if (search?.trim()) {
-      queryParams.append(QUERY_PARAM.SEARCH, search.trim());
+      // Backend pagination middleware decodes search from base64, so plain text never matches
+      queryParams.append(QUERY_PARAM.SEARCH, encodeSearchText(search.trim()));
     }
 
     if (provinces && provinces !== FILTER_ALL.ALL_PROVINCES) {
@@ -83,7 +84,8 @@ export const getMyRequestsList = async (params: any): Promise<any> => {
     }
 
     if (search?.trim()) {
-      queryParams.append(QUERY_PARAM.SEARCH, search.trim());
+      // Backend pagination middleware decodes search from base64, so plain text never matches
+      queryParams.append(QUERY_PARAM.SEARCH, encodeSearchText(search.trim()));
     }
 
     if (provinces && provinces !== FILTER_ALL.ALL_PROVINCES) {
