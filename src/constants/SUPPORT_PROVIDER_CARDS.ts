@@ -214,6 +214,7 @@ export const OFFERING_QUERY_PARAM_KEYS = {
   TYPE: 'type',
   DELIVERY_MODE: 'delivery_mode',
   IDP_TASKS: 'idp_tasks',
+  IDP_TRAINING_TASK: 'idp_training_task',
 } as const;
 
 export const OFFERING_FILTER_ALL_OPTIONS = {

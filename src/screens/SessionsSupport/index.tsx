@@ -29,7 +29,7 @@ import AssetsCard from './AssetsCard';
 import AdditionalServiceCard from './AdditionalServiceCard';
 import { getProvincesList, getSitesByProvince } from '../../services/usersService';
 import { getTrainingSessions, getAdditionalServices, getAssets, mapToAssetItem } from '../../services/SupportOfferingsServices/supportOfferingsService';
-import { getRequestSessionsList, requestorAssignMenteesToSession, getMyRequestsList } from '../../services/SessionSupportServices/sessionRequestorService';
+import { getRequestSessionsList, requestorAssignMenteesToSession, getMyRequestsList, getEnrolledMenteeIds } from '../../services/SessionSupportServices/sessionRequestorService';
 import type { ProvinceEntity } from '@app-types/Users';
 import type { AssetItem } from '../../types/supportOfferingsTypes';
 import { getSessionCategories, getDeliveryModes, getSessionTypesByPillar } from '../../services/mentoringService';
@@ -122,6 +122,25 @@ const SessionsSupportScreen: React.FC = () => {
     }
   };
 
+  // IDP flow: enroll the task's participant straight into the chosen session, then return to the IDP
+  const handleDirectAssign = async (item: any) => {
+    if (!assignContext?.menteeId) return;
+    const sessionId = item.id || item._id;
+    try {
+      const enrolledIds = await getEnrolledMenteeIds(sessionId);
+      if (enrolledIds.includes(assignContext.menteeId)) {
+        showAlert('error', t('lc.sessionsSupport.alerts.alreadyAssigned', 'This participant is already assigned to the session.'));
+        return;
+      }
+      await requestorAssignMenteesToSession(sessionId, [assignContext.menteeId]);
+      showAlert('success', t('lc.sessionsSupport.alerts.assignSuccess', { count: 1, defaultValue: '1 participant(s) assigned to session successfully.' }));
+      navigation.goBack();
+    } catch (err: any) {
+      console.error('Error assigning participant from IDP:', err);
+      showAlert('error', err?.response?.data?.message || err?.message || 'Failed to assign participant to session.');
+    }
+  };
+
   const handleConfirmAssignment = async (selectedIds: string[]): Promise<boolean> => {
     if (!selectedSession) return false;
     const sessionId = selectedSession.id || selectedSession._id;
@@ -157,6 +176,11 @@ const SessionsSupportScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>(SUPPORT_OFFERING_TABS.SESSIONS);
   const [activeSubTab, setActiveSubTab] = useState<string>(SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS);
   const [refreshRequests, setRefreshRequests] = useState<number>(0);
+  // Set when opened from an IDP task: Assign enrolls this participant directly, without the participant picker
+  const [assignContext, setAssignContext] = useState<{ menteeId: string; taskId?: string } | null>(null);
+  // Pillar/type pre-selected by the IDP task; seeds the filter bar and is dropped on the first manual tab change
+  const [initialFilterValue, setInitialFilterValue] = useState<Record<string, any> | undefined>(undefined);
+  const pendingInitialFiltersRef = useRef<Record<string, any> | null>(null);
 
   // Capture newly created session or request from navigation params
   useEffect(() => {
@@ -175,12 +199,21 @@ const SessionsSupportScreen: React.FC = () => {
       navigation.setParams({ newSession: undefined } as any);
     }
     if (params?.activeSubTab) {
-      setActiveTab(params.activeTab || SUPPORT_OFFERING_TABS.SESSIONS);
+      const nextTab = params.activeTab || SUPPORT_OFFERING_TABS.SESSIONS;
+      const initialFilters = params.initialFilters as Record<string, any> | undefined;
+      setAssignContext(params.assignContext?.menteeId ? params.assignContext : null);
+      setInitialFilterValue(initialFilters);
+      if (initialFilters) {
+        setFilters(initialFilters);
+        // The sub-tab change below resets filters, so it re-applies these instead of clearing them
+        if (params.activeSubTab !== activeSubTab) pendingInitialFiltersRef.current = initialFilters;
+      }
+      setActiveTab(nextTab);
       setActiveSubTab(params.activeSubTab);
       if (params.refreshRequests) {
         setRefreshRequests(params.refreshRequests);
       }
-      navigation.setParams({ activeTab: undefined, activeSubTab: undefined, refreshRequests: undefined } as any);
+      navigation.setParams({ activeTab: undefined, activeSubTab: undefined, refreshRequests: undefined, initialFilters: undefined, assignContext: undefined } as any);
     }
   }, [route?.params]);
 
@@ -224,6 +257,8 @@ const SessionsSupportScreen: React.FC = () => {
     if (key === activeTab) return;
     // Every tab's Browse sub-tab shares the same key, so filters are cleared here or they would carry over to the new tab
     setFilters({});
+    setInitialFilterValue(undefined);
+    setAssignContext(null);
     setPage(1);
     setItems([]);
     setActiveTab(key);
@@ -239,6 +274,7 @@ const SessionsSupportScreen: React.FC = () => {
   const handleSubTabChange = (key: string) => {
     if (key === activeSubTab) return;
     setFilters({});
+    setInitialFilterValue(undefined);
     setPage(1);
     setItems([]);
     setActiveSubTab(key);
@@ -443,7 +479,8 @@ const SessionsSupportScreen: React.FC = () => {
   // Reset page and filters when active sub-tab changes
   useEffect(() => {
     setPage(1);
-    setFilters({});
+    setFilters(pendingInitialFiltersRef.current ?? {});
+    pendingInitialFiltersRef.current = null;
     setItems([]);
   }, [activeSubTab]);
 
@@ -491,8 +528,10 @@ const SessionsSupportScreen: React.FC = () => {
 
         const params: any = { page, limit, isSessionsSupport: true };
 
-        // Filters only apply to the Browse sub-tab of each main tab; other sub-tabs list everything unfiltered
-        if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS) {
+        // Filters apply to the Browse sub-tab of each main tab and to My Trainings & Sessions; other sub-tabs list everything unfiltered
+        const isMyTrainingSessions =
+          activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS && activeTab === SUPPORT_OFFERING_TABS.SESSIONS;
+        if (activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS || isMyTrainingSessions) {
           // Any filter not handled below is passed through under its own name, so new filters need no change here
           const specialFilters: string[] = [
             FILTER_FIELDS.PROVINCE,
@@ -507,10 +546,10 @@ const SessionsSupportScreen: React.FC = () => {
           });
           params.idp_training_task = idpTrainingTask;
 
-          // Browse defaults to the user's own provinces
+          // Browse defaults to the user's own provinces; My sessions only narrows when a province is picked
           if (hasSelectedProvince) {
             params.provinces = selectedProvince;
-          } else if (allowedProvinces.length > 0) {
+          } else if (!isMyTrainingSessions && allowedProvinces.length > 0) {
             params.provinces = allowedProvinces.join(',');
           }
 
@@ -601,7 +640,7 @@ const SessionsSupportScreen: React.FC = () => {
             });
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           } else {
-            result = await getTrainingSessions({});
+            result = await getTrainingSessions(params);
             fetchedData = result?.result?.data || [];
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           }
@@ -839,6 +878,7 @@ const SessionsSupportScreen: React.FC = () => {
                 typeOptions={typeOptions}
                 statusOptions={statusOptions}
                 formatOptions={formatOptions}
+                initialValue={initialFilterValue}
                 shouldDisableSite={!effectiveProvince}
                 shouldDisableType={!filters[FILTER_FIELDS.PILLAR] || filters[FILTER_FIELDS.PILLAR] === FILTER_ALL.ALL_PILLARS}
               />
@@ -884,7 +924,24 @@ const SessionsSupportScreen: React.FC = () => {
               )}
             </>
           ) : activeSubTab === SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS ? (
-            mySessions.length > 0 ? (
+            <>
+            {activeTab === SUPPORT_OFFERING_TABS.SESSIONS && (
+              <RequestorFilter
+                key={`my-${activeTab}`}
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                provinceOptions={provinceOptions}
+                siteOptions={siteOptions}
+                pillarOptions={pillarOptions}
+                typeOptions={typeOptions}
+                statusOptions={SP_STATUS_OPTIONS}
+                formatOptions={formatOptions}
+                initialValue={initialFilterValue}
+                shouldDisableSite={!effectiveProvince}
+                shouldDisableType={!filters[FILTER_FIELDS.PILLAR] || filters[FILTER_FIELDS.PILLAR] === FILTER_ALL.ALL_PILLARS}
+              />
+            )}
+            {mySessions.length > 0 ? (
               <VStack {...styles.mySessionsListVStack}>
                 {mySessions.map((session, idx) => (
                   <LcMySessionTab
@@ -892,6 +949,8 @@ const SessionsSupportScreen: React.FC = () => {
                     item={session}
                     isFirst={idx === 0}
                     onAssignParticipants={handleAssignSessionClick}
+                    assignMode={!!assignContext}
+                    onDirectAssign={handleDirectAssign}
                     onEditSession={(sessionId) => {
                       (navigation as any).navigate(ROUTES.SESSIONS_SUPPORT_CREATE_SESSION, {
                         type: FORM_MODE.EDIT,
@@ -918,7 +977,8 @@ const SessionsSupportScreen: React.FC = () => {
                       </Text> */}
                     </VStack>
                   </Box>
-                )
+                )}
+            </>
           ) : activeSubTab === SUPPORT_OFFERING_SUB_TABS.HISTORY && activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES ? (
             // Same card as My Requests (provider, requested date, notes, View Details -> request details page)
             <MyRequests

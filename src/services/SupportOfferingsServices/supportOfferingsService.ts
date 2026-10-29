@@ -46,6 +46,11 @@ const getSupportOfferingsList = async (
       queryParams.append(QUERY_PARAM.SITES, sites);
     }
 
+    // Comma-separated training types; the backend matches any of them
+    if (params.idp_training_task) {
+      queryParams.append(QUERY_PARAM.IDP_TRAINING_TASK, params.idp_training_task);
+    }
+
     const queryString = queryParams.toString();
     const endpoint = queryString
       ? `${API_ENDPOINTS.SUPPORT_OFFERINGS_SESSIONS}?${queryString}`
