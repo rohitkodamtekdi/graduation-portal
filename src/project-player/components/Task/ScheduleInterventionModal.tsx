@@ -16,25 +16,27 @@ interface ScheduleInterventionModalProps {
   menteeId?: string;
   taskId?: string;
   pillar?: string;
+  // Task's training type (its externalId, e.g. SE_TASK_7), so only that type's sessions are listed
+  sessionType?: string;
 }
 
 /**
  * "Who will be conducting <task>?" prompt. Picking either option opens the sessions-support page.
  */
-const ScheduleInterventionModal = memo<ScheduleInterventionModalProps>(({ isOpen, onClose, taskName, menteeId, taskId, pillar }) => {
+const ScheduleInterventionModal = memo<ScheduleInterventionModalProps>(({ isOpen, onClose, taskName, menteeId, taskId, pillar, sessionType }) => {
   const { t } = useLanguage();
   const navigation = useNavigation();
 
   const handleSelect = useCallback((optionKey: string) => {
     onClose();
-    const initialFilters = pillar ? { pillar } : undefined;
+    const initialFilters = pillar ? { pillar, ...(sessionType ? { type: sessionType } : {}) } : undefined;
     // Myself: My Trainings & Sessions with Assign; Other Support Providers: Browse (existing Assign flow)
     const params = optionKey === 'myself'
       ? { activeTab: 'sessions', activeSubTab: 'my_sessions', initialFilters, assignContext: menteeId ? { menteeId, taskId } : undefined }
       : { activeTab: 'sessions', activeSubTab: 'browse_sessions', initialFilters };
     // @ts-ignore
     navigation.navigate('sessions-support', params);
-  }, [navigation, onClose, pillar, menteeId, taskId]);
+  }, [navigation, onClose, pillar, sessionType, menteeId, taskId]);
 
   return (
     <Modal

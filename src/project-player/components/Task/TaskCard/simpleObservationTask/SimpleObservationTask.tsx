@@ -361,6 +361,7 @@ const SimpleObservationTask: React.FC<SimpleObservationTaskProps> = ({
         menteeId={menteeId}
         taskId={task?._id}
         pillar={task.metaInformation?.session_category}
+        sessionType={task?.externalId}
       />
       <EvidencePreviewModal
         isOpen={showPreviewModal} onClose={handleClosePreviewModal}

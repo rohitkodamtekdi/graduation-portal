@@ -2612,6 +2612,8 @@
       },
       "mySessionCard": {
         "assignParticipants": "Assign Participants",
+        "assign": "Assign",
+        "assigned": "Assigned",
         "editSession": "Edit Session",
         "participants": "participants"
       },

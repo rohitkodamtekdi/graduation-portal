@@ -31,6 +31,8 @@ export const STORAGE_KEYS = {
   PARTICIPANTS_ACTIVE_FILTER: 'participants_active_filter',
   /** Participants List screen active status preference */
   PARTICIPANTS_ACTIVE_STATUS: 'participants_active_status',
+  /** Sessions & Support opened from an IDP task (sessionStorage), kept so a page refresh stays in that mode */
+  IDP_ASSIGN_CONTEXT: '@idp_assign_context',
 } as const;
 
 // ---------------------------------------------------------------------------

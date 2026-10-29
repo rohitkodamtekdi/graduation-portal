@@ -31,7 +31,9 @@ interface LcMySessionTabProps {
   hideSchedule?: boolean;
   // IDP flow: show a single Assign button that enrolls the task's participant directly
   assignMode?: boolean;
-  onDirectAssign?: (item: any) => void | Promise<void>;
+  onDirectAssign?: (item: any) => boolean | void | Promise<boolean | void>;
+  // Parent already assigned the IDP participant here (e.g. auto-assign after creating the session)
+  isAssigned?: boolean;
 }
 
 /**
@@ -78,6 +80,7 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
   hideSchedule = false,
   assignMode = false,
   onDirectAssign,
+  isAssigned: isAssignedByParent = false,
 }) => {
   const { t } = useLanguage();
   const { showAlert } = useAlert();
@@ -183,16 +186,21 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
 
   const isDraft = statusLabel === SESSION_STATUS_LABEL.DRAFT;
   const [isAssigning, setIsAssigning] = useState(false);
+  // After a successful assign the button stays on this page as a disabled "Assigned"
+  const [isAssignedHere, setIsAssigned] = useState(false);
+  const isAssigned = isAssignedHere || isAssignedByParent;
   const canDirectAssign =
     assignMode &&
     !hasEnded &&
     !isDraft &&
     statusLabel !== SESSION_STATUS_LABEL.CANCELLED &&
-    seatsRemaining > 0;
+    (seatsRemaining > 0 || isAssigned);
   const handleDirectAssign = async () => {
+    if (isAssigned) return;
     setIsAssigning(true);
     try {
-      await onDirectAssign?.(item);
+      const assigned = await onDirectAssign?.(item);
+      if (assigned) setIsAssigned(true);
     } finally {
       setIsAssigning(false);
     }
@@ -280,9 +288,17 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
           <HStack {...styles.mySessionCardFooter}>
             {/* Only shown when an assign handler is passed (History renders these cards read-only); hidden for drafts */}
             {canDirectAssign && (
-              <Button {...styles.mySessionCardManageBtn} variant="solid" isDisabled={isAssigning} onPress={handleDirectAssign}>
+              <Button
+                {...styles.mySessionCardManageBtn}
+                variant="solid"
+                isDisabled={isAssigning || isAssigned}
+                opacity={isAssigned ? 0.6 : 1}
+                onPress={handleDirectAssign}
+              >
                 <ButtonText {...styles.mySessionCardManageBtnText}>
-                  {t('lc.sessionsSupport.mySessionCard.assign', 'Assign')}
+                  {isAssigned
+                    ? t('lc.sessionsSupport.mySessionCard.assigned', 'Assigned')
+                    : t('lc.sessionsSupport.mySessionCard.assign', 'Assign')}
                 </ButtonText>
               </Button>
             )}

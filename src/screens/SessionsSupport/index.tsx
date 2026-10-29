@@ -18,6 +18,7 @@ import {
   SUPPORT_OFFERING_TYPE_VALUES,
   REQUEST_STATUS,
   SESSION_STATUS_LABEL,
+  SESSION_STATUS,
   OFFERING_FILTER_FIELDS as FILTER_FIELDS,
   OFFERING_FILTER_ALL_OPTIONS as FILTER_ALL,
 } from '@constants/SUPPORT_PROVIDER_CARDS';
@@ -41,11 +42,34 @@ import supportOfferingsStyles from '../ServiceProvider/SupportOfferings/styles';
 import { RequestFooter } from './RequestorFooter';
 import AssignParticipantsModal from './modals/AssignParticipantsModal';
 import LcMySessionTab, { getSessionBadgeLabel } from './MyTraining&Sessions/LcMySessionTab';
+import { STORAGE_KEYS } from '@constants/STORAGE_KEYS';
 
 // Fallback filter if the backend doesn't apply `support_offering_type`; normalizes both string
 // and `{ value, label }` shapes across APIs (missing type = assume it belongs).
 
 const HISTORY_FETCH_LIMIT = 100;
+
+// IDP mode saved in sessionStorage (web only) so it survives a page refresh; storage errors are ignored
+const idpSessionStore = {
+  save: (data: Record<string, any>) => {
+    try {
+      if (typeof window !== 'undefined') window.sessionStorage?.setItem(STORAGE_KEYS.IDP_ASSIGN_CONTEXT, JSON.stringify(data));
+    } catch { /* storage unavailable */ }
+  },
+  read: (): Record<string, any> | null => {
+    try {
+      const raw = typeof window !== 'undefined' ? window.sessionStorage?.getItem(STORAGE_KEYS.IDP_ASSIGN_CONTEXT) : null;
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  },
+  clear: () => {
+    try {
+      if (typeof window !== 'undefined') window.sessionStorage?.removeItem(STORAGE_KEYS.IDP_ASSIGN_CONTEXT);
+    } catch { /* storage unavailable */ }
+  },
+};
 
 // Browse tabs only list offerings that can still be joined: Upcoming or In Progress (completed ones live in History)
 const BROWSE_VISIBLE_STATUSES: string[] = [SESSION_STATUS_LABEL.UPCOMING, SESSION_STATUS_LABEL.IN_PROGRESS];
@@ -122,22 +146,40 @@ const SessionsSupportScreen: React.FC = () => {
     }
   };
 
+  // Sessions the IDP participant was assigned to on this page; their cards show "Assigned"
+  const [assignedSessionIds, setAssignedSessionIds] = useState<string[]>([]);
+  const markSessionAssigned = (sessionId: string | number) =>
+    setAssignedSessionIds((prev) => (prev.includes(String(sessionId)) ? prev : [...prev, String(sessionId)]));
+
   // IDP flow: enroll the task's participant straight into the chosen session, then return to the IDP
-  const handleDirectAssign = async (item: any) => {
-    if (!assignContext?.menteeId) return;
+  // Returns true once the participant is in the session, so the card can switch to "Assigned"
+  const handleDirectAssign = async (item: any): Promise<boolean> => {
+    if (!assignContext?.menteeId) return false;
     const sessionId = item.id || item._id;
     try {
       const enrolledIds = await getEnrolledMenteeIds(sessionId);
       if (enrolledIds.includes(assignContext.menteeId)) {
         showAlert('error', t('lc.sessionsSupport.alerts.alreadyAssigned', 'This participant is already assigned to the session.'));
-        return;
+        markSessionAssigned(sessionId);
+        return true;
       }
       await requestorAssignMenteesToSession(sessionId, [assignContext.menteeId]);
       showAlert('success', t('lc.sessionsSupport.alerts.assignSuccess', { count: 1, defaultValue: '1 participant(s) assigned to session successfully.' }));
-      navigation.goBack();
+      // Stay on this page (no redirect back to the IDP); just update the card's seat count
+      // navigation.goBack();
+      setMySessions((prev) =>
+        prev.map((session) =>
+          (session.id || session._id) === sessionId
+            ? { ...session, seats_remaining: Math.max(0, (session.seats_remaining ?? session.seats_limit ?? 0) - 1) }
+            : session,
+        ),
+      );
+      markSessionAssigned(sessionId);
+      return true;
     } catch (err: any) {
       console.error('Error assigning participant from IDP:', err);
       showAlert('error', err?.response?.data?.message || err?.message || 'Failed to assign participant to session.');
+      return false;
     }
   };
 
@@ -178,6 +220,31 @@ const SessionsSupportScreen: React.FC = () => {
   const [refreshRequests, setRefreshRequests] = useState<number>(0);
   // Set when opened from an IDP task: Assign enrolls this participant directly, without the participant picker
   const [assignContext, setAssignContext] = useState<{ menteeId: string; taskId?: string } | null>(null);
+  // Opened from IDP via "Myself": only the current tab and Create A Session stay usable
+  const isIdpAssignMode = !!assignContext;
+  const isIdpAssignModeRef = useRef(false);
+  isIdpAssignModeRef.current = isIdpAssignMode;
+  // Create A Session is part of the IDP flow, so leaving for it keeps the IDP mode for the return
+  const keepIdpModeOnBlurRef = useRef(false);
+  // Bumped when the IDP mode ends so the filter bar remounts without the IDP pillar still selected
+  const [filterResetCount, setFilterResetCount] = useState(0);
+
+  // Leaving this page any other way (e.g. another menu) ends the IDP mode, so the next normal visit has every tab enabled
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('blur', () => {
+      if (keepIdpModeOnBlurRef.current) {
+        keepIdpModeOnBlurRef.current = false;
+        return;
+      }
+      if (!isIdpAssignModeRef.current) return;
+      idpSessionStore.clear();
+      setAssignContext(null);
+      setInitialFilterValue(undefined);
+      setFilters({});
+      setFilterResetCount((count) => count + 1);
+    });
+    return unsubscribe;
+  }, [navigation]);
   // Pillar/type pre-selected by the IDP task; seeds the filter bar and is dropped on the first manual tab change
   const [initialFilterValue, setInitialFilterValue] = useState<Record<string, any> | undefined>(undefined);
   const pendingInitialFiltersRef = useRef<Record<string, any> | null>(null);
@@ -195,6 +262,12 @@ const SessionsSupportScreen: React.FC = () => {
       // Switch to My Sessions tab so the user sees the new session
       setActiveTab(SUPPORT_OFFERING_TABS.SESSIONS);
       setActiveSubTab(SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS);
+      // IDP flow: a session published from here is assigned to the IDP participant right away
+      const newSessionId = params.newSession.id || params.newSession._id;
+      const isDraftSession = String(params.newSession.status || '').toUpperCase() === SESSION_STATUS.DRAFT;
+      if (assignContext?.menteeId && newSessionId && !isDraftSession) {
+        handleDirectAssign(params.newSession);
+      }
       // Clear the param so re-visits don't re-add it
       navigation.setParams({ newSession: undefined } as any);
     }
@@ -202,6 +275,17 @@ const SessionsSupportScreen: React.FC = () => {
       const nextTab = params.activeTab || SUPPORT_OFFERING_TABS.SESSIONS;
       const initialFilters = params.initialFilters as Record<string, any> | undefined;
       setAssignContext(params.assignContext?.menteeId ? params.assignContext : null);
+      // Remember the IDP mode so a page refresh (which drops route params) stays in it
+      if (params.assignContext?.menteeId) {
+        idpSessionStore.save({
+          assignContext: params.assignContext,
+          initialFilters,
+          activeTab: nextTab,
+          activeSubTab: params.activeSubTab,
+        });
+      } else {
+        idpSessionStore.clear();
+      }
       setInitialFilterValue(initialFilters);
       if (initialFilters) {
         setFilters(initialFilters);
@@ -216,6 +300,23 @@ const SessionsSupportScreen: React.FC = () => {
       navigation.setParams({ activeTab: undefined, activeSubTab: undefined, refreshRequests: undefined, initialFilters: undefined, assignContext: undefined } as any);
     }
   }, [route?.params]);
+
+  // After a page refresh the route params are gone, so restore the IDP mode saved above
+  useEffect(() => {
+    if ((route?.params as any)?.activeSubTab) return;
+    const saved = idpSessionStore.read();
+    if (!saved?.assignContext?.menteeId) return;
+    setAssignContext(saved.assignContext);
+    setInitialFilterValue(saved.initialFilters);
+    if (saved.initialFilters) {
+      setFilters(saved.initialFilters);
+      if (saved.activeSubTab !== activeSubTab) pendingInitialFiltersRef.current = saved.initialFilters;
+    }
+    setActiveTab(saved.activeTab || SUPPORT_OFFERING_TABS.SESSIONS);
+    setActiveSubTab(saved.activeSubTab || SUPPORT_OFFERING_SUB_TABS.MY_SESSIONS);
+    // Runs once on mount only: it restores the state a page refresh lost
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   const [filters, setFilters] = useState<Record<string, any>>({});
@@ -640,9 +741,33 @@ const SessionsSupportScreen: React.FC = () => {
             });
             totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           } else {
-            result = await getTrainingSessions(params);
-            fetchedData = result?.result?.data || [];
-            totalCount = result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
+            // createdSessions matches meta values exactly, so a comma list of types finds nothing, and newer
+            // sessions keep their type in meta.idp_tasks; so the pillar/type filter is applied on the list here
+            const hasPillarFilter = !!selectedPillar && selectedPillar !== FILTER_ALL.ALL_PILLARS;
+            const hasTypeFilter = hasPillarFilter && !!selectedType && selectedType !== FILTER_ALL.ALL_TYPES;
+            const myParams = { ...params };
+            delete myParams.idp_training_task;
+            result = await getTrainingSessions(hasPillarFilter ? { ...myParams, page: 1, limit: 100 } : myParams);
+            const rawData: any[] = result?.result?.data || [];
+            const toValues = (val: any): string[] =>
+              (Array.isArray(val) ? val : val ? [val] : []).map((v: any) => String(v?.value ?? v).toLowerCase());
+            // createdSessions does not return `categories`, so the pillar is matched through the session's type
+            const pillarTypes = pillarTypeValues.map((value: string) => String(value).toLowerCase());
+            // A type that is not one of the pillar's types (e.g. a custom IDP task) falls back to the pillar match
+            const typeToMatch = hasTypeFilter && pillarTypes.includes(String(selectedType).toLowerCase())
+              ? String(selectedType).toLowerCase()
+              : null;
+            fetchedData = hasPillarFilter
+              ? rawData.filter((session: any) => {
+                const sessionTypes = [...toValues(session.meta?.idp_tasks ?? session.idp_tasks), ...toValues(session.meta?.idp_training_task ?? session.idp_training_task)];
+                if (typeToMatch) return sessionTypes.includes(typeToMatch);
+                const categories = toValues(session.categories ?? session.meta?.categories);
+                return categories.includes(String(selectedPillar).toLowerCase()) || sessionTypes.some((type) => pillarTypes.includes(type));
+              })
+              : rawData;
+            totalCount = hasPillarFilter
+              ? fetchedData.length
+              : result?.result?.count ?? result?.total ?? result?.count ?? (result?.result?.total ?? fetchedData.length);
           }
 
         } else if (activeTab === SUPPORT_OFFERING_TABS.ADDITIONAL_SERVICES) {
@@ -763,13 +888,24 @@ const SessionsSupportScreen: React.FC = () => {
         rightSection={
           <Box {...styles.rightSectionBox}>
             <HStack {...styles.rightSectionHStack}>
-              <Button {...styles.createSessionBtn} onPress={() => navigation.navigate(ROUTES.SESSIONS_SUPPORT_CREATE as never)}>
+              <Button
+                {...styles.createSessionBtn}
+                onPress={() => {
+                  if (isIdpAssignMode) keepIdpModeOnBlurRef.current = true;
+                  navigation.navigate(ROUTES.SESSIONS_SUPPORT_CREATE as never);
+                }}
+              >
                 <ButtonIcon as={LucideIcon} name="Plus" size={16} color="$textForegroundColor" />
                 <ButtonText {...styles.createSessionBtnText}>
                   {t('lc.sessionsSupport.createSession')}
                 </ButtonText>
               </Button>
-              <Button {...styles.requestSupportBtn} onPress={() => setIsDropdownOpen(prev => !prev)}>
+              <Button
+                {...styles.requestSupportBtn}
+                onPress={() => setIsDropdownOpen(prev => !prev)}
+                isDisabled={isIdpAssignMode}
+                opacity={isIdpAssignMode ? 0.5 : 1}
+              >
                 <ButtonIcon as={LucideIcon} name="Plus" size={16} color="$white" />
                 <ButtonText {...styles.requestSupportBtnText}>
                   {t('lc.sessionsSupport.requestSupport')}
@@ -826,7 +962,7 @@ const SessionsSupportScreen: React.FC = () => {
             {displayTabs.map((tab) => (
               <TabButton
                 key={tab.key}
-                tab={tab}
+                tab={isIdpAssignMode && tab.key !== activeTab ? { ...tab, isDisabled: true } : tab}
                 isActive={activeTab === tab.key}
                 onPress={handleTabChange}
                 variant="ButtonTab"
@@ -850,7 +986,7 @@ const SessionsSupportScreen: React.FC = () => {
                 {subTabs.map((tab) => (
                   <TabButton
                     key={tab.key}
-                    tab={tab}
+                    tab={isIdpAssignMode && tab.key !== activeSubTab ? { ...tab, isDisabled: true } : tab}
                     isActive={activeSubTab === tab.key}
                     onPress={handleSubTabChange}
                     _text={supportOfferingsStyles.tabTextProps}
@@ -869,7 +1005,7 @@ const SessionsSupportScreen: React.FC = () => {
           {activeSubTab === SUPPORT_OFFERING_SUB_TABS.BROWSE_SESSIONS ? (
             <>
               <RequestorFilter
-                key={activeTab}
+                key={`${activeTab}-${filterResetCount}`}
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 provinceOptions={provinceOptions}
@@ -927,7 +1063,7 @@ const SessionsSupportScreen: React.FC = () => {
             <>
             {activeTab === SUPPORT_OFFERING_TABS.SESSIONS && (
               <RequestorFilter
-                key={`my-${activeTab}`}
+                key={`my-${activeTab}-${filterResetCount}`}
                 filters={filters}
                 onFilterChange={handleFilterChange}
                 provinceOptions={provinceOptions}
@@ -951,6 +1087,7 @@ const SessionsSupportScreen: React.FC = () => {
                     onAssignParticipants={handleAssignSessionClick}
                     assignMode={!!assignContext}
                     onDirectAssign={handleDirectAssign}
+                    isAssigned={assignedSessionIds.includes(String(session.id || session._id))}
                     onEditSession={(sessionId) => {
                       (navigation as any).navigate(ROUTES.SESSIONS_SUPPORT_CREATE_SESSION, {
                         type: FORM_MODE.EDIT,

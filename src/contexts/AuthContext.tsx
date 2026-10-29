@@ -333,6 +333,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       await offlineStorage.remove(STORAGE_KEYS.AUTH_USER);
       await offlineStorage.remove(STORAGE_KEYS.AUTH_REFRESH_TOKEN);
       await offlineStorage.remove(STORAGE_KEYS.AUTH_REMEMBER_ME);
+      // IDP mode of Sessions & Support ends with the login session, so the next login opens it normally
+      try {
+        if (typeof window !== 'undefined') window.sessionStorage?.removeItem(STORAGE_KEYS.IDP_ASSIGN_CONTEXT);
+      } catch { /* storage unavailable */ }
 
       // Clear context state
       setUser(null);
