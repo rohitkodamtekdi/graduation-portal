@@ -16,6 +16,7 @@ import { getTrainingSessions, getAdditionalServices, getAssets, } from '../../..
 import type { ProvinceEntity } from '@app-types/Users';
 import logger from '@utils/logger';
 import { getSessionDetails } from '../../../services/mentoringService';
+import { SESSION_STATUS, SESSION_STATUS_LABEL } from '@constants/SUPPORT_PROVIDER_CARDS';
 
 export const STATUS_OPTIONS = [
   {
@@ -33,6 +34,10 @@ export const STATUS_OPTIONS = [
   {
     labelKey: 'supportProvider.supportOfferings.statusOptions.completed',
     value: 'Completed',
+  },
+  {
+    labelKey: 'supportProvider.supportOfferings.statusOptions.expired',
+    value: SESSION_STATUS_LABEL.EXPIRED,
   },
   {
     labelKey: 'supportProvider.supportOfferings.statusOptions.draft',
@@ -81,6 +86,7 @@ const App = (): React.JSX.Element => {
     setTotal(0);
     setPage(1);
     setLoading(true);
+    setFilters({});
     setActiveTab(key);
   };
 
@@ -100,13 +106,26 @@ const App = (): React.JSX.Element => {
     setPage((prevPage) => prevPage + 1);
   };
 
+  // Trainings get Cancelled next to Expired; additional services and assets have no Expired state, so Cancelled takes its place
+  const cancelledStatusOption = {
+    labelKey: 'supportProvider.supportOfferings.statusOptions.cancelled',
+    value: SESSION_STATUS_LABEL.CANCELLED,
+  };
+  const statusOptions = activeTab === 'sessions'
+    ? STATUS_OPTIONS.flatMap((option) =>
+      option.value === SESSION_STATUS_LABEL.EXPIRED ? [option, cancelledStatusOption] : [option],
+    )
+    : STATUS_OPTIONS.map((option) =>
+      option.value === SESSION_STATUS_LABEL.EXPIRED ? cancelledStatusOption : option,
+    );
+
   const filterOptions = [
     { type: 'search', attr: 'search', placeholderKey: 'admin.filters.searchOfferingsPlaceholder' },
     {
       type: 'select',
       attr: 'status',
       placeholder: 'All Statuses',
-      data: STATUS_OPTIONS,
+      data: statusOptions,
     },
     {
       type: 'select',
@@ -244,9 +263,12 @@ const App = (): React.JSX.Element => {
     const isStale = () => requestId !== latestRequestIdRef.current;
     try {
       setLoading(true);
+      // Expired is not a saved status: it is a PUBLISHED session whose end time has already passed
+      const isExpiredFilter = filters.status === SESSION_STATUS_LABEL.EXPIRED;
       const params = {
         search: filters.search,
-        status: filters.status,
+        status: isExpiredFilter ? SESSION_STATUS.PUBLISHED : filters.status,
+        ...(isExpiredFilter ? { endDate: Math.floor(Date.now() / 1000) } : {}),
         provinces: filters.province,
         sites: filters.site,
         page,
@@ -349,6 +371,7 @@ const App = (): React.JSX.Element => {
       <Container {...styles.container}>
         <VStack {...styles.contentContainer}>
           <FilterButton
+            key={activeTab}
             data={filterOptions}
             onFilterChange={handleFilterChange}
             showClearButton={false}

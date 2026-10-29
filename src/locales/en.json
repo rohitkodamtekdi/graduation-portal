@@ -2945,6 +2945,8 @@
         "upcoming": "Upcoming",
         "inProgress": "In progress",
         "completed": "Completed",
+        "expired": "Expired",
+        "cancelled": "Cancelled",
         "draft": "Draft"
       },
       "cards": {

@@ -46,6 +46,10 @@ const getSupportOfferingsList = async (
       queryParams.append(QUERY_PARAM.SITES, sites);
     }
 
+    if (params.endDate) {
+      queryParams.append(QUERY_PARAM.END_DATE, String(params.endDate));
+    }
+
     const queryString = queryParams.toString();
     const endpoint = queryString
       ? `${API_ENDPOINTS.SUPPORT_OFFERINGS_SESSIONS}?${queryString}`
