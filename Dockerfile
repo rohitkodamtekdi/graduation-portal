@@ -2,7 +2,7 @@
 # ============================================================
 # Stage 1: Build
 # ============================================================
-FROM node:22.21.1-alpine AS builder
+FROM node:24.22.1-alpine AS builder
 
 WORKDIR /app
 
@@ -26,7 +26,7 @@ RUN yarn build:web
 # ============================================================
 # Stage 2: Production Runtime
 # ============================================================
-FROM node:22.21.1-alpine AS runtime
+FROM node:24.22.1-alpine AS runtime
 
 WORKDIR /app
 

@@ -89,6 +89,6 @@
     "webpack-dev-server": "^5.2.2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24 <25"
   }
 }

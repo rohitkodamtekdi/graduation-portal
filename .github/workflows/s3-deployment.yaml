@@ -29,7 +29,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"       # pin to your actual runtime; don't leave floating
+          node-version: "24.22.1"       # pin to your actual runtime; don't leave floating
           cache: "npm"
 
       - name: Create .env for build
