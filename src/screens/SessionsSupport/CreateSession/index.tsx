@@ -216,6 +216,8 @@ const CreateSessionScreen = (): React.JSX.Element => {
             onSaveDraft={(formValues) => handleSave(formValues, true)}
             draftRequiredFields={TRAINING_DRAFT_CONFIG.requiredFields}
             lodingButton={lodingButton}
+            // White spinner so the loader is visible on the primary Submit button
+            submitButtonProps={{ _icon: { color: '$white' } }}
             uploadService={async (file) => {
               const entityId = `trainingSession-${Date.now()}`;
               const uploaded = await uploadFiles(entityId, [
