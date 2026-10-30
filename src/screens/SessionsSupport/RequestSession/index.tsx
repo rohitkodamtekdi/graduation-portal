@@ -17,6 +17,7 @@ import {
   MentoringOption,
 } from '../../../services/mentoringService';
 import { requestSessionPayloadMapping } from '@utils/supportProvider';
+import { BUTTON_LOADING_STATE } from '@constants/SUPPORT_PROVIDER_CARDS';
 import { useTrainingFormOptions, useProfileCompletion } from '@hooks';
 import styles from '../styles';
 
@@ -39,6 +40,7 @@ const RequestSessionScreen = (): React.JSX.Element => {
   const [livelihoodCategories, setLivelihoodCategories] = useState<MentoringOption[]>([]);
   const [values, setValues] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [lodingButton, setLodingButton] = useState<false | typeof BUTTON_LOADING_STATE[keyof typeof BUTTON_LOADING_STATE]>(false);
   const { showAlert } = useAlert();
 
   const { allowedProvinces, allowedSites } = useProfileCompletion();
@@ -108,8 +110,10 @@ const RequestSessionScreen = (): React.JSX.Element => {
   );
 
   const handleSave = async (formValues: any, isDraft: boolean) => {
+    if (lodingButton) return;
     try {
       setValues(formValues);
+      setLodingButton(isDraft ? BUTTON_LOADING_STATE.SAVE_DRAFT : BUTTON_LOADING_STATE.SUBMIT);
 
       const payload: any = requestSessionPayloadMapping(
         { ...formValues, isDraft },
@@ -130,6 +134,8 @@ const RequestSessionScreen = (): React.JSX.Element => {
         error?.message ||
         t('supportProvider.createSupport.training.errors.saveFailed', 'Something went wrong while saving. Please try again.');
       showAlert('error', errMsg);
+    } finally {
+      setLodingButton(false);
     }
   };
 
@@ -178,6 +184,9 @@ const RequestSessionScreen = (): React.JSX.Element => {
             onSubmit={(formValues) => handleSave(formValues, false)}
             onSaveDraft={(formValues) => handleSave(formValues, true)}
             showSaveDraftButton={false}
+            lodingButton={lodingButton}
+            // White spinner so the loader is visible on the primary Submit button
+            submitButtonProps={{ _icon: { color: '$white' } }}
             uploadService={async (file) => {
               const entityId = `trainingSession-${Date.now()}`;
               const uploaded = await uploadFiles(entityId, [

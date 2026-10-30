@@ -259,10 +259,15 @@ const App = (): React.JSX.Element => {
             lodingButton={lodingButton}
             uploadService={uploadService}
             // SP publishes with the same button as Training; LC keeps the default Submit for its request
-            {...(!isLc && {
-              submitButtonProps: { bg: "green", icon: "Check", _icon: { color: "$white" } },
-              submitButtonText: t("supportProvider.supportOfferings.buttonTexts.publishSupport"),
-            })}
+            {...(!isLc
+              ? {
+                  submitButtonProps: { bg: "green", icon: "Check", _icon: { color: "$white" } },
+                  submitButtonText: t("supportProvider.supportOfferings.buttonTexts.publishSupport"),
+                }
+              : {
+                  // White spinner so the loader is visible on the primary Submit button
+                  submitButtonProps: { _icon: { color: "$white" } },
+                })}
           />
         </Card>
       </Container>
