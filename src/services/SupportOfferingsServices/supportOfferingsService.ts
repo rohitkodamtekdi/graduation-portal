@@ -46,8 +46,8 @@ const getSupportOfferingsList = async (
       queryParams.append(QUERY_PARAM.SITES, sites);
     }
 
-    if (params.endDate) {
-      queryParams.append(QUERY_PARAM.END_DATE, String(params.endDate));
+    if (params?.endDate) {
+      queryParams.append(QUERY_PARAM.END_DATE, String(params?.endDate));
     }
 
     const queryString = queryParams.toString();
