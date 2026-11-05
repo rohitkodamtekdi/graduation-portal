@@ -57,6 +57,12 @@ const LC_STATUS_FILTER_TO_BADGE: Record<string, string> = {
   Upcoming: SESSION_STATUS_LABEL.UPCOMING,
   live: SESSION_STATUS_LABEL.IN_PROGRESS,
 };
+// Browse asks sessions/list to filter by dates, so its count only includes what can be shown
+const LC_STATUS_FILTER_TO_DATE_STATUS: Record<string, string> = {
+  Upcoming: 'upcoming',
+  live: 'in_progress',
+};
+const BROWSE_DEFAULT_DATE_STATUS = 'active';
 // History tab only lists sessions whose card badge is Completed or Expired
 const HISTORY_BADGES: string[] = [SESSION_STATUS_LABEL.COMPLETED, SESSION_STATUS_LABEL.EXPIRED];
 const matchesOfferingType = (item: any, expectedType: string): boolean => {
@@ -506,6 +512,8 @@ const SessionsSupportScreen: React.FC = () => {
             }
           });
           params.idp_training_task = idpTrainingTask;
+          params.date_status =
+            LC_STATUS_FILTER_TO_DATE_STATUS[filters[FILTER_FIELDS.STATUS]] ?? BROWSE_DEFAULT_DATE_STATUS;
 
           // Browse defaults to the user's own provinces
           if (hasSelectedProvince) {

@@ -57,6 +57,10 @@ export const getRequestSessionsList = async (params: any): Promise<any> => {
       queryParams.append(QUERY_PARAM.IDP_TRAINING_TASK, params.idp_training_task);
     }
 
+    if (params.date_status) {
+      queryParams.append(QUERY_PARAM.DATE_STATUS, params.date_status);
+    }
+
     const endpoint = `${API_ENDPOINTS.USER_SESSIONS_LIST}?${queryParams.toString()}`;
     const response = await api.get(endpoint);
     return response.data;
