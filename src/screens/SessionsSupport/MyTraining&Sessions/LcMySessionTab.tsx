@@ -301,6 +301,7 @@ const LcMySessionTab: React.FC<LcMySessionTabProps> = ({
         initialParticipants={enrolledParticipants ?? undefined}
         isLoadingParticipants={isLoadingParticipants}
         onConfirmComplete={handleConfirmComplete}
+        disableSkip={String(item.status || '').toUpperCase() === SESSION_STATUS.COMPLETED}
       />
 
       {isShowLoadMore && (

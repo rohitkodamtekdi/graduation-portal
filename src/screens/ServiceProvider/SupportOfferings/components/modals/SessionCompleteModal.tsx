@@ -100,7 +100,7 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
     if (isOpen) setIsSubmitting(false);
   }, [isOpen]);
 
-  // Completion needs at least one enrolled participant; otherwise a session could be completed with nobody in it
+  // Confirm needs at least one enrolled participant to mark present; Skip can still complete an empty session
   const hasNoParticipants = isLoadingParticipants || participants.length === 0;
   // Everyone was already marked present when opened and still is, so there is nothing new to save
   const isAllAlreadyPresent =
@@ -130,8 +130,10 @@ const SessionCompleteModal: React.FC<SessionCompleteModalProps> = ({
     submitCompletion(selectedIds);
   };
 
-  // Without onCancel, "Skip" itself completes the session, so it follows the same rule
-  const isSkipDisabled = disableSkip || (!onCancel && hasNoParticipants);
+  // Disabled: a session with no participants could not be completed at all
+  // const isSkipDisabled = disableSkip || (!onCancel && hasNoParticipants);
+  // Without onCancel, "Skip" completes the session even with no participants, so it only waits for the list to load
+  const isSkipDisabled = disableSkip || (!onCancel && isLoadingParticipants);
 
   const handleSkip = () => {
     if (isSubmitting || isSkipDisabled) return;
