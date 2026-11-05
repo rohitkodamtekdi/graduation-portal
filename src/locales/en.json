@@ -3031,7 +3031,9 @@
         "discard": "Discard Draft",
         "alerts": {
           "draftSaved": "Draft saved successfully!",
-          "sessionSaved": "Session saved successfully!"
+          "sessionSaved": "Session saved successfully!",
+          "sessionRequestSent": "Session request sent successfully!",
+          "additionalServiceRequestSent": "Additional service request sent successfully!"
         }
       },
       "additionalService": {

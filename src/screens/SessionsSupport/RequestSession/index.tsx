@@ -124,7 +124,7 @@ const RequestSessionScreen = (): React.JSX.Element => {
 
       const successMsg = isDraft
         ? t('supportProvider.createSupport.training.alerts.draftSaved', 'Draft saved successfully!')
-        : t('supportProvider.createSupport.training.alerts.sessionSaved', 'Training session saved successfully!');
+        : t('supportProvider.createSupport.training.alerts.sessionRequestSent', 'Session request sent successfully!');
 
       showAlert('success', successMsg);
       navigation.navigate('sessions-support' as never);

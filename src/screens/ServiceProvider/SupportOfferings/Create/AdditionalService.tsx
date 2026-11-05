@@ -159,7 +159,7 @@ const App = (): React.JSX.Element => {
 
         const successMsg = isDraft
           ? t('supportProvider.createSupport.training.alerts.draftSaved')
-          : t('supportProvider.createSupport.training.alerts.sessionSaved');
+          : t('supportProvider.createSupport.training.alerts.additionalServiceRequestSent');
 
         showAlert('success', successMsg);
         // @ts-ignore
