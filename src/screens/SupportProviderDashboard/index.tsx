@@ -496,6 +496,7 @@ const SupportProviderDashboard = ({ variant = 'admin' }: { variant?: 'admin' | '
   const { showAlert } = useAlert();
   const isSupervisor = useIsTenantAdmin();
   const { user } = useAuth();
+  const isReportManager = user?.role === 'report_manager';
   const { allowedProvinces, isProfileLoading } = useProfileCompletion();
 
   const [allProvinces, setAllProvinces] = useState<any[]>([]);
@@ -951,8 +952,8 @@ const SupportProviderDashboard = ({ variant = 'admin' }: { variant?: 'admin' | '
               </>
             )}
 
-            {/* Record Intervention Commitment */}
-            {isMentor ? null : (
+            {/* Record Intervention Commitment, a write action so Report Manager (view only) doesn't get it */}
+            {isMentor || isReportManager ? null : (
             <VStack {...styles.sectionCard}>
               <SectionHeader
                 icon="ClipboardCheck"

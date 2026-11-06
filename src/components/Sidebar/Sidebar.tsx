@@ -23,10 +23,12 @@ import {
   MAIN_MENU_ITEMS,
   MORE_INFORMATION_MENU_ITEMS,
   USER_STORY_MENU_ITEMS,
+  REPORT_MANAGER_MENU_ITEMS,
+  REPORT_MANAGER_USER_STORY_KEYS,
   type SidebarMenuItem,
 } from '@constants/ADMIN_SIDEBAR_MENU';
 import { useLanguage } from '@contexts/LanguageContext';
-import { useIsTenantAdmin } from '@contexts/AuthContext';
+import { useAuth, useIsTenantAdmin } from '@contexts/AuthContext';
 import openExternalLink from '@utils/openExternalLink';
 import hardRedirect from '@utils/hardRedirect';
 
@@ -43,8 +45,10 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const navigation = useNavigation();
   const route = useRoute();
+  const { user } = useAuth();
+  const isReportManager = user?.role === 'report_manager';
   const [expandedItems, setExpandedItems] = useState<Set<string>>(
-    new Set(['user-management']),
+    new Set(isReportManager ? ['reports-and-dashboards'] : ['user-management']),
   );
   const [expandedMoreInfo, setExpandedMoreInfo] = useState(true);
   const [expandedUserStory, setExpandedUserStory] = useState(true);
@@ -55,8 +59,18 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   // 'review-requests' is only visible to users holding the granular
   // 'tenant_admin' role title; hide it from other Supervisor-bucket users.
   const visibleMainMenuItems = useMemo(
-    () => MAIN_MENU_ITEMS.filter(item => item.key !== 'review-requests' || isTenantAdmin),
-    [isTenantAdmin],
+    () =>
+      isReportManager
+        ? REPORT_MANAGER_MENU_ITEMS
+        : MAIN_MENU_ITEMS.filter(item => item.key !== 'review-requests' || isTenantAdmin),
+    [isTenantAdmin, isReportManager],
+  );
+  const visibleUserStoryItems = useMemo(
+    () =>
+      isReportManager
+        ? USER_STORY_MENU_ITEMS.filter(item => REPORT_MANAGER_USER_STORY_KEYS.includes(item.key))
+        : USER_STORY_MENU_ITEMS,
+    [isReportManager],
   );
 
   // Sync activeRoute with the current route from navigation
@@ -272,7 +286,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
         <Divider my="$4" />
 
-        {/* MORE INFORMATION Section */}
+        {/* MORE INFORMATION Section, admin settings so hidden for Report Manager */}
+        {!isReportManager && (
+        <>
         <Box>
           <Pressable
             onPress={() => setExpandedMoreInfo(!expandedMoreInfo)}
@@ -296,6 +312,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </Box>
 
         <Divider my="$4" />
+        </>
+        )}
         <Box>
           <Pressable
             onPress={() => setExpandedUserStory(!expandedUserStory)}
@@ -313,7 +331,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </Pressable>
           {expandedUserStory && (
             <VStack {...sidebarStyles.quickActionsContent}>
-              {USER_STORY_MENU_ITEMS.map(item => renderSidebarItem(item))}
+              {visibleUserStoryItems.map(item => renderSidebarItem(item))}
             </VStack>
           )}
         </Box>
@@ -354,13 +372,17 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
         <Divider my="$4" />
 
-        <VStack space="md" alignItems="center">
-          {MORE_INFORMATION_MENU_ITEMS.map(item => renderCollapsedItem(item))}
-        </VStack>
+        {!isReportManager && (
+          <>
+            <VStack space="md" alignItems="center">
+              {MORE_INFORMATION_MENU_ITEMS.map(item => renderCollapsedItem(item))}
+            </VStack>
 
-        <Divider my="$4" />
+            <Divider my="$4" />
+          </>
+        )}
         <VStack space="md" alignItems="center">
-          {USER_STORY_MENU_ITEMS.map(item => renderCollapsedItem(item))}
+          {visibleUserStoryItems.map(item => renderCollapsedItem(item))}
         </VStack>
       </ScrollView>
     </>

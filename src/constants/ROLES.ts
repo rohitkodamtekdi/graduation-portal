@@ -4,6 +4,7 @@
  */
 export const ADMIN_ROLES: readonly string[] = ['admin'] as const;
 export const SUPERVISOR_ROLES: readonly string[] = ['tenant_admin'] as const;
+export const REPORT_MANAGER_ROLES: readonly string[] = ['report_manager'] as const;
 export const LC_ROLES: readonly string[] = ['session_manager','org_admin'] as const;
 export const MENTOR_ROLES: readonly string[] = ['mentor'] as const;
 export const PARTICIPANT_ROLES: readonly string[] = ['user'] as const;
@@ -21,6 +22,7 @@ export const ROLE_NAMES = {
 export const ROLE_DISPLAY_LABELS: Record<string, string> = {
   admin: 'Admin',
   tenant_admin: 'Supervisor',
+  report_manager: 'Report Manager',
   org_admin: 'Linkage Champion',
   mentor: 'Support Provider',
   user: 'Participant',

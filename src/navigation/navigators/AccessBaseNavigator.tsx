@@ -44,7 +44,7 @@ const createScreenWithLayout = (
 
 function titleNamespaceForRole(role?: string): 'admin' | 'lc' | "supportProvider" | 'participantJourney' {
   const r = role?.toLowerCase();
-  if (r === 'admin' || r === 'tenant_admin') {
+  if (r === 'admin' || r === 'tenant_admin' || r === 'report_manager') {
     return 'admin';
   }
   if (MENTOR_ROLES.includes(r || "")) {

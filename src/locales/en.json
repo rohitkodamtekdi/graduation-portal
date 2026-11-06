@@ -260,7 +260,8 @@
       "participants": "Participants",
       "project": "Project",
       "review-requests": "Review Requests",
-      "support-provider-dashboard": "Support Provider Dashboard"
+      "support-provider-dashboard": "Support Provider Dashboard",
+      "participants-report": "Participants"
     },
     "home": "Home",
     "dashboard": "Dashboards",
@@ -1275,9 +1276,12 @@
       "passwordManagementPolicy": "Password Management Policy",
       "profileFieldEditPermissions": "Profile Field Edit Permissions",
       "dashboards": "Dashboards",
+      "reportsAndDashboards": "Reports and Dashboards",
       "participants": "Participants",
       "supportProviders": "Support Providers",
+      "supportProvider": "Support Provider",
       "coachProgress": "Coach Progress",
+      "coachProgressInLms": "Coach Progress in LMS",
       "formsAndSurveysManagement": "Forms and Surveys Management",
       "lmsManagement": "LMS Management",
       "contentLibrary": "Content Library",
@@ -1285,6 +1289,12 @@
       "certificates": "Certificates"
     },
     "supportProviderDashboardDescription": "Track support needed, approved and delivered across provinces and providers",
+    "participantsReport": {
+      "title": "Participants",
+      "description": "Participant reports across provinces and sites",
+      "sampleTitle": "Participants report",
+      "sampleText": "This is a sample page. The report content will be added soon."
+    },
     "userManagementDescription": "Manage all users across your organization with unified controls and bulk operations.",
     "assignUsersDescription": "Assign Coaches to Supervisors and Participants to Coaches",
     "reviewRequestsDescription": "Review and decide on pathway switch and dropout requests submitted for your organization",

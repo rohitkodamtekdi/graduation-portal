@@ -160,6 +160,36 @@ export const MORE_INFORMATION_MENU_ITEMS: SidebarMenuItem[] = [
   },
 ];
 
+// Report Manager has its own menu with only the reports; the admin menu above is unchanged
+export const REPORT_MANAGER_MENU_ITEMS: SidebarMenuItem[] = [
+  {
+    key: 'reports-and-dashboards',
+    label: 'admin.menu.reportsAndDashboards',
+    icon: 'LayoutDashboard',
+    children: [
+      {
+        key: 'participants',
+        label: 'admin.menu.participants',
+        icon: 'Users',
+        route: 'participants-report',
+      },
+      {
+        key: 'coach-progress',
+        label: 'admin.menu.coachProgressInLms',
+        icon: 'TrendingUp',
+        redirectUrl: '/lms-admin/Coach-Progress-Dashboard',
+      },
+      {
+        key: 'support-provider-dashboard',
+        label: 'admin.menu.supportProvider',
+        icon: 'ChartColumn',
+        route: 'support-provider-dashboard',
+      },
+    ],
+  },
+];
+export const REPORT_MANAGER_USER_STORY_KEYS: string[] = ['user-story-dashboard-guide', 'report-feedback'];
+
 /** GBL help guides and feedback links */
 export const USER_STORY_MENU_ITEMS: SidebarMenuItem[] = [
   {

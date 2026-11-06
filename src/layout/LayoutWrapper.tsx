@@ -63,6 +63,7 @@ const LayoutWrapper: React.FC<LayoutWrapperProps> = ({
   switch (userRole) {
     case 'admin':
     case 'tenant_admin':
+    case 'report_manager':
       SelectedLayout = AdminLayout as LayoutComponent;
       break;
     case 'org_admin':
