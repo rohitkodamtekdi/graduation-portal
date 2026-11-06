@@ -25,6 +25,33 @@ export const REPORT_FEEDBACK_MENU_ITEM: SidebarMenuItem = {
   href: process.env.REPORT_FEEDBACK_FORM_URL || 'https://forms.gle/12ZsUZs9wn2hHtfh9',
 };
 
+// All reports and dashboards under one menu, shared by the admin and Report Manager menus
+export const REPORTS_AND_DASHBOARDS_MENU_ITEM: SidebarMenuItem = {
+  key: 'reports-and-dashboards',
+  label: 'admin.menu.reportsAndDashboards',
+  icon: 'LayoutDashboard',
+  children: [
+    {
+      key: 'participants',
+      label: 'admin.menu.participants',
+      icon: 'Users',
+      route: 'participants-report',
+    },
+    {
+      key: 'coach-progress',
+      label: 'admin.menu.coachProgressInLms',
+      icon: 'TrendingUp',
+      redirectUrl: '/lms-admin/Coach-Progress-Dashboard',
+    },
+    {
+      key: 'support-provider-dashboard',
+      label: 'admin.menu.supportProvider',
+      icon: 'ChartColumn',
+      route: 'support-provider-dashboard',
+    },
+  ],
+};
+
 export const MAIN_MENU_ITEMS: SidebarMenuItem[] = [
   // Dashboard is hidden from menu but still accessible via /admin-dashboard URL
   // {
@@ -33,30 +60,32 @@ export const MAIN_MENU_ITEMS: SidebarMenuItem[] = [
   //   icon: 'LayoutDashboard', // Lucide icon name
   //   route: 'admin-dashboard',
   // },
+  // Replaced by REPORTS_AND_DASHBOARDS_MENU_ITEM, which groups all reports under one menu
   // Pages not built yet — no route/href set; wire these up once their screens exist
-  {
-    key: 'dashboards',
-    label: 'admin.menu.dashboards',
-    icon: 'LayoutDashboard',
-    children: [
-      // {
-      //   key: 'participants',
-      //   label: 'admin.menu.participants',
-      //   icon: 'Users',
-      // },
-      // {
-      //   key: 'support-providers',
-      //   label: 'admin.menu.supportProviders',
-      //   icon: 'Briefcase',
-      // },
-      {
-        key: 'coach-progress',
-        label: 'admin.menu.coachProgress',
-        icon: 'TrendingUp',
-        redirectUrl:"/lms-admin/Coach-Progress-Dashboard"
-      },
-    ],
-  },
+  // {
+  //   key: 'dashboards',
+  //   label: 'admin.menu.dashboards',
+  //   icon: 'LayoutDashboard',
+  //   children: [
+  //     // {
+  //     //   key: 'participants',
+  //     //   label: 'admin.menu.participants',
+  //     //   icon: 'Users',
+  //     // },
+  //     // {
+  //     //   key: 'support-providers',
+  //     //   label: 'admin.menu.supportProviders',
+  //     //   icon: 'Briefcase',
+  //     // },
+  //     {
+  //       key: 'coach-progress',
+  //       label: 'admin.menu.coachProgress',
+  //       icon: 'TrendingUp',
+  //       redirectUrl:"/lms-admin/Coach-Progress-Dashboard"
+  //     },
+  //   ],
+  // },
+  REPORTS_AND_DASHBOARDS_MENU_ITEM,
   {
     key: 'user-management',
     label: 'admin.menu.userManagement',
@@ -75,12 +104,13 @@ export const MAIN_MENU_ITEMS: SidebarMenuItem[] = [
     icon: 'ClipboardCheck', // Lucide icon name
     route: 'review-requests',
   },
-  {
-    key: 'support-provider-dashboard',
-    label: 'admin.menu.supportProviderDashboard',
-    icon: 'ChartColumn', // Lucide icon name
-    route: 'support-provider-dashboard',
-  },
+  // Moved under Reports and Dashboards
+  // {
+  //   key: 'support-provider-dashboard',
+  //   label: 'admin.menu.supportProviderDashboard',
+  //   icon: 'ChartColumn', // Lucide icon name
+  //   route: 'support-provider-dashboard',
+  // },
   // {
   //   key: 'template-management',
   //   label: 'admin.menu.templateManagement',
@@ -160,34 +190,8 @@ export const MORE_INFORMATION_MENU_ITEMS: SidebarMenuItem[] = [
   },
 ];
 
-// Report Manager has its own menu with only the reports; the admin menu above is unchanged
-export const REPORT_MANAGER_MENU_ITEMS: SidebarMenuItem[] = [
-  {
-    key: 'reports-and-dashboards',
-    label: 'admin.menu.reportsAndDashboards',
-    icon: 'LayoutDashboard',
-    children: [
-      {
-        key: 'participants',
-        label: 'admin.menu.participants',
-        icon: 'Users',
-        route: 'participants-report',
-      },
-      {
-        key: 'coach-progress',
-        label: 'admin.menu.coachProgressInLms',
-        icon: 'TrendingUp',
-        redirectUrl: '/lms-admin/Coach-Progress-Dashboard',
-      },
-      {
-        key: 'support-provider-dashboard',
-        label: 'admin.menu.supportProvider',
-        icon: 'ChartColumn',
-        route: 'support-provider-dashboard',
-      },
-    ],
-  },
-];
+// Report Manager sees only the reports menu
+export const REPORT_MANAGER_MENU_ITEMS: SidebarMenuItem[] = [REPORTS_AND_DASHBOARDS_MENU_ITEM];
 export const REPORT_MANAGER_USER_STORY_KEYS: string[] = ['user-story-dashboard-guide', 'report-feedback'];
 
 /** GBL help guides and feedback links */

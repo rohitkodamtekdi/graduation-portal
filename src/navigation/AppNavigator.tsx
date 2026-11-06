@@ -123,6 +123,7 @@ const getAccessPages = (
           component: UserManagementScreen,
         },
         { name: 'admin-dashboard', path: '/admin-dashboard', component: AdminDashboard },
+        { name: 'participants-report', path: '/participants-report', component: ParticipantsReport },
         { name: 'support-provider-dashboard', path: '/support-provider-dashboard', component: SupportProviderDashboard },
         {
           name: 'template-management',
@@ -166,6 +167,7 @@ const getAccessPages = (
           component: UserManagementScreen,
         },
         { name: 'admin-dashboard', path: '/admin-dashboard', component: AdminDashboard },
+        { name: 'participants-report', path: '/participants-report', component: ParticipantsReport },
         { name: 'support-provider-dashboard', path: '/support-provider-dashboard', component: SupportProviderDashboard },
         {
           name: 'assign-users',
