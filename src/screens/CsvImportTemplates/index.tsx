@@ -21,6 +21,7 @@ import {
   TEMPLATE_FILE_URLS,
 } from '@constants/CSV_TEMPLATE_DATA';
 import { csvImportStyles } from './Styles';
+import logger from '@utils/logger';
 
 const CsvImportTemplates = () => {
   const { t } = useLanguage();
@@ -53,6 +54,28 @@ const CsvImportTemplates = () => {
     });
   };
 
+  // Fetch the file and save it from memory, so it downloads in the same tab (the S3 bucket allows cross-origin GET)
+  const downloadFileFromUrl = async (fileUrl: string, title: string) => {
+    try {
+      const response = await fetch(fileUrl);
+      if (!response.ok) throw new Error(`Template download failed: ${response.status}`);
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', objectUrl);
+      link.setAttribute('download', decodeURIComponent(fileUrl.split('?')[0].split('/').pop() || 'template.xlsx'));
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      logger.error('CsvImportTemplates: template file fetch failed, opening the link instead', error);
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    }
+    showDownloadSuccess(title);
+  };
+
   const handleDownload = (id: string) => {
     const template = TEMPLATE_DATA.find(item => item.id === id);
     if (!template) return;
@@ -61,14 +84,7 @@ const CsvImportTemplates = () => {
     const templateFileUrl = TEMPLATE_FILE_URLS[id];
     if (templateFileUrl) {
       if (Platform.OS === 'web') {
-        const link = document.createElement('a');
-        link.setAttribute('href', templateFileUrl);
-        link.setAttribute('rel', 'noopener');
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        showDownloadSuccess(template.title);
+        void downloadFileFromUrl(templateFileUrl, template.title);
       } else {
         Linking.openURL(templateFileUrl);
       }
