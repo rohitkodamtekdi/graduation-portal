@@ -1,5 +1,5 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { TemplateCard } from './TemplateCard';
 import {
   LucideIcon,
@@ -17,7 +17,8 @@ import { useLanguage } from '@contexts/LanguageContext';
 import {
   CSV_TEMPLATES_KEYS,
   GUIDELINES_KEYS,
-  CSV_CONTENT_STRINGS
+  CSV_CONTENT_STRINGS,
+  TEMPLATE_FILE_URLS,
 } from '@constants/CSV_TEMPLATE_DATA';
 import { csvImportStyles } from './Styles';
 
@@ -34,9 +35,45 @@ const CsvImportTemplates = () => {
 
   const GUIDELINES = GUIDELINES_KEYS.map(key => t(key));
 
+  const showDownloadSuccess = (title: string) => {
+    toast.show({
+      placement: 'top right',
+      render: ({ id }) => {
+        return (
+          <Toast nativeID={`toast-${id}`} action="success" variant="outline" bg="$white" hardShadow="5" borderColor="$gray300">
+            <HStack space="md" alignItems="center">
+              <LucideIcon name="CheckCircle" size={20} color="$success500" />
+              <ToastTitle color="$textPrimary" fontSize="$sm" fontWeight="$bold">
+                {t('admin.csvTemplatePage.downloadSuccess', { title })}
+              </ToastTitle>
+            </HStack>
+          </Toast>
+        )
+      }
+    });
+  };
+
   const handleDownload = (id: string) => {
     const template = TEMPLATE_DATA.find(item => item.id === id);
     if (!template) return;
+
+    // Ready-made template file (e.g. XLSX on S3) when its URL is configured; otherwise the generated CSV below
+    const templateFileUrl = TEMPLATE_FILE_URLS[id];
+    if (templateFileUrl) {
+      if (Platform.OS === 'web') {
+        const link = document.createElement('a');
+        link.setAttribute('href', templateFileUrl);
+        link.setAttribute('rel', 'noopener');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showDownloadSuccess(template.title);
+      } else {
+        Linking.openURL(templateFileUrl);
+      }
+      return;
+    }
 
     const sanitizedTitle = template.title.replace(/[^a-zA-Z0-9-_]/g, '_');
     const fileName = `${sanitizedTitle || id}.csv`;
@@ -56,21 +93,7 @@ const CsvImportTemplates = () => {
         document.body.removeChild(link);
 
         // Show Success Toast only on Web
-        toast.show({
-          placement: 'top right',
-          render: ({ id }) => {
-            return (
-              <Toast nativeID={`toast-${id}`} action="success" variant="outline" bg="$white" hardShadow="5" borderColor="$gray300">
-                <HStack space="md" alignItems="center">
-                  <LucideIcon name="CheckCircle" size={20} color="$success500" />
-                  <ToastTitle color="$textPrimary" fontSize="$sm" fontWeight="$bold">
-                    {t('admin.csvTemplatePage.downloadSuccess', { title: template.title })}
-                  </ToastTitle>
-                </HStack>
-              </Toast>
-            )
-          }
-        });
+        showDownloadSuccess(template.title);
       }
     } else {
       // Show Info Toast for Mobile

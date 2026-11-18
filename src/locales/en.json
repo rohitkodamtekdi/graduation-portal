@@ -1938,7 +1938,8 @@
           "Role values must match exactly: Admin, Supervisor, Coach, or Participant",
           "Province and District values must match the system's configured administrative divisions",
           "File size limit: 5MB (approximately 5,000 rows)",
-          "Duplicates will be skipped with a warning"
+          "Duplicates will be skipped with a warning",
+          "Fill in the downloaded template (XLSX) on its first sheet, then export that sheet as CSV (File › Download › Comma-separated values) and upload the CSV"
         ]
       },
       "downloadSuccess": "{{title}} template downloaded.",

@@ -34,7 +34,14 @@ export const GUIDELINES_KEYS = [
     'admin.csvTemplatePage.guidelines.items.4',
     'admin.csvTemplatePage.guidelines.items.5',
     'admin.csvTemplatePage.guidelines.items.6',
+    'admin.csvTemplatePage.guidelines.items.7',
 ];
+
+// Templates served as a ready-made file (e.g. the GBL XLSX on S3) instead of the generated CSV below
+export const TEMPLATE_FILE_URLS: Record<string, string> = {
+    // @ts-ignore - process.env from DefinePlugin
+    user_import: (process.env.USER_IMPORT_TEMPLATE_URL || '').trim(),
+};
 
 export const CSV_CONTENT_STRINGS: Record<string, string> = {
     // Replaced by the GBL v5 upload template columns (roles, gender, national_id, password; dob as dd/mm/yyyy)
