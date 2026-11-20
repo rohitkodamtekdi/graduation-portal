@@ -30,6 +30,7 @@ import {
 import { getTargetedSolutions } from './solutionService';
 import { FILTER_KEYWORDS } from '@constants/LOG_VISIT_CARDS';
 import { CARD_STATUS, STATUS } from '@constants/app.constant';
+import { getEntityValue } from '@utils/entityField';
 
 /** Called by the download pipeline as each module starts and finishes. */
 export type DownloadProgressCallback = (
@@ -587,9 +588,11 @@ export const startDownload = async ({
         participantSnapshot?.province ??
         participantSnapshot?.userDetails?.province;
       const resolvedProvince: string | undefined =
-        typeof rawProvince === 'string'
-          ? rawProvince
-          : rawProvince?.value ?? rawProvince?.label;
+        // typeof rawProvince === 'string'
+        //   ? rawProvince
+        //   : rawProvince?.value ?? rawProvince?.label;
+        // province can now be an array; take the first id
+        getEntityValue(rawProvince) || undefined;
 
       if (!entityId || !resolvedProvince) {
         logger.error(

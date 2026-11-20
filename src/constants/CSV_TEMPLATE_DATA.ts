@@ -34,6 +34,7 @@ export const GUIDELINES_KEYS = [
     'admin.csvTemplatePage.guidelines.items.4',
     'admin.csvTemplatePage.guidelines.items.5',
     'admin.csvTemplatePage.guidelines.items.6',
+    'admin.csvTemplatePage.guidelines.items.7',
 ];
 
 export const CSV_CONTENT_STRINGS: Record<string, string> = {

@@ -23,6 +23,7 @@ import { STATUS, USER_STATUS } from '@constants/app.constant';
 import { openDownload } from '@utils/helper';
 import { usePlatform } from '@utils/platform';
 import { useOfflineSync } from '@contexts/OfflineSyncContext';
+import { getEntityLabel } from '@utils/entityField';
 
 type ParticipantProfileModalProps = {
   isOpen: boolean;
@@ -75,8 +76,8 @@ function ParticipantProfileModalInner({
        setEditedAddress({
         email: participantData?.email || '',
         street: participantData?.location || '',
-        province: participantData?.province?.label || '',
-        site: participantData?.site?.label || participantData?.site || '',
+        province: getEntityLabel(participantData?.province) || '',
+        site: getEntityLabel(participantData?.site) || '',
       });
     }
     if(participantId && isOpen) {
@@ -118,8 +119,8 @@ function ParticipantProfileModalInner({
         setEditedAddress({
           email: participant?.email || '',
           street: participant?.location || '',
-          province: participant?.province?.label || '',
-          site: participant?.site?.label || participant?.site || '',
+          province: getEntityLabel(participant?.province) || '',
+          site: getEntityLabel(participant?.site) || '',
         });
         setAddressFieldErrors({});
       }
@@ -354,14 +355,14 @@ function ParticipantProfileModalInner({
             color={'$textMutedForeground' as const}
           >
             {t('common.profileFields.addressFields.province')}:{' '}
-            {participant?.province?.label || '-'}
+            {getEntityLabel(participant?.province) || '-'}
           </Text>
           <Text
             {...profileStyles.fieldValue}
             color={'$textMutedForeground' as const}
           >
             {t('common.profileFields.addressFields.site')}:{' '}
-            {participant?.site?.label || '-'}
+            {getEntityLabel(participant?.site) || '-'}
           </Text>
         </VStack>
       </VStack>

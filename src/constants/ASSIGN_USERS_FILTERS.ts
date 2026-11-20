@@ -205,11 +205,13 @@ export const useSiteFilterOptions = (
 export const useParticipantFilterOptions = (
   selectedProvinceId?: string,
   enabled = true,
-  lockProvince = false
+  lockProvince = false,
+  allowedProvinceIds: string[] = [],
 ): {
   filters: ReadonlyArray<FilterConfig>;
   sites: SiteEntity[];
 } => {
+  const allowedProvinceKey = allowedProvinceIds.join(',');
   // State for API data
   const [provinces, setProvinces] = useState<ProvinceEntity[]>([]);
   const [sites, setSites] = useState<SiteEntity[]>([]);
@@ -259,12 +261,24 @@ export const useParticipantFilterOptions = (
   // Build dynamic filter options with API data
   return useMemo(() => {
     // Build province filter from API provinces
+    // const provinceFilterOptions = [
+    //   { labelKey: 'admin.filters.allProvinces', value: 'all-provinces' },
+    //   ...provinces.map((province: ProvinceEntity) => ({
+    //     label: province.name,
+    //     value: province._id,
+    //   })),
+    // ];
+    // A Supervisor with several provinces can switch only between their own provinces
+    const allowedIds = allowedProvinceKey ? allowedProvinceKey.split(',') : [];
+    const restrictToOwnProvinces = allowedIds.length > 1;
     const provinceFilterOptions = [
-      { labelKey: 'admin.filters.allProvinces', value: 'all-provinces' },
-      ...provinces.map((province: ProvinceEntity) => ({
-        label: province.name,
-        value: province._id,
-      })),
+      ...(restrictToOwnProvinces ? [] : [{ labelKey: 'admin.filters.allProvinces', value: 'all-provinces' }]),
+      ...provinces
+        .filter((province: ProvinceEntity) => !restrictToOwnProvinces || allowedIds.includes(province._id))
+        .map((province: ProvinceEntity) => ({
+          label: province.name,
+          value: province._id,
+        })),
     ];
 
     // Build site filter from API sites
@@ -295,7 +309,7 @@ export const useParticipantFilterOptions = (
       ],
       sites,
     };
-  }, [provinces, sites, selectedProvinceId, lockProvince]);
+  }, [provinces, sites, selectedProvinceId, lockProvince, allowedProvinceKey]);
 };
 
 // NOTE: Participant filters are now provided by `useParticipantFilterOptions`.

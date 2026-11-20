@@ -20,6 +20,7 @@ import { theme } from '@config/theme';
 import { getLinkageChampions, assignLCsToSupervisor, getMappedLCsForSupervisor, getParticipants, assignParticipantsToLC, getMappedParticipantsForLC, getSupervisorsByProvince } from '../../services/assignUsersService';
 import { getInitials } from '@utils/helper';
 import { useIsTenantAdmin, useAuth } from '../../contexts/AuthContext';
+import { getEntityLabel, getEntityValues } from '@utils/entityField';
 
 // Type declaration for process.env (injected by webpack DefinePlugin on web, available in React Native)
 declare const process:
@@ -104,30 +105,53 @@ const shouldLoadParticipantFilters =
   activeTab === 'PARTICIPANT_TO_LC' && !!selectedLcId;
 
  // tenant_admin (Supervisor) is locked to their own province when assigning participants to LCs
- const supervisorOwnProvinceId = (user as any)?.province?.value || '';
+ // const supervisorOwnProvinceId = getEntityValue((user as any)?.province) || '';
+ // Supervisor may have several provinces; the first one is the default selection
+ const supervisorProvinceIds = getEntityValues((user as any)?.province);
+ const supervisorProvinceKey = supervisorProvinceIds.join(',');
+ const supervisorOwnProvinceId = supervisorProvinceIds[0] || '';
 
  // Get dynamic participant filter options (Province and Site)
  // Only lock the province filter when the supervisor/tenant_admin actually
  // has a province set on their profile - otherwise leave it enabled so they
  // can browse/see participants across all provinces.
+ // const { filters: participantProvinceSiteFilters } = useParticipantFilterOptions(
+ //   participantFilterValues.filterByProvince,
+ //   shouldLoadParticipantFilters,
+ //   isSupervisor && !!supervisorOwnProvinceId
+ // );
+ // One province stays locked; with several provinces they can switch between their own ones
  const { filters: participantProvinceSiteFilters } = useParticipantFilterOptions(
    participantFilterValues.filterByProvince,
    shouldLoadParticipantFilters,
-   isSupervisor && !!supervisorOwnProvinceId
+   isSupervisor && supervisorProvinceIds.length === 1,
+   isSupervisor ? supervisorProvinceIds : [],
  );
  const AssignParticipantFilterOptions = [ParticipantSearchFilter, ...participantProvinceSiteFilters];
 
  // Auto-select the tenant_admin's own province and keep it locked while on this tab
+ // useEffect(() => {
+ //   if (
+ //     isSupervisor &&
+ //     activeTab === 'PARTICIPANT_TO_LC' &&
+ //     supervisorOwnProvinceId &&
+ //     participantFilterValues.filterByProvince !== supervisorOwnProvinceId
+ //   ) {
+ //     setParticipantFilterValues((prev) => ({ ...prev, filterByProvince: supervisorOwnProvinceId }));
+ //   }
+ // }, [isSupervisor, activeTab, supervisorOwnProvinceId, participantFilterValues.filterByProvince]);
+ // Keep the selection inside the supervisor's own provinces; fall back to the first one
  useEffect(() => {
+   const ownIds = supervisorProvinceKey ? supervisorProvinceKey.split(',') : [];
    if (
      isSupervisor &&
      activeTab === 'PARTICIPANT_TO_LC' &&
-     supervisorOwnProvinceId &&
-     participantFilterValues.filterByProvince !== supervisorOwnProvinceId
+     ownIds.length &&
+     !ownIds.includes(participantFilterValues.filterByProvince)
    ) {
-     setParticipantFilterValues((prev) => ({ ...prev, filterByProvince: supervisorOwnProvinceId }));
+     setParticipantFilterValues((prev) => ({ ...prev, filterByProvince: ownIds[0] }));
    }
- }, [isSupervisor, activeTab, supervisorOwnProvinceId, participantFilterValues.filterByProvince]);
+ }, [isSupervisor, activeTab, supervisorProvinceKey, participantFilterValues.filterByProvince]);
 
 useEffect(() => {
   setParticipantsPage(1);
@@ -187,9 +211,9 @@ useEffect(() => {
          value: String(lc.userId || ''),
          id: lc.userId,
          email: lc.userDetails?.email || '',
-         province: lc.userDetails?.province?.label || '',
+         province: getEntityLabel(lc.userDetails?.province) || '',
          site:
-           lc.userDetails?.site?.label ||
+           getEntityLabel(lc.userDetails?.site) ||
            lc.userDetails?.district?.label ||
            lc.userDetails?.local_municipality?.label ||
            '',
@@ -317,14 +341,14 @@ useEffect(() => {
       const userId = lc.userId || '';
       const email = lc.userDetails?.email || '';
       const province =
-        lc.userDetails?.province?.label ||
-        lc.province?.label ||
+        getEntityLabel(lc.userDetails?.province) ||
+        getEntityLabel(lc.province) ||
         '';
       const site =
-        lc.userDetails?.site?.label ||
+        getEntityLabel(lc.userDetails?.site) ||
         lc.userDetails?.district?.label ||
         lc.userDetails?.local_municipality?.label ||
-        lc.site?.label ||
+        getEntityLabel(lc.site) ||
         '';
       const lcId = `LC-${String(userId).padStart(3, '0')}`;
 
@@ -409,9 +433,9 @@ useEffect(() => {
        const name = participant.name || participant.userDetails?.name || participant.email || 'Unknown';
        const userId = participant.userId || participant.userDetails?.id || '';
        const email = participant.userDetails?.email || participant.email || '';
-       const province = participant.userDetails?.province?.label || '-';
+       const province = getEntityLabel(participant.userDetails?.province) || '-';
        const site =
-         participant.userDetails?.site?.label ||
+         getEntityLabel(participant.userDetails?.site) ||
          participant.userDetails?.district?.label ||
          participant.userDetails?.local_municipality?.label ||
          '-';
@@ -576,14 +600,14 @@ const getAvailableParticipants = () => {
          const email = lc.userDetails?.email || '';
         // Extract province/site similar to UserManagement table
         const province =
-          lc.userDetails?.province?.label ||
-          lc.province?.label ||
+          getEntityLabel(lc.userDetails?.province) ||
+          getEntityLabel(lc.province) ||
           '';
         const site =
-          lc.userDetails?.site?.label ||
+          getEntityLabel(lc.userDetails?.site) ||
           lc.userDetails?.district?.label ||
           lc.userDetails?.local_municipality?.label ||
-          lc.site?.label ||
+          getEntityLabel(lc.site) ||
           '';
          const lcId = `LC-${String(userId).padStart(3, '0')}`;
          
@@ -658,8 +682,8 @@ useEffect(() => {
         const email = participant.email || participant.userDetails?.email || '';
         
         // Extract province and site from userDetails
-        const participantProvince = participant.province?.label || participant.userDetails?.province?.label || '';
-        const participantSite = participant.site?.label || participant.userDetails?.site?.label || participant.userDetails?.district?.label || participant.userDetails?.local_municipality?.label || '';
+        const participantProvince = getEntityLabel(participant.province) || getEntityLabel(participant.userDetails?.province) || '';
+        const participantSite = getEntityLabel(participant.site) || getEntityLabel(participant.userDetails?.site) || participant.userDetails?.district?.label || participant.userDetails?.local_municipality?.label || '';
         
         // Build location string with province and site
         const locationParts = [];
@@ -740,8 +764,8 @@ useEffect(() => {
         const name = participant.name || participant.userDetails?.name || participant.email || 'Unknown';
         const userId = participant.userId || participant.userDetails?.id || '';
         const email = participant.userDetails?.email || participant.email || '';
-        const province = participant.userDetails?.province?.label || '-';
-        const site = participant.userDetails?.site?.label || participant.userDetails?.district?.label || participant.userDetails?.local_municipality?.label || '-';
+        const province = getEntityLabel(participant.userDetails?.province) || '-';
+        const site = getEntityLabel(participant.userDetails?.site) || participant.userDetails?.district?.label || participant.userDetails?.local_municipality?.label || '-';
         
         return {
           labelKey: name,

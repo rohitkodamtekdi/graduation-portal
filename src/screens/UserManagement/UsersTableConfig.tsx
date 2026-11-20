@@ -13,6 +13,7 @@ import { useAuth } from '@contexts/AuthContext';
 import { StatusBadge as StatusBadge1 } from '../ParticipantsList/StatusBadge';
 import { USER_STATUS } from '@constants/app.constant';
 import { ADMIN_ROLES, PARTICIPANT_ROLES } from '@constants/ROLES';
+import { getEntityLabel } from '@utils/entityField';
 
 /**
  * Helper function to extract role label from user object
@@ -380,7 +381,7 @@ export const getUsersColumns = (handlers?: {
       flex: 1.2,
       render: (user: any) => (
         <Text {...TYPOGRAPHY.paragraph} {...styles.provinceText}>
-          {String((user?.province && (user?.province?.label ?? user?.province)) ?? '-')}
+          {getEntityLabel(user?.province, '-')}
         </Text>
       ),
       mobileConfig: {
@@ -394,7 +395,7 @@ export const getUsersColumns = (handlers?: {
       flex: 1.2,
       render: (user: any) => (
         <Text {...TYPOGRAPHY.paragraph} {...styles.districtText}>
-          {String((user?.site && (user?.site?.label ?? user?.site)) ?? '-')}
+          {getEntityLabel(user?.site, '-')}
         </Text>
       ),
       mobileConfig: {

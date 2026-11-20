@@ -15,7 +15,14 @@ import { ProfileModalHeader } from './CreateUserForm';
 import {
   mapFormValuesToPayload,
   mapFiltersToOptionsMap,
+  isMultiLocationRole,
+  isMultiLocationTitle,
+  getLocationSchema,
+  toLocationList,
+  toLocationValue,
+  fetchSitesForProvinces,
 } from './CreateUserForm';
+import { getEntityValues } from '@utils/entityField';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -118,10 +125,15 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     ];
   }, [roles, extraRoleOption]);
 
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const initialValuesRef = useRef<Record<string, string>>({});
+  const initialValuesRef = useRef<Record<string, any>>({});
+  // Role is fixed while viewing/editing, so a list value also means the profile is LC/Supervisor
+  const isMultiLocation =
+    isMultiLocationRole(values.roleId, effectiveRoles) || Array.isArray(values.provinceId);
+  const provinceCount = toLocationList(values.provinceId).length;
+  const siteCount = toLocationList(values.siteId).length;
   const firstNameRef = useRef<any>(null);
 
   useEffect(() => {
@@ -135,22 +147,28 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
   const editSchema = useMemo(
     () =>
-      CREATE_USER_FORM_SCHEMA.map(section => {
+      // CREATE_USER_FORM_SCHEMA.map(section => {
+      getLocationSchema(isMultiLocation).map(section => {
         const { hint, ...sectionWithoutHint } = section;
         return {
           ...sectionWithoutHint,
           ...(mode === 'edit' && { hint }),
           rows: section.rows.map(row => ({
             ...row,
-            fields: row.fields.map(field =>
-              field.name === 'roleId'
-                ? { ...field, disabled: mode === 'edit' }
-                : field
-            ),
+            fields: row.fields.map(field => {
+              if (field.name === 'roleId') return { ...field, disabled: mode === 'edit' };
+              // LC/Supervisor labels show how many provinces/sites are selected, e.g. "Province (3)"
+              const count = field.name === 'provinceId' ? provinceCount : field.name === 'siteId' ? siteCount : 0;
+              if (isMultiLocation && count > 0 && field.label) {
+                const baseLabel = t(`admin.users.createUser.${field.label.key}`, field.label.fallback);
+                return { ...field, label: { key: `${field.label.key}WithCount`, fallback: `${baseLabel} (${count})` } };
+              }
+              return field;
+            }),
           })),
         };
       }),
-    [mode],
+    [mode, isMultiLocation, provinceCount, siteCount, t],
   );
 
   const getEntityId = (value: any): string => {
@@ -164,7 +182,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const mapUserToFormValues = (
     user: AdminUserManagementData | null,
     userProfile: any | null
-  ): Record<string, string> => {
+  ): Record<string, any> => {
     if (!user) return {};
 
     const resolvedRoleInfo = resolveRoleInfo(user, userProfile);
@@ -320,8 +338,14 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     const employee_id = getFieldVal('employee_id');
     let organisationId = getFieldVal('organization');
     const positionId = getFieldIdVal('positionId');
-    const provinceId = getFieldIdVal('provinceId');
-    const siteId = getFieldIdVal('siteId');
+    // const provinceId = getFieldIdVal('provinceId');
+    // const siteId = getFieldIdVal('siteId');
+    // province/site may hold several ids; LC/Supervisor keep the full list, other roles the first one
+    // Own role (e.g. tenant_admin) is missing from `roles`, so also check the resolved role title
+    const multiLocation =
+      isMultiLocationTitle(resolvedRoleInfo?.title) || isMultiLocationRole(roleId, effectiveRoles);
+    const provinceId = toLocationValue(getEntityValues(getRawFieldVal('provinceId')), multiLocation);
+    const siteId = toLocationValue(getEntityValues(getRawFieldVal('siteId')), multiLocation);
     const location = getFieldVal('location');
 
     const roleTitle = (() => {
@@ -383,16 +407,17 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           setValues(mapped);
           initialValuesRef.current = mapped;
 
-          const provId = getEntityId(
-            profile?.province || (user as any)?.province,
-          );
-          if (provId) {
-            getSitesByProvince({ provinceId: provId, page: 1, limit: 100 })
-              .then(res => setFormSites(res.result?.data || []))
-              .catch(() => setFormSites([]));
-          } else {
-            setFormSites([]);
-          }
+          // const provId = getEntityId(
+          //   profile?.province || (user as any)?.province,
+          // );
+          // if (provId) {
+          //   getSitesByProvince({ provinceId: provId, page: 1, limit: 100 })
+          //     .then(res => setFormSites(res.result?.data || []))
+          //     .catch(() => setFormSites([]));
+          // } else {
+          //   setFormSites([]);
+          // }
+          fetchSitesForProvinces(toLocationList(mapped.provinceId)).then(setFormSites);
         })
         .catch(err => {
           console.error('Failed to load user profile for editing:', err);
@@ -431,23 +456,36 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     ],
   );
 
-  const handleFieldChange = (name: string, value: string) => {
-    let nextValues: Record<string, string> = {};
+  const handleFieldChange = (name: string, value: any) => {
+    let nextValues: Record<string, any> = {};
     setValues(prev => {
       const updated = { ...prev, [name]: value };
       nextValues = updated;
 
       // Clear site if province changes
+      // if (name === 'provinceId') {
+      //   updated.siteId = '';
+      //   const provId = getEntityId(value);
+      //   if (provId) {
+      //     getSitesByProvince({ provinceId: provId, page: 1, limit: 100 })
+      //       .then(res => setFormSites(res.result?.data || []))
+      //       .catch(() => setFormSites([]));
+      //   } else {
+      //     setFormSites([]);
+      //   }
+      // }
+      // Single select clears the site; multi select keeps only sites that belong to the remaining provinces
       if (name === 'provinceId') {
-        updated.siteId = '';
-        const provId = getEntityId(value);
-        if (provId) {
-          getSitesByProvince({ provinceId: provId, page: 1, limit: 100 })
-            .then(res => setFormSites(res.result?.data || []))
-            .catch(() => setFormSites([]));
-        } else {
-          setFormSites([]);
-        }
+        if (!Array.isArray(value)) updated.siteId = '';
+        fetchSitesForProvinces(toLocationList(value)).then(sites => {
+          setFormSites(sites);
+          const siteIds = sites.map((s: any) => s._id);
+          setValues(current =>
+            Array.isArray(current.siteId)
+              ? { ...current, siteId: current.siteId.filter((id: string) => siteIds.includes(id)) }
+              : current,
+          );
+        });
       }
 
       if (name === 'roleId') {
@@ -462,7 +500,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     setErrors(prev => {
       const next = { ...prev };
       const validationErrs = validateSchema(
-        CREATE_USER_FORM_SCHEMA,
+        // CREATE_USER_FORM_SCHEMA,
+        editSchema,
         nextValues,
         optionsMap,
       );
@@ -498,7 +537,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     }
 
     const validationErrors = validateSchema(
-      CREATE_USER_FORM_SCHEMA,
+      // CREATE_USER_FORM_SCHEMA,
+      editSchema,
       values,
       optionsMap,
     );

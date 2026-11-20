@@ -44,6 +44,7 @@ import openExternalLink from '@utils/openExternalLink';
 import { useOfflineSync } from '@contexts/OfflineSyncContext';
 import { UserProfileModal } from '../../screens/UserManagement/UserProfileModal';
 import type { AdminUserManagementData } from '@app-types/Users';
+import { getEntityLabel, toEntityList } from '@utils/entityField';
 
 /**
  * Header Component - Enhanced for LC Layout Support
@@ -411,10 +412,10 @@ const Header: React.FC<{
                   {authUser?.location || '-'}
                 </Text>
                 <Text {...profileStyles.fieldValue} color={'$textMutedForeground' as const}>
-               {t('common.profileFields.addressFields.province')}: {authUser?.province?.label || "-"}
+               {t('common.profileFields.addressFields.province')}: {getEntityLabel(authUser?.province) || "-"}
               </Text> */}
                 <Text {...profileStyles.fieldValue} color={'$textMutedForeground' as const}>
-                  {t('common.profileFields.addressFields.site')}: {authUser?.site?.label || '-'}
+                  {t('common.profileFields.addressFields.site')}{toEntityList(authUser?.site).length > 1 ? ` (${toEntityList(authUser?.site).length})` : ''}: {getEntityLabel(authUser?.site) || '-'}
                 </Text>
               </Box>
             </Box>

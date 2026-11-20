@@ -30,6 +30,7 @@ import { getInitials } from '@utils/helper';
 import { TYPOGRAPHY } from '@constants/TYPOGRAPHY';
 import DataTable from '@components/DataTable';
 import type { ColumnDef } from '@app-types/components';
+import { getEntityLabel } from '@utils/entityField';
 
 interface UserAvatarCardProps {
  title: string;
@@ -397,9 +398,9 @@ const UserAvatarCard = ({
         const supervisorInitials = getInitials(supervisorName);
         
         // Get province and site from supervisor API response
-        const supervisorProvince = supervisorData?.province?.label || '';
+        const supervisorProvince = getEntityLabel(supervisorData?.province) || '';
         const supervisorSite = supervisorData?.local_municipality?.label || 
-                              supervisorData?.site?.label ||
+                              getEntityLabel(supervisorData?.site) ||
                               '';
         
         // Build location text: show both Province and Site if available

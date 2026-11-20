@@ -8,6 +8,7 @@ import LucideIcon from '@components/ui/LucideIcon';
 import { profileStyles, LCProfileStyles } from '@components/ui/Modal/Styles';
 import { getUserProfile } from '../../services/authenticationService';
 import { stylesHeader } from './Styles';
+import { getEntityLabel, toEntityList } from '@utils/entityField';
 
 interface LcProfileModalProps {
   isOpen: boolean;
@@ -137,7 +138,7 @@ const LcProfileModal: React.FC<LcProfileModalProps> = ({ isOpen, onClose }) => {
               </HStack>
               <Box {...LCProfileStyles.lcValueField} width="$full" overflow="hidden">
                 <Text {...profileStyles.fieldValue} color="$textMutedForeground">
-                  {t('common.profileFields.addressFields.site')}: {authUser?.site?.label || '-'}
+                  {t('common.profileFields.addressFields.site')}{toEntityList(authUser?.site).length > 1 ? ` (${toEntityList(authUser?.site).length})` : ''}: {getEntityLabel(authUser?.site) || '-'}
                 </Text>
               </Box>
             </Box>

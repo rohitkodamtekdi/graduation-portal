@@ -2,6 +2,7 @@ import type { DownloadConfig } from '@app-types/offline';
 import { ALLOWOFFLINESTATUS, STATUS } from '@constants/app.constant';
 import { ProjectData, Task } from '../project-player/types';
 import { Participant } from '@app-types/screens';
+import { getEntityValue } from '@utils/entityField';
 
 // ---------------------------------------------------------------------------
 // Status-based download option visibility (Section 3.6)
@@ -194,7 +195,9 @@ export function resolveDownloadContext(participantData: any): ResolvedDownloadCo
 
   const rawProvince = participantData?.province ?? participantData?.userDetails?.province;
   const resolvedProvince: string | undefined =
-    typeof rawProvince === 'string' ? rawProvince : rawProvince?.value ?? rawProvince?.label;
+    // typeof rawProvince === 'string' ? rawProvince : rawProvince?.value ?? rawProvince?.label;
+    // province can now be an array; take the first id
+    getEntityValue(rawProvince) || undefined;
 
   const resolvedEntityId: string | undefined =
     participantData?.entityId ??

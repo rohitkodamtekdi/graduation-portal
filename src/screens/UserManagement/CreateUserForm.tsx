@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { VStack, HStack, Button, ButtonText, Modal, Badge, BadgeText, Text, LucideIcon, Spinner } from '@ui';
 import { useAlert } from '@components/ui';
 import { TYPOGRAPHY } from '@constants/TYPOGRAPHY';
-import { FormField, FORM_FIELD_TYPES } from '@components/SchemaFormRenderer/type';
+import { FormField, FormSection, FORM_FIELD_TYPES } from '@components/SchemaFormRenderer/type';
 import SchemaFormRenderer, { validateSchema } from '@components/SchemaFormRenderer';
 import { createUser, getSitesByProvince } from '../../services/usersService';
 import { updateMentorExtension } from '../../services/mentoringService';
@@ -44,20 +44,42 @@ export const CreateUserForm = React.memo<CreateUserFormProps>(({
     return vals;
   }, []);
 
-  const [values, setValues] = useState<Record<string, string>>(initialValues);
+  const [values, setValues] = useState<Record<string, any>>(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formSites, setFormSites] = useState<any[]>([]);
 
+  const isMultiLocation = isMultiLocationRole(values.roleId, roles);
+  const formSchema = useMemo(() => getLocationSchema(isMultiLocation), [isMultiLocation]);
+
+  // useEffect(() => {
+  //   if (!values.provinceId) {
+  //     setFormSites([]);
+  //     return;
+  //   }
+  //   getSitesByProvince({ provinceId: values.provinceId })
+  //     .then(res => setFormSites(res.result?.data || []))
+  //     .catch(() => setFormSites([]));
+  // }, [values.provinceId]);
+
+  // Load sites for every selected province; in multi mode drop picked sites whose province was removed
+  const provinceKey = toLocationList(values.provinceId).join(',');
   useEffect(() => {
-    if (!values.provinceId) {
-      setFormSites([]);
-      return;
-    }
-    getSitesByProvince({ provinceId: values.provinceId })
-      .then(res => setFormSites(res.result?.data || []))
-      .catch(() => setFormSites([]));
-  }, [values.provinceId]);
+    let cancelled = false;
+    fetchSitesForProvinces(provinceKey ? provinceKey.split(',') : []).then(sites => {
+      if (cancelled) return;
+      setFormSites(sites);
+      const siteIds = sites.map((s: any) => s._id);
+      setValues(prev =>
+        Array.isArray(prev.siteId)
+          ? { ...prev, siteId: prev.siteId.filter((id: string) => siteIds.includes(id)) }
+          : prev,
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [provinceKey]);
 
   useEffect(() => {
     if (isOpen) {
@@ -77,24 +99,34 @@ export const CreateUserForm = React.memo<CreateUserFormProps>(({
     countryCodes,
   }), [roles, genders, provinces, formSites, organisations, positions, countryCodes]);
 
-  const handleFieldChange = useCallback((name: string, value: string) => {
-    let nextValues: Record<string, string> = {};
+  const handleFieldChange = useCallback((name: string, value: any) => {
+    let nextValues: Record<string, any> = {};
     setValues(prev => {
       nextValues = { ...prev, [name]: value };
       if (name === 'email' && (prev.username === '' || prev.username === prev.email)) {
         nextValues.username = value;
       }
-      if (name === 'provinceId') nextValues.siteId = '';
+      // if (name === 'provinceId') nextValues.siteId = '';
+      // Single select resets site on province change; multi select keeps sites and prunes them after reload
+      if (name === 'provinceId' && !Array.isArray(value)) nextValues.siteId = '';
       if (name === 'roleId') {
         const selectedRole = roles.find((r: any) => r.id.toString() === value);
         const roleTitle = (selectedRole?.title || '').toLowerCase();
         nextValues.isParticipant = roleTitle === 'user' ? 'true' : 'false';
+        // Switching between LC/Supervisor and other roles converts province/site between list and single value
+        const multi = isMultiLocationRole(value, roles);
+        nextValues.provinceId = toLocationValue(prev.provinceId, multi);
+        nextValues.siteId = toLocationValue(prev.siteId, multi);
       }
       return nextValues;
     });
     setErrors(prev => {
       const next = { ...prev };
-      const validationErrs = validateSchema(CREATE_USER_FORM_SCHEMA, nextValues, optionsMap);
+      const validationErrs = validateSchema(
+        getLocationSchema(isMultiLocationRole(nextValues.roleId, roles)),
+        nextValues,
+        optionsMap,
+      );
       if (validationErrs[name]) {
         next[name] = validationErrs[name];
       } else {
@@ -109,7 +141,7 @@ export const CreateUserForm = React.memo<CreateUserFormProps>(({
   }, [roles, optionsMap]);
 
   const handleSubmit = useCallback(async () => {
-    const validationErrs = validateSchema(CREATE_USER_FORM_SCHEMA, values, optionsMap);
+    const validationErrs = validateSchema(formSchema, values, optionsMap);
     if (Object.keys(validationErrs).length > 0) {
       setErrors({});
       setTimeout(() => {
@@ -157,7 +189,7 @@ export const CreateUserForm = React.memo<CreateUserFormProps>(({
     } finally {
       setIsSubmitting(false);
     }
-  }, [values, optionsMap, roles, showAlert, t, onSuccess]);
+  }, [values, formSchema, optionsMap, roles, showAlert, t, onSuccess]);
   
   const firstNameRef = useRef<any>(null);
 
@@ -183,7 +215,7 @@ export const CreateUserForm = React.memo<CreateUserFormProps>(({
     >
       <VStack space="md" width="100%" px="$1">
         <SchemaFormRenderer
-          schema={CREATE_USER_FORM_SCHEMA}
+          schema={formSchema}
           values={values}
           errors={errors}
           onFieldChange={handleFieldChange}
@@ -357,6 +389,61 @@ export const mapFiltersToOptionsMap = (params: {
   };
 };
 
+// LC (org_admin) and Supervisor (tenant_admin) can cover more than one province/site
+const MULTI_LOCATION_ROLES: string[] = [ROLE_NAMES.ORG_ADMIN, 'tenant_admin'];
+
+export const isMultiLocationTitle = (roleTitle: any): boolean =>
+  MULTI_LOCATION_ROLES.includes(String(roleTitle || '').toLowerCase());
+
+export const isMultiLocationRole = (roleId: any, roles: any[]): boolean => {
+  const role = roles.find((r: any) => r.id?.toString() === String(roleId ?? ''));
+  return isMultiLocationTitle(role?.title);
+};
+
+export const toLocationList = (value: any): string[] =>
+  (Array.isArray(value) ? value : [value])
+    .map((v: any) => (v === null || v === undefined ? '' : String(v).trim()))
+    .filter(Boolean);
+
+export const toLocationValue = (value: any, isMulti: boolean): string | string[] => {
+  const list = toLocationList(value);
+  return isMulti ? list : list[0] || '';
+};
+
+// Same user form schema, with province/site switched to multi select for LC/Supervisor
+export const getLocationSchema = (isMulti: boolean): FormSection[] =>
+  !isMulti
+    ? CREATE_USER_FORM_SCHEMA
+    : CREATE_USER_FORM_SCHEMA.map(section => ({
+        ...section,
+        rows: (section.rows || []).map(row => ({
+          ...row,
+          fields: row.fields.map(field =>
+            field.name === 'provinceId' || field.name === 'siteId'
+              ? { ...field, type: FORM_FIELD_TYPES.MULTISELECT }
+              : field,
+          ),
+        })),
+      }));
+
+// Sites of every selected province, merged without duplicates
+export const fetchSitesForProvinces = async (provinceIds: string[]): Promise<any[]> => {
+  if (!provinceIds.length) return [];
+  const results = await Promise.all(
+    provinceIds.map(provinceId =>
+      getSitesByProvince({ provinceId, page: 1, limit: 100 })
+        .then(res => res.result?.data || [])
+        .catch(() => []),
+    ),
+  );
+  const seen = new Set<string>();
+  return results.flat().filter((site: any) => {
+    if (seen.has(site._id)) return false;
+    seen.add(site._id);
+    return true;
+  });
+};
+
 /**
  * Creates the mentor extension for newly created org_admin / user role users.
  * org_admin users are flagged as mentors.
@@ -364,7 +451,7 @@ export const mapFiltersToOptionsMap = (params: {
 const syncMentorExtension = async (
   createRes: any,
   payload: any,
-  values: Record<string, string>,
+  values: Record<string, any>,
 ) => {
   const roleList = String(payload.roles || '').toLowerCase().split(',');
   const isOrgAdmin = roleList.includes(ROLE_NAMES.ORG_ADMIN);
@@ -386,8 +473,10 @@ const syncMentorExtension = async (
     //   provinces: values.provinceId ? [values.provinceId] : [],
     //   sites: values.siteId ? [values.siteId] : [],
     // },
-    provinces: values.provinceId ? [values.provinceId] : [],
-    sites: values.siteId ? [values.siteId] : [],
+    // provinces: values.provinceId ? [values.provinceId] : [],
+    // sites: values.siteId ? [values.siteId] : [],
+    provinces: toLocationList(values.provinceId),
+    sites: toLocationList(values.siteId),
     is_mentor: isOrgAdmin,
     mentor_visibility: 'CURRENT',
     mentee_visibility: 'CURRENT',
@@ -399,7 +488,7 @@ const syncMentorExtension = async (
 };
 
 export const mapFormValuesToPayload = (
-  values: Record<string, string>,
+  values: Record<string, any>,
   roles: any[],
 ): any => {
   const roleId = values.roleId;
@@ -424,11 +513,20 @@ export const mapFormValuesToPayload = (
   if (values.gender && values.gender.trim()) {
     payload.gender = values.gender;
   }
-  if (values.siteId && values.siteId.trim()) {
-    payload.site = values.siteId;
+  // if (values.siteId && values.siteId.trim()) {
+  //   payload.site = values.siteId;
+  // }
+  // if (values.provinceId && values.provinceId.trim()) {
+  //   payload.province = values.provinceId;
+  // }
+  // user-service stores province/site as ARRAY[STRING], so always send a list
+  const siteIds = toLocationList(values.siteId);
+  const provinceIds = toLocationList(values.provinceId);
+  if (siteIds.length) {
+    payload.site = siteIds;
   }
-  if (values.provinceId && values.provinceId.trim()) {
-    payload.province = values.provinceId;
+  if (provinceIds.length) {
+    payload.province = provinceIds;
   }
   if (values.phoneNumber && values.phoneNumber.trim()) {
     payload.phone = values.phoneNumber.trim();

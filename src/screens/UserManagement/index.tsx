@@ -28,6 +28,7 @@ import { theme } from '@config/theme';
 import { STORAGE_KEYS } from '@constants/STORAGE_KEYS';
 import offlineStorage from '../../services/offlineStorage';
 import logger from '@utils/logger';
+import { getEntityValues } from '@utils/entityField';
 
 const programParticipantRowKey = (p: any): string => {
   const raw = p?.userId ?? p?.userDetails?.id ?? p?.id ?? p?._id;
@@ -113,8 +114,12 @@ const UserManagementScreen = () => {
   // tenant_admin is locked to their own province in User Management, when one is set on
   // their profile. If no province is set, the filter stays enabled/unlocked so they can
   // see all participants across provinces.
-  const tenantAdminOwnProvinceId = (currentUser as any)?.province?.value || '';
-  const shouldLockProvince = isTenantAdmin && !!tenantAdminOwnProvinceId;
+  // const tenantAdminOwnProvinceId = getEntityValue((currentUser as any)?.province) || '';
+  // const shouldLockProvince = isTenantAdmin && !!tenantAdminOwnProvinceId;
+  // One province stays locked; with several provinces the filter lists only their own provinces
+  const tenantAdminProvinceIds = getEntityValues((currentUser as any)?.province);
+  const tenantAdminOwnProvinceId = tenantAdminProvinceIds[0] || '';
+  const shouldLockProvince = isTenantAdmin && tenantAdminProvinceIds.length === 1;
   console.log('shouldLockProvince', shouldLockProvince);
 
   // API state management
@@ -127,7 +132,11 @@ const UserManagementScreen = () => {
   );
 
   // Use custom hook for filter management - handles all API calls for roles, provinces
-  const { filters: filterOptions, roles } = useUserManagementFilters(filters, shouldLockProvince);
+  const { filters: filterOptions, roles } = useUserManagementFilters(
+    filters,
+    shouldLockProvince,
+    isTenantAdmin ? tenantAdminProvinceIds : [],
+  );
   // const [displayUsers, setDisplayUsers] = useState<AdminUserManagementData[]>([]);
   const [users, setUsers] = useState<AdminUserManagementData[]>([]);
   /** Program-user search rows keyed by user id; applied async after the main user list loads. */

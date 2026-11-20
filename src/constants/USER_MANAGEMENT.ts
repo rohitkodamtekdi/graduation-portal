@@ -79,7 +79,12 @@ export const mapStatusLabelToAPI = (statusLabel: string): string => {
  * Custom hook to manage user management filters with API integration
  * Fetches roles and provinces from API and builds filter options dynamically
  */
-export const useUserManagementFilters = (filters: Record<string, any>, lockProvince = false) => {
+export const useUserManagementFilters = (
+  filters: Record<string, any>,
+  lockProvince = false,
+  allowedProvinceIds: string[] = [],
+) => {
+  const allowedProvinceKey = allowedProvinceIds.join(',');
   // Check if user is a tenant_admin using the reusable hook
   const isTenantAdmin = useIsTenantAdmin();
 
@@ -186,12 +191,24 @@ export const useUserManagementFilters = (filters: Record<string, any>, lockProvi
         ];
 
     // Build province filter from API provinces
+    // const provinceFilterOptions = [
+    //   { labelKey: 'admin.filters.allProvinces', value: 'all-provinces' },
+    //   ...provinces.map((province: ProvinceEntity) => ({
+    //     label: province.name,
+    //     value: province._id,
+    //   })),
+    // ];
+    // A Supervisor with several provinces can switch only between their own provinces
+    const allowedIds = allowedProvinceKey ? allowedProvinceKey.split(',') : [];
+    const restrictToOwnProvinces = allowedIds.length > 1;
     const provinceFilterOptions = [
-      { labelKey: 'admin.filters.allProvinces', value: 'all-provinces' },
-      ...provinces.map((province: ProvinceEntity) => ({
-        label: province.name,
-        value: province._id,
-      })),
+      ...(restrictToOwnProvinces ? [] : [{ labelKey: 'admin.filters.allProvinces', value: 'all-provinces' }]),
+      ...provinces
+        .filter((province: ProvinceEntity) => !restrictToOwnProvinces || allowedIds.includes(province._id))
+        .map((province: ProvinceEntity) => ({
+          label: province.name,
+          value: province._id,
+        })),
     ];
 
     // Determine if site filter should be disabled
@@ -259,7 +276,7 @@ export const useUserManagementFilters = (filters: Record<string, any>, lockProvi
             },
           ]),
     ];
-  }, [roles, provinces, sites, filters.province, filters.role, lockProvince, isTenantAdmin]);
+  }, [roles, provinces, sites, filters.province, filters.role, lockProvince, isTenantAdmin, allowedProvinceKey]);
 
   return {
     filters: filterOptions,

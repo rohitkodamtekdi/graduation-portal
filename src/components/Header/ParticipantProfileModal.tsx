@@ -10,6 +10,7 @@ import { getUserProfile } from '../../services/authenticationService';
 import { stylesHeader, participantAvatarWebStyle } from './Styles';
 import { participantProfileModalStyles } from './ParticipantProfileModal.Styles';
 import { usePlatform } from '@utils/platform';
+import { getEntityLabel } from '@utils/entityField';
 
 interface ParticipantProfileModalProps {
   isOpen: boolean;
@@ -108,8 +109,8 @@ const ParticipantProfileModal: React.FC<ParticipantProfileModalProps> = ({ isOpe
     : '-';
   const email = safeRenderString(currentUser?.email);
   const address = safeRenderString(currentUser?.location);
-  const province = safeRenderString(currentUser?.province);
-  const site = safeRenderString(currentUser?.site);
+  const province = getEntityLabel(currentUser?.province, "-");
+  const site = getEntityLabel(currentUser?.site, "-");
   const altPhoneCodeStr = safeRenderString(currentUser?.alternative_phone_code || currentUser?.phone_code);
   const altPhoneStr = safeRenderString(currentUser?.alternative_phone || currentUser?.alternativePhone || currentUser?.emergencyContact);
   const formattedAltPhoneCode = formatPhoneCode(altPhoneCodeStr);

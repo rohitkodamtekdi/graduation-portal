@@ -16,6 +16,7 @@ import { sortTasksWithChildren } from '@utils/helper';
 import { useOfflineSync } from '@contexts/OfflineSyncContext';
 import { refreshOfflineProjectFromServer } from '../../../services/offlineCacheUpdateService';
 import logger from '@utils/logger';
+import { getEntityValue } from '@utils/entityField';
 
 const InterventionPlan: React.FC<InterventionPlanProps> = ({
   mode,
@@ -181,11 +182,11 @@ const InterventionPlan: React.FC<InterventionPlanProps> = ({
       userStatus: participantProfile?.status,
       pillarCategoryRelation: undefined,
       data: projectSortData ?? undefined,
-      province: participantProfile?.province?.value,
+      province: getEntityValue(participantProfile?.province),
       offlineKeyPrefix: user?.id ?? '',
       participantId: (participantProfile as any)?.userId ?? '',
     }),
-    [ participantProfile?.entityId, participantProfile?.status, participantProfile?.province?.value, projectSortData, user?.id, (participantProfile as any)?.userId],
+    [ participantProfile?.entityId, participantProfile?.status, getEntityValue(participantProfile?.province), projectSortData, user?.id, (participantProfile as any)?.userId],
   );
   
   // Offline and this project was never downloaded via the Offline Download flow —

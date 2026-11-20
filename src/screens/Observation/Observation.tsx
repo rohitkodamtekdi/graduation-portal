@@ -8,6 +8,7 @@ import { useAuth, useIsdminPanalAccess } from '@contexts/AuthContext';
 import { ParticipantData } from '@app-types/participant';
 import { buildObservationPrefillData } from '@constants/OBSERVATION_PREFILL';
 import moment from 'moment';
+import { getEntityLabel } from '@utils/entityField';
 
 const DEFAULT_COUNTRY_CODE = 27;
 
@@ -114,8 +115,8 @@ const Observation: React.FC = () => {
                 const alternatePhone = ud?.alternate_phone ?? ud?.alternative_phone ?? ud?.alt_phone ?? mapped?.alternate_phone ?? mapped?.alternative_phone ?? mapped?.alt_phone;
                 setUserData(buildObservationPrefillData({
                   facilitatorName: user?.name,
-                  provinceLabel: user?.province?.label,
-                  siteLabel: user?.site?.label,
+                  provinceLabel: getEntityLabel(user?.province),
+                  siteLabel: getEntityLabel(user?.site),
                   participantName: mapped?.name,
                   nationalIdLabel: ud?.national_id?.label || '',
                   phoneCode: ud?.phone_code,
@@ -147,8 +148,8 @@ const Observation: React.FC = () => {
 
           const preFillData = buildObservationPrefillData({
             facilitatorName: user?.name,
-            provinceLabel: user?.province?.label,
-            siteLabel: user?.site?.label,
+            provinceLabel: getEntityLabel(user?.province),
+            siteLabel: getEntityLabel(user?.site),
             participantName: newData?.name,
             nationalIdLabel: (ud?.national_id?.label || newData?.national_id?.label) || '',
             phoneCode: ud?.phone_code ?? newData?.phone_code,
