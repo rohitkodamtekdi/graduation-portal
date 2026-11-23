@@ -65,8 +65,23 @@ export const useProfileCompletion = () => {
             .map((entry: any) => (entry && typeof entry === 'object' ? entry._id || entry.id || entry.value : entry))
             .filter(Boolean);
         };
-        const provinceIds = toIdList(profileData.provinces, meta.provinces, profileData.province, meta.province);
-        const siteIds = toIdList(profileData.sites, meta.sites, profileData.site, meta.site);
+        // const provinceIds = toIdList(profileData.provinces, meta.provinces, profileData.province, meta.province);
+        // const siteIds = toIdList(profileData.sites, meta.sites, profileData.site, meta.site);
+        let provinceIds = toIdList(profileData.provinces, meta.provinces, profileData.province, meta.province);
+        let siteIds = toIdList(profileData.sites, meta.sites, profileData.site, meta.site);
+
+        // Mentoring extension can miss provinces/sites (created by the user-create event); for LC/Supervisor fall back to the user profile
+        const isLcOrSupervisor = ['org_admin', 'tenant_admin'].includes(String((user as any)?.role || ''));
+        if (isLcOrSupervisor && (!provinceIds.length || !siteIds.length)) {
+          try {
+            const userProfile = (await getUserProfile(user.id)) || {};
+            const userMeta = userProfile?.meta || {};
+            if (!provinceIds.length) provinceIds = toIdList(userProfile.province, userMeta.province);
+            if (!siteIds.length) siteIds = toIdList(userProfile.site, userMeta.site);
+          } catch (uErr) {
+            // Keep whatever the mentoring profile had
+          }
+        }
 
         // Extract categories
         let cats: string[] = [];
