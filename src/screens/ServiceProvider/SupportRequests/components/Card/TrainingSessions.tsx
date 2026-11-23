@@ -10,6 +10,7 @@ import LucideIcon from '@components/ui/LucideIcon';
 // import ActionButtons from "../Buttons/ActionButtons";
 import ActionButtons from "./FooterButtons";
 import CardBadges from "./CardBadges";
+import CardDescription from "./CardDescription";
 import cardStyles from '../../styles';
 import { useLanguage } from '@contexts/LanguageContext';
 
@@ -29,6 +30,7 @@ interface WorkshopRequest {
   preferredTime: string;
   preferredDate: string;
   location: string;
+  description?: string;
   site?: string;
 }
 
@@ -93,6 +95,8 @@ function Card({
         {/* Right Side: Badges */}
         <CardBadges overdueDays={item?.overdueDays} status={item?.status} />
       </HStack>
+
+      <CardDescription description={item?.description} />
 
       {/* Middle Light-Gray Detail Box */}
       <Box {...cardStyles.detailBox}>

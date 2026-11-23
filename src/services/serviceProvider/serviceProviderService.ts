@@ -147,6 +147,7 @@ const mapRequestSessionItem = (
     declineReason: item.reason || item.decline_reason,
     declineDetails: item.details || item.decline_details,
     justification: meta.learning_objectives || item.agenda || undefined,
+    description: [item.agenda, meta.description].find((text) => text && text !== title) || undefined,
     email: item.user_details?.email || item.user?.email || undefined,
     phone: item.user_details?.phone || item.user?.phone || undefined,
     raw: item,

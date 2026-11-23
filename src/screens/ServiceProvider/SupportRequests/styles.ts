@@ -255,6 +255,11 @@ export default {
     fontSize: '$xs',
     color: '$textDark600',
   } as const,
+  cardDescriptionText: {
+    fontSize: '$sm',
+    color: '$textDark700',
+    mb: '$3',
+  } as const,
   cardDetailBoldText: {
     fontSize: '$sm',
     fontWeight: '$bold',
