@@ -79,7 +79,20 @@ export const mapStatusLabelToAPI = (statusLabel: string): string => {
  * Custom hook to manage user management filters with API integration
  * Fetches roles and provinces from API and builds filter options dynamically
  */
-export const useUserManagementFilters = (filters: Record<string, any>, lockProvince = false) => {
+// Province/site can be an id, an entity object or a list of them; returns the ids
+export const toEntityIdList = (field: any): string[] =>
+  (Array.isArray(field) ? field : field ? [field] : [])
+    .map((item: any) => (item && typeof item === 'object' ? item.value || item._id || item.id : item))
+    .filter(Boolean)
+    .map(String);
+
+// export const useUserManagementFilters = (filters: Record<string, any>, lockProvince = false) => {
+export const useUserManagementFilters = (
+  filters: Record<string, any>,
+  lockProvince = false,
+  allowedSiteIds: string[] = [],
+) => {
+  const allowedSiteKey = allowedSiteIds.join(',');
   // Check if user is a tenant_admin using the reusable hook
   const isTenantAdmin = useIsTenantAdmin();
 
@@ -167,6 +180,13 @@ export const useUserManagementFilters = (filters: Record<string, any>, lockProvi
     fetchSites();
   }, [filters.province]); // Re-fetch when province filter changes
 
+  // Supervisor's own sites inside the selected province; empty means no site restriction
+  const ownSiteIdsInProvince = useMemo(() => {
+    const ownIds = allowedSiteKey ? allowedSiteKey.split(',') : [];
+    if (!ownIds.length) return [];
+    return sites.filter((site: SiteEntity) => ownIds.includes(site._id)).map((site: SiteEntity) => site._id);
+  }, [sites, allowedSiteKey]);
+
   // Build dynamic filter options with API data
   const filterOptions = useMemo(() => {
     // Build role filter from API roles
@@ -201,12 +221,22 @@ export const useUserManagementFilters = (filters: Record<string, any>, lockProvi
     const shouldDisableSiteFilter = !isProvinceSelected; // Disable until a province is selected
 
     // Build site filter from API sites
+    // const siteFilterOptions = [
+    //   { labelKey: 'admin.filters.allSites', value: 'all-sites' },
+    //   ...sites.map((site: SiteEntity) => ({
+    //     label: site.name,
+    //     value: site._id, // Use _id as value for filtering
+    //   })),
+    // ];
+    // A Supervisor sees only their own sites of the selected province
     const siteFilterOptions = [
       { labelKey: 'admin.filters.allSites', value: 'all-sites' },
-      ...sites.map((site: SiteEntity) => ({
-        label: site.name,
-        value: site._id, // Use _id as value for filtering
-      })),
+      ...sites
+        .filter((site: SiteEntity) => !ownSiteIdsInProvince.length || ownSiteIdsInProvince.includes(site._id))
+        .map((site: SiteEntity) => ({
+          label: site.name,
+          value: site._id, // Use _id as value for filtering
+        })),
     ];
 
     // Linkage Champions (org_admin) are managed irrespective of
@@ -259,7 +289,7 @@ export const useUserManagementFilters = (filters: Record<string, any>, lockProvi
             },
           ]),
     ];
-  }, [roles, provinces, sites, filters.province, filters.role, lockProvince, isTenantAdmin]);
+  }, [roles, provinces, sites, filters.province, filters.role, lockProvince, isTenantAdmin, ownSiteIdsInProvince]);
 
   return {
     filters: filterOptions,
@@ -272,6 +302,7 @@ export const useUserManagementFilters = (filters: Record<string, any>, lockProvi
     countryCodes,
     entityTypesMap,
     isFiltersLoading,
+    ownSiteIdsInProvince,
   };
 };
 

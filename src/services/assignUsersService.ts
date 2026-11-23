@@ -122,7 +122,9 @@ export const getParticipants = async (
     excludeMapped?: boolean;
     limit?: number;
     province?: string;
-    site?: string;
+    // site?: string;
+    // A list means participants in any of these sites (a Supervisor's own sites)
+    site?: string | string[];
     page?: number;
     search?: string;
     /** When set, sent in the request body to restrict results to these user IDs. */

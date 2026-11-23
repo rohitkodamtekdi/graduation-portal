@@ -205,11 +205,14 @@ export const useSiteFilterOptions = (
 export const useParticipantFilterOptions = (
   selectedProvinceId?: string,
   enabled = true,
-  lockProvince = false
+  lockProvince = false,
+  allowedSiteIds: string[] = [],
 ): {
   filters: ReadonlyArray<FilterConfig>;
   sites: SiteEntity[];
+  ownSiteIdsInProvince: string[];
 } => {
+  const allowedSiteKey = allowedSiteIds.join(',');
   // State for API data
   const [provinces, setProvinces] = useState<ProvinceEntity[]>([]);
   const [sites, setSites] = useState<SiteEntity[]>([]);
@@ -268,15 +271,30 @@ export const useParticipantFilterOptions = (
     ];
 
     // Build site filter from API sites
+    // const siteFilterOptions = [
+    //   { labelKey: 'admin.filters.allSites', value: 'all-sites' },
+    //   ...sites.map((site: SiteEntity) => ({
+    //     label: site.name,
+    //     value: site._id,
+    //   })),
+    // ];
+    // A Supervisor sees only their own sites of the selected province
+    const ownSiteIds = allowedSiteKey ? allowedSiteKey.split(',') : [];
+    const ownSiteIdsInProvince = ownSiteIds.length
+      ? sites.filter((site: SiteEntity) => ownSiteIds.includes(site._id)).map((site: SiteEntity) => site._id)
+      : [];
     const siteFilterOptions = [
       { labelKey: 'admin.filters.allSites', value: 'all-sites' },
-      ...sites.map((site: SiteEntity) => ({
-        label: site.name,
-        value: site._id,
-      })),
+      ...sites
+        .filter((site: SiteEntity) => !ownSiteIdsInProvince.length || ownSiteIdsInProvince.includes(site._id))
+        .map((site: SiteEntity) => ({
+          label: site.name,
+          value: site._id,
+        })),
     ];
 
     return {
+      ownSiteIdsInProvince,
       filters: [
         {
           nameKey: 'admin.filters.filterByProvince',
@@ -295,7 +313,7 @@ export const useParticipantFilterOptions = (
       ],
       sites,
     };
-  }, [provinces, sites, selectedProvinceId, lockProvince]);
+  }, [provinces, sites, selectedProvinceId, lockProvince, allowedSiteKey]);
 };
 
 // NOTE: Participant filters are now provided by `useParticipantFilterOptions`.

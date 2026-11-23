@@ -14,6 +14,7 @@ import {
   useParticipantFilterOptions,
 } from '@constants/ASSIGN_USERS_FILTERS';
 import type { PaginatedSelectFetchParams, PaginatedSelectFetchResult } from '@constants/USER_MANAGEMENT';
+import { toEntityIdList } from '@constants/USER_MANAGEMENT';
 import UserAvatarCard from '@components/UserAvatarCard';
 import { AssignUsersStyles } from './Styles';
 import { theme } from '@config/theme';
@@ -110,11 +111,15 @@ const shouldLoadParticipantFilters =
  // Only lock the province filter when the supervisor/tenant_admin actually
  // has a province set on their profile - otherwise leave it enabled so they
  // can browse/see participants across all provinces.
- const { filters: participantProvinceSiteFilters } = useParticipantFilterOptions(
+ // Supervisor's own sites limit the Site filter and "All Sites"
+ const supervisorSiteIds = toEntityIdList((user as any)?.site);
+ const { filters: participantProvinceSiteFilters, ownSiteIdsInProvince } = useParticipantFilterOptions(
    participantFilterValues.filterByProvince,
    shouldLoadParticipantFilters,
-   isSupervisor && !!supervisorOwnProvinceId
+   isSupervisor && !!supervisorOwnProvinceId,
+   isSupervisor ? supervisorSiteIds : [],
  );
+ const supervisorOwnSiteKey = ownSiteIdsInProvince.join(',');
  const AssignParticipantFilterOptions = [ParticipantSearchFilter, ...participantProvinceSiteFilters];
 
  // Auto-select the tenant_admin's own province and keep it locked while on this tab
@@ -643,7 +648,11 @@ useEffect(() => {
         page: participantsPage,
         limit: participantsPageSize,
         province: province && province !== 'all-provinces' && province !== 'all-Provinces' ? province : undefined,
-        site: site && site !== 'all-sites' ? site : undefined,
+        // site: site && site !== 'all-sites' ? site : undefined,
+        // "All Sites" for a Supervisor means only their own sites of the selected province
+        site: site && site !== 'all-sites'
+          ? site
+          : isSupervisor && supervisorOwnSiteKey ? supervisorOwnSiteKey.split(',') : undefined,
         search: search && String(search).trim() ? String(search).trim() : undefined,
       });
 
@@ -699,6 +708,7 @@ useEffect(() => {
   participantFilterValues.site,
   participantFilterValues.search,
   participantsRefreshKey,
+  supervisorOwnSiteKey,
 ]);
 
 // Fetch mapped participants when LC is selected in Participant to LC flow

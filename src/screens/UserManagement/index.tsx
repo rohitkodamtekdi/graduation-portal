@@ -3,7 +3,7 @@ import { VStack, HStack, Button, Text, Box, Pressable, Card, Modal, useAlert, Bu
 import { Platform } from 'react-native';
 import { LucideIcon } from '@ui/index';
 import { useLanguage } from '@contexts/LanguageContext';
-import { useUserManagementFilters, mapStatusLabelToAPI, PAGE_SIZE_OPTIONS } from '@constants/USER_MANAGEMENT';
+import { useUserManagementFilters, mapStatusLabelToAPI, PAGE_SIZE_OPTIONS, toEntityIdList } from '@constants/USER_MANAGEMENT';
 import FilterButton from '@components/Filter';
 import TitleHeader from '@components/TitleHeader';
 // import { titleHeaderStyles } from '@components/TitleHeader/Styles';
@@ -127,7 +127,15 @@ const UserManagementScreen = () => {
   );
 
   // Use custom hook for filter management - handles all API calls for roles, provinces
-  const { filters: filterOptions, roles } = useUserManagementFilters(filters, shouldLockProvince);
+  // const { filters: filterOptions, roles } = useUserManagementFilters(filters, shouldLockProvince);
+  // Supervisor's own sites limit the Site filter and "All Sites"
+  const tenantAdminSiteIds = toEntityIdList((currentUser as any)?.site);
+  const { filters: filterOptions, roles, ownSiteIdsInProvince } = useUserManagementFilters(
+    filters,
+    shouldLockProvince,
+    isTenantAdmin ? tenantAdminSiteIds : [],
+  );
+  const ownSiteKey = ownSiteIdsInProvince.join(',');
   // const [displayUsers, setDisplayUsers] = useState<AdminUserManagementData[]>([]);
   const [users, setUsers] = useState<AdminUserManagementData[]>([]);
   /** Program-user search rows keyed by user id; applied async after the main user list loads. */
@@ -397,8 +405,14 @@ const closeProfileModal = useCallback(() => {
           }
 
           // Add site parameter if present
+          // if (filters.site && filters.site !== 'all-sites') {
+          //   apiParams.site = filters.site;
+          // }
+          // "All Sites" for a Supervisor means only their own sites of the selected province
           if (filters.site && filters.site !== 'all-sites') {
             apiParams.site = filters.site;
+          } else if (isTenantAdmin && ownSiteKey) {
+            apiParams.site = ownSiteKey.split(',');
           }
 
           const response = await getUsersList(apiParams);
@@ -446,7 +460,7 @@ const closeProfileModal = useCallback(() => {
       fetchUsers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, roles.length, currentPage, pageSize, refetchKey, isTenantAdmin, currentUser?.id]); // Depend on filters, roles, currentPage, and pageSize
+  }, [filters, roles.length, currentPage, pageSize, refetchKey, isTenantAdmin, currentUser?.id, ownSiteKey]); // Depend on filters, roles, currentPage, and pageSize
 
   // Handle filter changes
   const handleFilterChange = useCallback((newFilters: Record<string, any>) => {
