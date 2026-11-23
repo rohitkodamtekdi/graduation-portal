@@ -120,6 +120,7 @@ const UserManagementScreen = () => {
   const tenantAdminProvinceIds = getEntityValues((currentUser as any)?.province);
   const tenantAdminOwnProvinceId = tenantAdminProvinceIds[0] || '';
   const shouldLockProvince = isTenantAdmin && tenantAdminProvinceIds.length === 1;
+  const tenantAdminSiteIds = getEntityValues((currentUser as any)?.site);
   console.log('shouldLockProvince', shouldLockProvince);
 
   // API state management
@@ -132,11 +133,13 @@ const UserManagementScreen = () => {
   );
 
   // Use custom hook for filter management - handles all API calls for roles, provinces
-  const { filters: filterOptions, roles } = useUserManagementFilters(
+  const { filters: filterOptions, roles, ownSiteIdsInProvince } = useUserManagementFilters(
     filters,
     shouldLockProvince,
     isTenantAdmin ? tenantAdminProvinceIds : [],
+    isTenantAdmin ? tenantAdminSiteIds : [],
   );
+  const ownSiteKey = ownSiteIdsInProvince.join(',');
   // const [displayUsers, setDisplayUsers] = useState<AdminUserManagementData[]>([]);
   const [users, setUsers] = useState<AdminUserManagementData[]>([]);
   /** Program-user search rows keyed by user id; applied async after the main user list loads. */
@@ -406,8 +409,14 @@ const closeProfileModal = useCallback(() => {
           }
 
           // Add site parameter if present
+          // if (filters.site && filters.site !== 'all-sites') {
+          //   apiParams.site = filters.site;
+          // }
+          // "All Sites" for a Supervisor means only their own sites of the selected province
           if (filters.site && filters.site !== 'all-sites') {
             apiParams.site = filters.site;
+          } else if (isTenantAdmin && ownSiteKey) {
+            apiParams.site = ownSiteKey.split(',');
           }
 
           const response = await getUsersList(apiParams);
@@ -455,7 +464,7 @@ const closeProfileModal = useCallback(() => {
       fetchUsers();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, roles.length, currentPage, pageSize, refetchKey, isTenantAdmin, currentUser?.id]); // Depend on filters, roles, currentPage, and pageSize
+  }, [filters, roles.length, currentPage, pageSize, refetchKey, isTenantAdmin, currentUser?.id, ownSiteKey]); // Depend on filters, roles, currentPage, and pageSize
 
   // Handle filter changes
   const handleFilterChange = useCallback((newFilters: Record<string, any>) => {

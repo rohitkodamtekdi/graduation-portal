@@ -65,7 +65,9 @@ export interface UserSearchParams {
   role?: string;
   status?: string;
   province?: string;
-  site?: string;
+  // site?: string;
+  // A list means users in any of these sites (e.g. a Supervisor's own sites)
+  site?: string | string[];
   userIds?: (string | number)[];
 }
 

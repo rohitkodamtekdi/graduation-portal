@@ -121,12 +121,15 @@ const shouldLoadParticipantFilters =
  //   isSupervisor && !!supervisorOwnProvinceId
  // );
  // One province stays locked; with several provinces they can switch between their own ones
- const { filters: participantProvinceSiteFilters } = useParticipantFilterOptions(
+ const supervisorSiteIds = getEntityValues((user as any)?.site);
+ const { filters: participantProvinceSiteFilters, ownSiteIdsInProvince } = useParticipantFilterOptions(
    participantFilterValues.filterByProvince,
    shouldLoadParticipantFilters,
    isSupervisor && supervisorProvinceIds.length === 1,
    isSupervisor ? supervisorProvinceIds : [],
+   isSupervisor ? supervisorSiteIds : [],
  );
+ const supervisorOwnSiteKey = ownSiteIdsInProvince.join(',');
  const AssignParticipantFilterOptions = [ParticipantSearchFilter, ...participantProvinceSiteFilters];
 
  // Auto-select the tenant_admin's own province and keep it locked while on this tab
@@ -667,7 +670,11 @@ useEffect(() => {
         page: participantsPage,
         limit: participantsPageSize,
         province: province && province !== 'all-provinces' && province !== 'all-Provinces' ? province : undefined,
-        site: site && site !== 'all-sites' ? site : undefined,
+        // site: site && site !== 'all-sites' ? site : undefined,
+        // "All Sites" for a Supervisor means only their own sites of the selected province
+        site: site && site !== 'all-sites'
+          ? site
+          : isSupervisor && supervisorOwnSiteKey ? supervisorOwnSiteKey.split(',') : undefined,
         search: search && String(search).trim() ? String(search).trim() : undefined,
       });
 
@@ -723,6 +730,7 @@ useEffect(() => {
   participantFilterValues.site,
   participantFilterValues.search,
   participantsRefreshKey,
+  supervisorOwnSiteKey,
 ]);
 
 // Fetch mapped participants when LC is selected in Participant to LC flow
