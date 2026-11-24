@@ -21,18 +21,19 @@ export const PARTICIPANT_DETAIL_TABS: TabData[] = [
     icon: 'FileText',
     isDisabled: false,
   },
+  // Shown as "Intervention Linkages"; key kept as attended-sessions so routing stays the same
+  {
+    key: 'attended-sessions',
+    label: 'participantDetail.tabs.attendedSessions',
+    mobileLabel: 'Linkages',
+    icon: 'Calendar',
+    isDisabled: false,
+  },
   {
     key: 'assessment-surveys',
     label: 'participantDetail.tabs.assessmentSurveys',
     mobileLabel: 'Surveys',
     icon: 'UserCheck',
-    isDisabled: false,
-  },
-  {
-    key: 'attended-sessions',
-    label: 'participantDetail.tabs.attendedSessions',
-    mobileLabel: 'Sessions',
-    icon: 'Calendar',
     isDisabled: false,
   },
 ];

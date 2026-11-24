@@ -2189,26 +2189,31 @@
     "tabs": {
       "interventionPlan": "Intervention Plan",
       "assessmentSurveys": "Assessment Surveys",
-      "attendedSessions": "Attended Sessions"
+      "attendedSessions": "Intervention Linkages"
     },
     "attendedSessions": {
       "title": "Sessions",
-      "sectionTitle": "Attended Sessions",
-      "missedSectionTitle": "Missed Sessions",
+      "sectionTitle": "Attended Linkages",
+      "missedSectionTitle": "Missed Linkages",
       "scheduled": "Scheduled",
-      "scheduledSectionTitle": "Scheduled Sessions",
-      "noScheduledTitle": "No scheduled sessions",
-      "noScheduled": "Upcoming sessions scheduled for {{name}} will appear here",
+      "scheduledSectionTitle": "Scheduled Linkages",
+      "typeTags": {
+        "training": "Session",
+        "additional_service": "Additional Service",
+        "asset": "Asset"
+      },
+      "noScheduledTitle": "No scheduled linkages",
+      "noScheduled": "Upcoming sessions, additional services and assets scheduled for {{name}} will appear here",
       "attended": "Attended",
       "missed": "Missed",
       "serviceProvider": "Service Provider",
       "noSessionsTitle": "No Sessions Found",
       "noMissedSessionsTitle": "No Missed Sessions",
       "noSessionsDescription": "Sessions this participant has attended will appear here.",
-      "noAttendedTitle": "No attended sessions",
-      "noMissedTitle": "No missed sessions",
-      "noAttended": "Scheduled sessions that {{name}} attended will appear here",
-      "noMissed": "Scheduled sessions that {{name}} missed will appear here"
+      "noAttendedTitle": "No attended linkages",
+      "noMissedTitle": "No missed linkages",
+      "noAttended": "Sessions, additional services and assets that {{name}} attended will appear here",
+      "noMissed": "Sessions, additional services and assets that {{name}} missed will appear here"
     },
     "interventionPlan": {
       "noPlanAssigned": "No Intervention Plan Assigned",

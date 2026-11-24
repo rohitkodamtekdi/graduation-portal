@@ -28,6 +28,14 @@ interface AttendedSessionsProps {
 const deliveryModeText = (mode: any): string =>
   mode && typeof mode === 'object' ? String(mode.label ?? mode.value ?? '') : mode ?? '';
 
+// Linkage type is top-level on attended rows and inside meta on scheduled rows; missed rows don't send it yet
+const TYPE_TAG_KEYS = ['training', 'additional_service', 'asset'];
+const linkageType = (session: any): string => {
+  const raw = session?.support_offering_type ?? session?.meta?.support_offering_type;
+  const value = raw && typeof raw === 'object' ? raw.value : raw;
+  return value === 'training_session' ? 'training' : value ?? '';
+};
+
 const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
   const { t } = useLanguage();
   const [filterType, setFilterType] = useState<FilterType>('ATTENDED');
@@ -120,10 +128,10 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
             </Box>
             <Text {...styles.emptyStateTitle}>
               {isAttended
-                ? t('participantDetail.attendedSessions.noAttendedTitle', 'No attended sessions')
+                ? t('participantDetail.attendedSessions.noAttendedTitle', 'No attended linkages')
                 : isScheduled
-                  ? t('participantDetail.attendedSessions.noScheduledTitle', 'No scheduled sessions')
-                  : t('participantDetail.attendedSessions.noMissedTitle', 'No missed sessions')}
+                  ? t('participantDetail.attendedSessions.noScheduledTitle', 'No scheduled linkages')
+                  : t('participantDetail.attendedSessions.noMissedTitle', 'No missed linkages')}
             </Text>
             <Text {...styles.emptyStateDescription}>
               {isAttended
@@ -141,6 +149,13 @@ const AttendedSessions: React.FC<AttendedSessionsProps> = ({ participant }) => {
               <HStack {...styles.cardHeaderHStack}>
                 <HStack {...styles.cardTitleHStack}>
                   <Text {...styles.cardTitleText}>{session.title}</Text>
+                  {TYPE_TAG_KEYS.includes(linkageType(session)) && (
+                    <Box {...styles.tagBadge(true)}>
+                      <Text {...styles.tagBadgeText(true)}>
+                        {t(`participantDetail.attendedSessions.typeTags.${linkageType(session)}`)}
+                      </Text>
+                    </Box>
+                  )}
                   <Box {...styles.statusBadge(isAttended)}>
                     <Text {...styles.statusBadgeText(isAttended)}>
                       {t(`participantDetail.attendedSessions.${statusKey}`)}
