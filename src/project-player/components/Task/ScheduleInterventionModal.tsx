@@ -17,7 +17,7 @@ interface ScheduleInterventionModalProps {
 /**
  * "Who will be conducting <task>?" prompt. Picking either option opens the sessions-support page.
  */
-const ScheduleInterventionModal = memo<ScheduleInterventionModalProps>(({ isOpen, onClose, taskName }) => {
+const ScheduleInterventionModal = memo<ScheduleInterventionModalProps>(({ isOpen, onClose, taskName: _taskName }) => {
   const { t } = useLanguage();
   const navigation = useNavigation();
 
@@ -38,11 +38,13 @@ const ScheduleInterventionModal = memo<ScheduleInterventionModalProps>(({ isOpen
       confirmButtonText={t('projectPlayer.close')}
     >
       <VStack space="md">
-        <Text>
+        {/* Client asked not to show the task name here, since it includes the "organize and schedule" part which is always the coach's job */}
+        {/* <Text>
           {taskName
             ? t('projectPlayer.whoWillConduct', { taskName })
             : t('projectPlayer.whoWillConductGeneric')}
-        </Text>
+        </Text> */}
+        <Text>{t('projectPlayer.whoWillConductGeneric')}</Text>
         {OPTIONS.map((opt) => (
           <Pressable key={opt.key} onPress={handleSelect}>
             <Box borderWidth={1} borderColor="$borderLight200" borderRadius="$lg" padding="$4" $web-cursor="pointer">
