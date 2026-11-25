@@ -257,6 +257,11 @@ const CheckInsListContent: React.FC<CheckInsListContentProps> = ({
           }
         }
 
+        // observations/entities returns only 100 entities, so participants beyond that are missing; use the participant's own entityId (same as observation entity _id)
+        if (!entityId && solutionNameData?.entityType !== ENTITY_TYPE.LINKAGE_CHAMPION && participant?.entityId) {
+          entityId = participant.entityId;
+        }
+
         if (!entityId) {
           logger.log(t('logVisit.errors.entityIdNotFound'));
           setSubmissions([]);
