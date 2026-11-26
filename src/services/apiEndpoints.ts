@@ -25,6 +25,8 @@ export const API_ENDPOINTS = {
   IDP_TEMPLATE_CATEGORIES: `${prefix}/project/v1/idpTemplates/categories`, // All categories, active and inactive
   IDP_TEMPLATE_UPDATE_CATEGORY: (categoryId: string) => `${prefix}/project/v1/idpTemplates/updateCategory/${categoryId}`,
   IDP_TEMPLATE_UPDATE_TASK: (taskId: string) => `${prefix}/project/v1/idpTemplates/updateTask/${taskId}`,
+  IDP_TEMPLATE_CREATE_TASK: (templateId: string) => `${prefix}/project/v1/idpTemplates/createTask/${templateId}`,
+  IDP_TEMPLATE_REORDER_TASKS: (templateId: string) => `${prefix}/project/v1/idpTemplates/reorderTasks/${templateId}`,
   GET_ENTITY_DETAILS: (id: string) =>
     `${prefix}/entity-management/v1/entities/details/${id}`,
   UPDATE_ENTITY_DETAILS: `${prefix}/project/v1/programUsers/createOrUpdate`,

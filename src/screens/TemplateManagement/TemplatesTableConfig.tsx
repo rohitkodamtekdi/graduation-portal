@@ -58,7 +58,7 @@ const TEMPLATE_MENU_ITEMS: MenuItemData[] = [
   {
     key: 'view',
     label: 'admin.templates.actionMenu.view',
-    textValue: 'View (Read-Only)',
+    textValue: 'View',
     iconName: 'Eye',
     iconColor: theme.tokens.colors.textMutedForeground,
     iconSizeValue: 16,

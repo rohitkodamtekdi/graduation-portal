@@ -154,15 +154,58 @@ export const templateDetailStyles = {
     color: '$textForeground' as const,
     mt: '$1' as const,
   },
+  // Line shown above the row a dragged task will be dropped on
+  dropTargetRow: {
+    borderTopWidth: 2,
+    borderTopColor: '$primary500' as const,
+  },
+  addTaskButton: {
+    alignSelf: 'flex-end' as const,
+    bg: '$white' as const,
+    borderWidth: 1,
+    borderColor: '$borderLight300' as const,
+    borderRadius: '$md' as const,
+    px: '$3' as const,
+    py: '$1.5' as const,
+    mb: '$3' as const,
+  },
+  // Tasks | Sub-categories tabs inside a pillar
+  tabBar: {
+    alignSelf: 'flex-start' as const,
+    bg: '$bgSidebar' as const,
+    borderRadius: '$lg' as const,
+    p: '$1' as const,
+    mb: '$4' as const,
+    space: 'xs' as const,
+  },
+  tab: {
+    px: '$3' as const,
+    py: '$1.5' as const,
+    borderRadius: '$md' as const,
+  },
+  tabActive: {
+    bg: '$white' as const,
+    borderWidth: 1,
+    borderColor: '$borderLight200' as const,
+  },
+  tabText: {
+    ...bodyText,
+    color: '$textMutedForeground' as const,
+  },
+  tabTextActive: {
+    color: '$textForeground' as const,
+    fontWeight: '$medium' as const,
+  },
+  subCategoryRow: {
+    alignItems: 'center' as const,
+    py: '$2' as const,
+    borderBottomWidth: 1,
+    borderColor: '$borderLight100' as const,
+  },
   editButton: {
     p: '$1.5' as const,
     borderRadius: '$md' as const,
     $hover: { bg: '$bgSidebar' },
-  },
-  sharedText: {
-    ...smallText,
-    color: '$warning700' as const,
-    mt: '$0.5' as const,
   },
   notFoundText: {
     ...bodyText,
@@ -171,13 +214,13 @@ export const templateDetailStyles = {
   },
 };
 
-// Column widths for the task table (# | Task Name | Description | Project Template | Edit)
+// Column widths for the task table (drag | # | Task Name | Description | Edit)
 export const TASK_TABLE_COLUMNS = {
+  drag: { width: 24, alignItems: 'center' as const, pt: '$0.5' as const },
   number: { width: 40 },
   name: { flex: 1.5, minWidth: 180 },
   description: { flex: 2, minWidth: 220 },
-  projectTemplate: { flex: 1.2, minWidth: 160 },
   actions: { width: 40, alignItems: 'center' as const },
 };
 
-export const TASK_TABLE_MIN_WIDTH = 700;
+export const TASK_TABLE_MIN_WIDTH = 570;

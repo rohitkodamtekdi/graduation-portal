@@ -20,6 +20,8 @@ interface EditTemplateItemModalProps {
   initialValues: EditableValues;
   /** Shows the Active toggle (pathways and pillars) */
   showStatus?: boolean;
+  /** Shows the Description field (hidden for sub-categories, which are name-only) */
+  showDescription?: boolean;
   /** Extra warning, e.g. for tasks shared by both pathways */
   warningKey?: string;
   onSave: (values: EditableValues) => Promise<void>;
@@ -34,6 +36,7 @@ const EditTemplateItemModal: React.FC<EditTemplateItemModalProps> = ({
   titleKey,
   initialValues,
   showStatus = false,
+  showDescription = true,
   warningKey,
   onSave,
 }) => {
@@ -100,18 +103,20 @@ const EditTemplateItemModal: React.FC<EditTemplateItemModalProps> = ({
           )}
         </VStack>
 
-        <VStack space="xs">
-          <Text fontSize="$sm" fontWeight="$medium" color="$textForeground">
-            {t('admin.templates.edit.description')}
-          </Text>
-          <Textarea isDisabled={isSaving}>
-            <TextareaInput
-              value={values.description}
-              maxLength={DESCRIPTION_MAX_LENGTH}
-              onChangeText={(description: string) => setValues(prev => ({ ...prev, description }))}
-            />
-          </Textarea>
-        </VStack>
+        {showDescription && (
+          <VStack space="xs">
+            <Text fontSize="$sm" fontWeight="$medium" color="$textForeground">
+              {t('admin.templates.edit.description')}
+            </Text>
+            <Textarea isDisabled={isSaving}>
+              <TextareaInput
+                value={values.description}
+                maxLength={DESCRIPTION_MAX_LENGTH}
+                onChangeText={(description: string) => setValues(prev => ({ ...prev, description }))}
+              />
+            </Textarea>
+          </VStack>
+        )}
 
         {showStatus && (
           <HStack alignItems="center" justifyContent="space-between" space="md">

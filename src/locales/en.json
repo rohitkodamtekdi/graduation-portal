@@ -1792,13 +1792,12 @@
       "loadError": "Could not load templates. Please try again.",
       "retry": "Retry",
       "actionMenu": {
-        "view": "View (Read-Only)"
+        "view": "View"
       },
       "detail": {
         "backToTemplates": "Back to Templates",
         "notFound": "Template not found.",
         "noTasks": "No tasks are linked to this pillar yet.",
-        "projectTemplate": "Project Template",
         "templateInformation": "Template Information",
         "lastUpdated": "Last Updated",
         "updatedBy": "Updated By",
@@ -1814,7 +1813,12 @@
         "totalPillars": "Total Pillars",
         "totalTasks": "Total Tasks",
         "templateType": "Template Type",
-        "sharedTask": "Shared by both pathways"
+        "subCategoriesTitle": "Sub-categories ({{count}})",
+        "tasksTitle": "Tasks ({{count}})",
+        "dragToReorder": "Drag to reorder",
+        "orderSaved": "Task order saved. New IDPs will follow this order.",
+        "orderSaveFailed": "Could not save the new order. Please try again.",
+        "reorderSameListOnly": "A task can only be moved among the tasks of its own list."
       },
       "edit": {
         "editPathway": "Edit Pathway",
@@ -1829,7 +1833,27 @@
         "saved": "Changes saved.",
         "saveFailed": "Could not save changes. Please try again.",
         "sharedTaskWarning": "This task is shared by both pathways. Changing it updates the task in both pathways.",
-        "newIdpsOnlyNote": "Changes apply to new IDPs only. IDPs that participants already have stay as they are."
+        "newIdpsOnlyNote": "Changes apply to new IDPs only. IDPs that participants already have stay as they are.",
+        "editCategory": "Edit Sub-category"
+      },
+      "addTask": {
+        "button": "Add Task",
+        "title": "Add Task",
+        "subtitle": "New task in {{pillar}}",
+        "descriptionHelper": "Leave empty to use the task name.",
+        "taskType": "Task type",
+        "typePlain": "Plain task (LC marks it complete)",
+        "typeTraining": "Training session",
+        "typeAdditionalService": "Additional service",
+        "typeAsset": "Asset",
+        "plainHelper": "The LC marks this task complete in the participant's IDP.",
+        "scheduleHelper": "The LC gets a Schedule button on this task to request a support provider.",
+        "projectTemplate": "Add to",
+        "sharedWarning": "This list of tasks is shared by both pathways. The new task will appear in both pathways.",
+        "newIdpsOnlyNote": "The task is added at the end and appears in new IDPs only. IDPs that participants already have stay as they are.",
+        "save": "Add Task",
+        "added": "Task added.",
+        "addFailed": "Could not add the task. Please try again."
       }
     },
     "auditLog": {

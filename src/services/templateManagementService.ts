@@ -4,10 +4,12 @@ import offlineStorage from './offlineStorage';
 import { STORAGE_KEYS } from '@constants/STORAGE_KEYS';
 import {
   CategoryUpdate,
+  TaskCreate,
   TaskUpdate,
   Template,
   TemplatePillar,
   TemplateStatus,
+  TemplateSubCategory,
   TemplateTask,
 } from '@app-types/templateManagement';
 
@@ -22,6 +24,9 @@ const asArray = (value: any): any[] => (Array.isArray(value) ? value : []);
 
 const toStatus = (status?: string): TemplateStatus => (status === 'active' ? 'Active' : 'Inactive');
 
+// Categories created without a description get the model default 'default'; treat it as empty
+const toDescription = (description?: string) => (description && description !== 'default' ? description : '');
+
 const toDate = (value?: string) => (value ? new Date(value).toISOString().slice(0, 10) : '');
 
 const toDateTime = (value?: string) => {
@@ -30,6 +35,15 @@ const toDateTime = (value?: string) => {
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${toDate(value)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
+
+// session_category of a pillar's session tasks, from the pillar externalId (e.g. L1_LH_EMP -> livelihoods)
+const SESSION_CATEGORY_BY_PILLAR_PREFIX: Record<string, string> = {
+  L1_SE_: 'social_empowerment',
+  L1_FI_: 'financial_inclusion',
+  L1_LH_: 'livelihoods',
+};
+const toSessionCategory = (externalId?: string) =>
+  Object.entries(SESSION_CATEGORY_BY_PILLAR_PREFIX).find(([prefix]) => externalId?.startsWith(prefix))?.[1] || '';
 
 const bySequence = (a: any, b: any) => (a?.sequenceNumber ?? 0) - (b?.sequenceNumber ?? 0);
 
@@ -109,6 +123,15 @@ export const getIdpTemplates = async (): Promise<Template[]> => {
     childrenByParent.set(String(category.parentId), siblings);
   });
 
+  // Only the pillar's direct children: the IDP flow lets the LC pick only this level
+  const toSubCategories = (parentId: string): TemplateSubCategory[] =>
+    [...(childrenByParent.get(parentId) || [])].sort(bySequence).map(category => ({
+      id: category._id,
+      name: category.name || '',
+      description: toDescription(category.description),
+      status: toStatus(category.status),
+    }));
+
   const pathways = categories
     .filter(category => !category.parentId && (category.keywords || []).includes(IDP_KEYWORD))
     .sort(bySequence);
@@ -142,6 +165,7 @@ export const getIdpTemplates = async (): Promise<Template[]> => {
         name: task.name || '',
         description: task.description || '',
         projectTemplate: projectTemplate.title || '',
+        projectTemplateId: projectTemplate._id,
         isShared: (pathwaysByTemplate.get(projectTemplate._id)?.size || 0) > 1,
       }));
 
@@ -153,8 +177,15 @@ export const getIdpTemplates = async (): Promise<Template[]> => {
       pillars: pillars.map(({ pillar, templates: pillarTemplates }): TemplatePillar => ({
         id: pillar._id,
         name: pillar.name || '',
-        description: pillar.description || '',
+        description: toDescription(pillar.description),
         status: toStatus(pillar.status),
+        subCategories: toSubCategories(String(pillar._id)),
+        sessionCategory: toSessionCategory(pillar.externalId),
+        projectTemplates: pillarTemplates.map(template => ({
+          id: template._id,
+          title: template.title || '',
+          isShared: (pathwaysByTemplate.get(template._id)?.size || 0) > 1,
+        })),
         tasks: pillarTemplates.flatMap(toTasks),
       })),
       created: pathway.createdAt ? pathway : latestBy(templates, 'createdAt', false),
@@ -170,7 +201,7 @@ export const getIdpTemplates = async (): Promise<Template[]> => {
     id: pathway._id,
     externalId: pathway.externalId,
     templateName: pathway.name || '',
-    description: pathway.description || '',
+    description: toDescription(pathway.description),
     status: toStatus(pathway.status),
     creator: names[String(created?.createdBy)] || '',
     createdDate: toDate(created?.createdAt),
@@ -190,5 +221,17 @@ export const updateIdpCategory = async (categoryId: string, data: CategoryUpdate
 /** Admin: update a task (name, description). Applies to new IDPs only. */
 export const updateIdpTask = async (taskId: string, data: TaskUpdate) => {
   const response = await api.post(API_ENDPOINTS.IDP_TEMPLATE_UPDATE_TASK(taskId), data);
+  return response.data;
+};
+
+/** Admin: save a new task order for a project template. Applies to new IDPs only. */
+export const reorderIdpTasks = async (templateId: string, taskIds: string[]) => {
+  const response = await api.post(API_ENDPOINTS.IDP_TEMPLATE_REORDER_TASKS(templateId), { taskIds });
+  return response.data;
+};
+
+/** Admin: add a task at the end of a project template. Applies to new IDPs only. */
+export const createIdpTask = async (templateId: string, data: TaskCreate) => {
+  const response = await api.post(API_ENDPOINTS.IDP_TEMPLATE_CREATE_TASK(templateId), data);
   return response.data;
 };
