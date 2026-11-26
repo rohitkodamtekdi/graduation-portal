@@ -1,86 +1,37 @@
 import React, { useMemo } from "react";
-import { HStack , VStack, Text, Button, Image, Box, Icon } from "@ui";
+import { useNavigation } from '@react-navigation/native';
+import { HStack, VStack, Text, Button, Box } from "@ui";
 import { useLanguage } from '@contexts/LanguageContext';
 import TitleHeader from '@components/TitleHeader';
 import { titleHeaderStyles } from '@components/TitleHeader/Styles';
-import { LucideIcon } from '@ui';
-import { theme } from '@config/theme';
 import { templateManagementStyles } from './Styles';
 import DataTable from '@components/DataTable';
 import { getTemplatesColumns } from './TemplatesTableConfig';
-import { TEMPLATE_MANAGEMENT_MOCK_DATA } from '@constants/TEMPLATE_MANAGEMENT_MOCK_DATA';
-import CSVUploadGuide from './CSVUploadGuide';
+import { Template } from '@app-types/templateManagement';
+import { useIdpTemplates } from './templateStore';
 
 const TemplateManagementScreen = () => {
     const { t } = useLanguage();
-    const columns = useMemo(() => getTemplatesColumns(), []);
+    const navigation = useNavigation();
+    const { templates, isLoading, error, reload } = useIdpTemplates();
+
+    const columns = useMemo(
+        () =>
+            getTemplatesColumns({
+                onView: (template: Template) => {
+                    // @ts-ignore - route params are not typed for admin screens
+                    navigation.navigate('template-detail', { templateId: template.id });
+                },
+            }),
+        [navigation],
+    );
 
     return(
         <VStack>
            <TitleHeader
             title="admin.menu.templateManagement"
-            description="admin.templateManagement.templateManagementDescription"
-
-            right={
-                <HStack space="md" alignItems="center">
-                    <Button
-                    {...titleHeaderStyles.outlineButton}
-                    onPress={() => {
-                        // Handle bulk upload
-                    }}
-                    >
-                    <HStack space="sm" alignItems="center">
-                      
-                        <LucideIcon
-                            name="FileDown"
-                            size={16}
-                            color={theme.tokens.colors.textForeground}
-                        />
-                        <Text {...titleHeaderStyles.outlineButtonText}>
-                        {t('admin.actions.downloadSampleCsv')}
-                        </Text>
-                    </HStack>
-                    </Button>
-                    
-                    <Button
-                    {...titleHeaderStyles.solidButton}
-                    onPress={() => {
-                        // Handle create user
-                    }}
-                    >
-                    <HStack space="sm" alignItems="center">
-                        <LucideIcon
-                            name="Upload"
-                            size={16}
-                            color={theme.tokens.colors.white}
-                        />
-                        <Text {...titleHeaderStyles.solidButtonText}>
-                        {t('admin.actions.uploadTemplateCsv')}
-                        </Text>
-                    </HStack>
-                    </Button>
-                </HStack>
-            }
+            description="admin.templateManagement.viewOnlyDescription"
            />
-           <Box {...templateManagementStyles.infoBox}>
-                <HStack space="md" alignItems="flex-start">
-                    {/* Info Icon */}
-                    <LucideIcon
-                            name="AlertCircle"
-                            size={16}
-                        />
-                    {/* Content */}
-                    <VStack space="sm" flex={1}>
-                        <Text {...templateManagementStyles.infoBoxTitle}>
-                                {t('admin.templateManagement.infoBox.title')}
-                        </Text>
-
-                        <Text {...templateManagementStyles.infoBoxDescription}>
-                            {t('admin.templateManagement.infoBox.description')}
-                        </Text>
-                    </VStack>
-                </HStack>
-            </Box>
 
             {/* Table Section with Border */}
             <Box {...templateManagementStyles.tableContainer}>
@@ -91,24 +42,32 @@ const TemplateManagementScreen = () => {
                     </Text>
                 </Box>
 
-                {/* Templates Table */}
-                <DataTable
-                    data={TEMPLATE_MANAGEMENT_MOCK_DATA}
-                    columns={columns}
-                    getRowKey={(template) => template.id}
-                    isLoading={false}
-                    emptyMessage={t('admin.templates.noTemplatesFound')}
-                    loadingMessage={t('admin.templates.loadingTemplates')}
-                    pagination={{
-                        enabled: true,
-                        pageSize: 10,
-                        maxPageNumbers: 5,
-                    }}
-                />
+                {error ? (
+                    <HStack space="md" alignItems="center" flexWrap="wrap">
+                        <Text {...templateManagementStyles.errorText}>
+                            {t('admin.templates.loadError')}
+                        </Text>
+                        <Button {...titleHeaderStyles.outlineButton} onPress={reload}>
+                            <Text {...titleHeaderStyles.outlineButtonText}>{t('admin.templates.retry')}</Text>
+                        </Button>
+                    </HStack>
+                ) : (
+                    /* Templates Table */
+                    <DataTable
+                        data={templates}
+                        columns={columns}
+                        getRowKey={(template) => template.id}
+                        isLoading={isLoading}
+                        emptyMessage={t('admin.templates.noTemplatesFound')}
+                        loadingMessage={t('admin.templates.loadingTemplates')}
+                        pagination={{
+                            enabled: true,
+                            pageSize: 10,
+                            maxPageNumbers: 5,
+                        }}
+                    />
+                )}
             </Box>
-
-            {/* CSV Upload Guide */}
-            <CSVUploadGuide />
         </VStack>
     );
 }

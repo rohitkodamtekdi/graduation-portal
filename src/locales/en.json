@@ -1310,8 +1310,6 @@
       "uploadCSVDescription": "Import multiple users from a CSV file",
       "addUser": "Add User",
       "addUserDescription": "Manually add a single user",
-      "downloadSampleCsv": "Download Sample CSV",
-      "uploadTemplateCsv": "Upload Template (CSV)",
       "viewDetails": "View Details",
       "logVisit": "Log Visit",
       "viewLog": "View Log",
@@ -1775,11 +1773,7 @@
       "otherSupervisors": "Other supervisors (admin only)"
     },
     "templateManagement": {
-      "templateManagementDescription": "Manage IDP templates via CSV upload. All templates are view-only after creation.",
-      "infoBox": {
-        "title": "CSV-Only Template Creation",
-        "description": "For MVP, all template creation and editing is performed via CSV upload. Download the sample CSV template to ensure proper formatting. Templates can only be viewed or activated/deactivated through this interface."
-      }
+      "viewOnlyDescription": "View and edit the IDP templates (pathways), their pillars and tasks. Changes apply to new IDPs only."
     },
     "templates": {
       "tableTitle": "Template Library (View Only)",
@@ -1790,32 +1784,52 @@
       "tasksLabel": "tasks",
       "createdDate": "Created Date",
       "actions": "Actions",
-      "uploadedViaCsv": "Uploaded via CSV",
       "noTemplatesFound": "No templates found",
       "loadingTemplates": "Loading templates...",
+      "statusActive": "Active",
+      "statusInactive": "Inactive",
+      "interventionPlan": "Intervention Plan",
+      "loadError": "Could not load templates. Please try again.",
+      "retry": "Retry",
       "actionMenu": {
-        "view": "View (Read-Only)",
-        "deactivate": "Deactivate",
-        "export": "Export as CSV"
+        "view": "View (Read-Only)"
       },
-      "csvUploadGuide": {
-        "title": "CSV Upload Guide",
-        "requiredColumns": "Required CSV Columns",
-        "templateWorkflow": "Template Workflow",
-        "columns": {
-          "templateName": "Name of the IDP template",
-          "taskId": "Unique identifier for each task",
-          "taskName": "Name of the development task",
-          "taskDescription": "Detailed description",
-          "outputIndicator": "Output measurement criteria",
-          "outcomeIndicator": "Outcome measurement criteria"
-        },
-        "steps": {
-          "step1": "Download sample CSV template",
-          "step2": "Fill in template details and tasks",
-          "step3": "Upload completed CSV file",
-          "step4": "Review and activate template"
-        }
+      "detail": {
+        "backToTemplates": "Back to Templates",
+        "notFound": "Template not found.",
+        "noTasks": "No tasks are linked to this pillar yet.",
+        "projectTemplate": "Project Template",
+        "templateInformation": "Template Information",
+        "lastUpdated": "Last Updated",
+        "updatedBy": "Updated By",
+        "structureTitle": "Template Structure: {{count}} Pillars & Tasks",
+        "structureDescription": "Individual Development Plan organized by {{count}} core pillars with specific tasks",
+        "expandAll": "Expand All",
+        "collapseAll": "Collapse All",
+        "taskCount": "{{count}} tasks",
+        "taskCountOne": "{{count}} task",
+        "taskName": "Task Name",
+        "description": "Description",
+        "templateSummary": "Template Summary",
+        "totalPillars": "Total Pillars",
+        "totalTasks": "Total Tasks",
+        "templateType": "Template Type",
+        "sharedTask": "Shared by both pathways"
+      },
+      "edit": {
+        "editPathway": "Edit Pathway",
+        "editPillar": "Edit Pillar",
+        "editTask": "Edit Task",
+        "name": "Name",
+        "nameRequired": "Name is required.",
+        "description": "Description",
+        "active": "Active",
+        "activeHelper": "Inactive items are not offered in new IDPs.",
+        "save": "Save Changes",
+        "saved": "Changes saved.",
+        "saveFailed": "Could not save changes. Please try again.",
+        "sharedTaskWarning": "This task is shared by both pathways. Changing it updates the task in both pathways.",
+        "newIdpsOnlyNote": "Changes apply to new IDPs only. IDPs that participants already have stay as they are."
       }
     },
     "auditLog": {

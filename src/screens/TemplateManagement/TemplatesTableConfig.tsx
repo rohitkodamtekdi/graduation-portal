@@ -5,7 +5,8 @@ import { TYPOGRAPHY } from '@constants/TYPOGRAPHY';
 import { LucideIcon, Menu } from '@ui';
 import { useLanguage } from '@contexts/LanguageContext';
 import { theme } from '@config/theme';
-import { Template } from '@constants/TEMPLATE_MANAGEMENT_MOCK_DATA';
+// import { Template } from '@constants/TEMPLATE_MANAGEMENT_MOCK_DATA';
+import { Template } from '@app-types/templateManagement';
 import { styles as dataTableStyles } from '@components/DataTable/Styles';
 import { MenuItemData } from '@components/ui/Menu';
 import { templateManagementStyles as styles } from './Styles';
@@ -13,7 +14,8 @@ import { templateManagementStyles as styles } from './Styles';
 /**
  * Status Badge Component
  */
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+export const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const { t } = useLanguage();
   const isActive = status === 'Active';
 
   return (
@@ -25,11 +27,16 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
         {...TYPOGRAPHY.bodySmall}
         {...styles.statusBadgeText}
       >
-        {status}
+        {/* {status} */}
+        {t(isActive ? 'admin.templates.statusActive' : 'admin.templates.statusInactive')}
       </Text>
     </HStack>
   );
 };
+
+export interface TemplateActionHandlers {
+  onView: (template: Template) => void;
+}
 
 /**
  * Custom trigger for actions menu
@@ -47,7 +54,7 @@ const getCustomTrigger = (triggerProps: any) => (
 /**
  * Get Template Menu Items
  */
-const getTemplateMenuItems = (t: (key: string) => string): MenuItemData[] => [
+const TEMPLATE_MENU_ITEMS: MenuItemData[] = [
   {
     key: 'view',
     label: 'admin.templates.actionMenu.view',
@@ -56,50 +63,22 @@ const getTemplateMenuItems = (t: (key: string) => string): MenuItemData[] => [
     iconColor: theme.tokens.colors.textMutedForeground,
     iconSizeValue: 16,
   },
-  {
-    key: 'deactivate',
-    label: 'admin.templates.actionMenu.deactivate',
-    textValue: 'Deactivate',
-    iconName: 'XCircle',
-    iconColor: theme.tokens.colors.textMutedForeground,
-    iconSizeValue: 16,
-  },
-  {
-    key: 'export',
-    label: 'admin.templates.actionMenu.export',
-    textValue: 'Export as CSV',
-    iconName: 'Download',
-    iconColor: theme.tokens.colors.textMutedForeground,
-    iconSizeValue: 16,
-  },
 ];
 
 /**
  * Actions Column Component
  */
-const ActionsColumn: React.FC<{ template: Template }> = ({ template }) => {
-  const { t } = useLanguage();
-
+const ActionsColumn: React.FC<{ template: Template; handlers: TemplateActionHandlers }> = ({
+  template,
+  handlers,
+}) => {
   const handleMenuSelect = (key: string) => {
-    switch (key) {
-      case 'view':
-        console.log('View template:', template.id);
-        // TODO: Navigate to template view (read-only)
-        break;
-      case 'deactivate':
-        console.log('Deactivate template:', template.id);
-        // TODO: Implement deactivate logic
-        break;
-      case 'export':
-        console.log('Export template:', template.id);
-        // TODO: Implement export logic
-        break;
-      default:
-        console.log('Action:', key, 'for template:', template.id);
+    if (key === 'view') {
+      handlers.onView(template);
     }
   };
 
-  const menuItems = getTemplateMenuItems(t);
+  const menuItems = TEMPLATE_MENU_ITEMS;
 
   return (
     <Menu
@@ -115,20 +94,13 @@ const ActionsColumn: React.FC<{ template: Template }> = ({ template }) => {
 /**
  * Template Name Cell Component
  */
-const TemplateNameCell: React.FC<{ template: Template }> = ({ template }) => {
-  const { t } = useLanguage();
-  
-  return (
-    <VStack space="xs">
-      <Text {...TYPOGRAPHY.paragraph} {...styles.templateNameText}>
-        {template.templateName}
-      </Text>
-      <Text {...TYPOGRAPHY.bodySmall} {...styles.uploadedViaText}>
-        {t('admin.templates.uploadedViaCsv')}
-      </Text>
-    </VStack>
-  );
-};
+const TemplateNameCell: React.FC<{ template: Template }> = ({ template }) => (
+  <VStack space="xs">
+    <Text {...TYPOGRAPHY.paragraph} {...styles.templateNameText}>
+      {template.templateName}
+    </Text>
+  </VStack>
+);
 
 /**
  * Tasks Cell Component
@@ -146,7 +118,7 @@ const TasksCell: React.FC<{ template: Template }> = ({ template }) => {
 /**
  * All possible columns for Templates Table
  */
-export const getTemplatesColumns = (): ColumnDef<Template>[] => [
+export const getTemplatesColumns = (handlers: TemplateActionHandlers): ColumnDef<Template>[] => [
   {
     key: 'templateName',
     label: 'admin.templates.templateName',
@@ -173,7 +145,8 @@ export const getTemplatesColumns = (): ColumnDef<Template>[] => [
     flex: 1.2,
     render: (template) => (
       <Text {...TYPOGRAPHY.paragraph} {...styles.creatorText}>
-        {template.creator}
+        {/* {template.creator} */}
+        {template.creator || '—'}
       </Text>
     ),
     mobileConfig: {
@@ -197,7 +170,8 @@ export const getTemplatesColumns = (): ColumnDef<Template>[] => [
     flex: 1.2,
     render: (template) => (
       <Text {...TYPOGRAPHY.paragraph} {...styles.createdDateText}>
-        {template.createdDate}
+        {/* {template.createdDate} */}
+        {template.createdDate || '—'}
       </Text>
     ),
     mobileConfig: {
@@ -209,7 +183,7 @@ export const getTemplatesColumns = (): ColumnDef<Template>[] => [
     key: 'actions',
     label: 'admin.templates.actions',
     flex: 0.8,
-    render: (template) => <ActionsColumn template={template} />,
+    render: (template) => <ActionsColumn template={template} handlers={handlers} />,
     mobileConfig: {
       fullWidthRank: 1,
       showLabel: false,

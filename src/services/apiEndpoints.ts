@@ -20,6 +20,11 @@ export const API_ENDPOINTS = {
   PARTICIPANTS_SUB_ENTITY_LIST: `${prefix}/entity-management/v1/entities/subEntityList`,
   ENTITY_DETAILS: `${prefix}/entity-management/v1/entities/details`,
   PROJECT_CATEGORIES_LIST: `${prefix}/project/v1/library/categories/list?parentId=null&keywords=idp&getChildren=true`,
+  PROJECT_TEMPLATES_WITH_TASKS: `${prefix}/project/v1/project/templates/list?taskDetails=true`, // Project templates with their tasks
+  // Admin-only IDP template APIs (Template Management)
+  IDP_TEMPLATE_CATEGORIES: `${prefix}/project/v1/idpTemplates/categories`, // All categories, active and inactive
+  IDP_TEMPLATE_UPDATE_CATEGORY: (categoryId: string) => `${prefix}/project/v1/idpTemplates/updateCategory/${categoryId}`,
+  IDP_TEMPLATE_UPDATE_TASK: (taskId: string) => `${prefix}/project/v1/idpTemplates/updateTask/${taskId}`,
   GET_ENTITY_DETAILS: (id: string) =>
     `${prefix}/entity-management/v1/entities/details/${id}`,
   UPDATE_ENTITY_DETAILS: `${prefix}/project/v1/programUsers/createOrUpdate`,

@@ -58,12 +58,19 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   // 'review-requests' is only visible to users holding the granular
   // 'tenant_admin' role title; hide it from other Supervisor-bucket users.
+  // 'template-management' has a route only for the admin role, so hide it for others.
+  const isAdmin = user?.role?.toLowerCase() === 'admin';
   const visibleMainMenuItems = useMemo(
     () =>
       isReportManager
         ? REPORT_MANAGER_MENU_ITEMS
-        : MAIN_MENU_ITEMS.filter(item => item.key !== 'review-requests' || isTenantAdmin),
-    [isTenantAdmin, isReportManager],
+        // : MAIN_MENU_ITEMS.filter(item => item.key !== 'review-requests' || isTenantAdmin),
+        : MAIN_MENU_ITEMS.filter(
+            item =>
+              (item.key !== 'review-requests' || isTenantAdmin) &&
+              (item.key !== 'template-management' || isAdmin),
+          ),
+    [isTenantAdmin, isReportManager, isAdmin],
   );
   const visibleUserStoryItems = useMemo(
     () =>
@@ -73,10 +80,15 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
     [isReportManager],
   );
 
+  // Sub-pages that should keep their parent menu item highlighted
+  const toMenuRoute = (routeName: string) =>
+    routeName === 'template-detail' ? 'template-management' : routeName;
+
   // Sync activeRoute with the current route from navigation
   useEffect(() => {
     const currentRouteName = route.name;
-    setActiveRoute(currentRouteName);
+    // setActiveRoute(currentRouteName);
+    setActiveRoute(toMenuRoute(currentRouteName));
   }, [route.name]);
 
   // Also listen to navigation state changes to catch programmatic navigation
@@ -87,7 +99,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
       if (state) {
         const currentRoute = state.routes[state.index];
         if (currentRoute?.name) {
-          setActiveRoute(currentRoute.name);
+          // setActiveRoute(currentRoute.name);
+          setActiveRoute(toMenuRoute(currentRoute.name));
         }
       }
     });

@@ -111,12 +111,13 @@ export const MAIN_MENU_ITEMS: SidebarMenuItem[] = [
   //   icon: 'ChartColumn', // Lucide icon name
   //   route: 'support-provider-dashboard',
   // },
-  // {
-  //   key: 'template-management',
-  //   label: 'admin.menu.templateManagement',
-  //   icon: 'FileText', // Lucide icon name
-  //   route: 'template-management',
-  // },
+  // Shown only to the admin role (filtered in Sidebar)
+  {
+    key: 'template-management',
+    label: 'admin.menu.templateManagement',
+    icon: 'FileText', // Lucide icon name
+    route: 'template-management',
+  },
   // {
   //   key: 'audit-log',
   //   label: 'admin.menu.auditLog',

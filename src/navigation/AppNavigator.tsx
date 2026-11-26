@@ -44,6 +44,7 @@ const CreateSupportSessionScreen = lazyScreen(() => import('../screens/SessionsS
 const SessionDetailsScreen = lazyScreen(() => import('../screens/SessionsSupport/SessionDetails'));
 const RequestDetailsScreen = lazyScreen(() => import('../screens/SessionsSupport/RequestDetails'));
 const TemplateManagementScreen = lazyScreen(() => import('../screens/TemplateManagement'));
+const TemplateDetailScreen = lazyScreen(() => import('../screens/TemplateManagement/TemplateDetail'));
 const CsvImportTemplates = lazyScreen(() => import('../screens/CsvImportTemplates'));
 const PasswordPolicy = lazyScreen(() => import('../screens/PasswordPolicy'));
 const AuditLogScreen = lazyScreen(() => import('../screens/AuditLog'));
@@ -127,8 +128,14 @@ const getAccessPages = (
         { name: 'support-provider-dashboard', path: '/support-provider-dashboard', component: SupportProviderDashboard },
         {
           name: 'template-management',
-          path: '/template-managemnt',
+          // path: '/template-managemnt',
+          path: '/template-management',
           component: TemplateManagementScreen,
+        },
+        {
+          name: 'template-detail',
+          path: '/template-management/:templateId',
+          component: TemplateDetailScreen,
         },
         {
           name: 'csv-templates',
